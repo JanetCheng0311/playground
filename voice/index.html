@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Type a line and generate robotic or instrument speech blips with emotion. Download as WAV for your game.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230033ff'/%3E%3Cg fill='white'%3E%3Crect x='14' y='26' width='5' height='12'/%3E%3Crect x='23' y='18' width='5' height='28'/%3E%3Crect x='32' y='22' width='5' height='20'/%3E%3Crect x='41' y='14' width='5' height='36'/%3E%3C/g%3E%3C/svg%3E">
+<title>Voice — Playground</title>
+<style>
+  :root{ --blue:#0033ff; --white:#fff; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    background:var(--blue);color:var(--white);
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    min-height:100dvh;display:flex;flex-direction:column;
+  }
+  header{
+    display:flex;align-items:baseline;gap:24px;
+    padding:22px clamp(20px,4vw,40px);font-size:14px;font-weight:500;flex:0 0 auto;
+  }
+  header a{color:var(--white);text-decoration:none;padding:2px 0;border-bottom:1px solid transparent;transition:border-color .15s}
+  header a:hover{border-bottom-color:var(--white)}
+  header .title{font-weight:600;margin-right:auto}
+  header .title em{font-style:normal;opacity:.6;font-weight:400;margin-left:10px}
+
+  main{
+    flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;gap:34px;
+    padding:0 clamp(20px,6vw,80px) 8vh;max-width:920px;width:100%;margin:0 auto;
+  }
+  .line input{
+    width:100%;background:none;border:none;border-bottom:2px solid rgba(255,255,255,.5);
+    color:var(--white);font:inherit;font-size:clamp(24px,4.4vw,46px);font-weight:600;
+    letter-spacing:-.02em;padding:8px 2px 14px;outline:none;
+  }
+  .line input::placeholder{color:rgba(255,255,255,.45)}
+  .line input:focus{border-bottom-color:var(--white)}
+
+  .group{display:flex;flex-direction:column;gap:10px}
+  .group .lbl{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;opacity:.6}
+  .chips{display:flex;gap:18px;flex-wrap:wrap}
+  .chips button{
+    font:inherit;font-size:15px;font-weight:500;color:var(--white);
+    background:none;border:none;cursor:pointer;padding:3px 0;
+    opacity:.5;border-bottom:2px solid transparent;
+    transition:opacity .15s,border-color .15s;
+  }
+  .chips button:hover{opacity:.85}
+  .chips button.on{opacity:1;border-bottom-color:var(--white)}
+
+  .actions{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-top:4px}
+  .actions button{
+    font:inherit;font-weight:600;cursor:pointer;border-radius:999px;
+    transition:transform .12s ease, background .15s ease;
+  }
+  #play{font-size:17px;padding:13px 30px;background:var(--white);color:var(--blue);border:none}
+  #play:hover{transform:translateY(-2px)}
+  #play:active{transform:translateY(0) scale(.97)}
+  #dl{font-size:15px;padding:12px 22px;background:none;color:var(--white);border:2px solid var(--white)}
+  #dl:hover{background:rgba(255,255,255,.12)}
+  .dur{font-size:13px;opacity:.65;font-variant-numeric:tabular-nums}
+  @media (max-width:640px){ header{gap:16px;padding:16px} }
+</style>
+</head>
+<body>
+<header>
+  <span class="title">Voice<em>robotic &amp; instrument speech</em></span>
+  <a href="../">playground</a>
+</header>
+<main>
+  <div class="line">
+    <input id="text" type="text" value="hello traveler" maxlength="120" placeholder="type a line…" autocomplete="off">
+  </div>
+  <div class="group">
+    <span class="lbl">emotion</span>
+    <div class="chips" id="emos"></div>
+  </div>
+  <div class="group">
+    <span class="lbl">voice</span>
+    <div class="chips" id="voices"></div>
+  </div>
+  <div class="actions">
+    <button id="play">▶ play</button>
+    <button id="dl">download wav</button>
+    <span class="dur" id="dur"></span>
+  </div>
+</main>
+<script>
+(() => {
+"use strict";
+const $=id=>document.getElementById(id);
+
+let actx=null, master=null;
+function audio(){
+  if(actx){ if(actx.state==="suspended")actx.resume(); return actx; }
+  try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
+  master=actx.createGain(); master.gain.value=0.4; master.connect(actx.destination);
+  return actx;
+}
+
+// major-pentatonic step pool (semitones) so blips stay musical
+const PENT=[0,2,4,7,9,12,14,16,19,21];
+function noteFor(ch){
+  const c=ch.toLowerCase().charCodeAt(0);
+  return PENT[(c*7)%PENT.length];
+}
+
+// emotion: base pitch (Hz), tempo, gain, and a pitch contour over the line (semitones vs progress p)
+const EMO={
+  neutral:{base:210,tempo:1.0,gain:0.5,contour:p=>0},
+  happy:  {base:300,tempo:1.08,gain:0.55,vib:0.4,contour:p=>2+Math.sin(p*Math.PI*4)*2},
+  sad:    {base:150,tempo:0.78,gain:0.42,contour:p=>-2-p*4},
+  angry:  {base:185,tempo:1.32,gain:0.7,harsh:true,contour:p=>1+Math.sin(p*Math.PI*6)*0.6},
+  curious:{base:235,tempo:0.95,gain:0.5,contour:p=>p>0.65?(p-0.65)/0.35*6:0},
+  robotic:{base:140,tempo:1.0,gain:0.5,mono:true,contour:p=>0},
+};
+let emotion="neutral", voice="robot";
+
+function build(){
+  const text=$("text").value||"hello";
+  const E=EMO[emotion];
+  const wave = voice==="instrument"
+    ? (emotion==="sad"?"sine":"triangle")
+    : (E.harsh?"sawtooth":"square");
+  const per=0.078/E.tempo;          // seconds per character ≈ speaking pace
+  const chars=[...text];
+  const n=Math.max(1,chars.length);
+  const evs=[]; let t=0;
+  chars.forEach((ch,i)=>{
+    const p=i/n;
+    if(/\s/.test(ch)){ t+=per*1.3; return; }
+    if(/[.,!?;:]/.test(ch)){ t+=per*1.7; return; }
+    const vowel=/[aeiou]/i.test(ch);
+    const note = E.mono ? 0 : noteFor(ch);
+    let freq = E.base*Math.pow(2,(note+E.contour(p))/12);
+    if(E.vib) freq *= 1+Math.sin(i*1.4)*0.025*E.vib;
+    const dur = per*(vowel?1.5:1)*0.88;
+    evs.push({t,freq,dur,wave,gain:E.gain});
+    t += per*(vowel?1.45:1);
+  });
+  return {events:evs,total:t+0.18};
+}
+
+function schedule(ctx,dest,t0,data){
+  data.events.forEach(ev=>{
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type=ev.wave; o.frequency.value=ev.freq;
+    const s=t0+ev.t, e=s+ev.dur;
+    g.gain.setValueAtTime(0.0001,s);
+    g.gain.exponentialRampToValueAtTime(ev.gain,s+0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001,e);
+    o.connect(g).connect(dest); o.start(s); o.stop(e+0.02);
+  });
+}
+
+function play(){
+  const a=audio(); if(!a)return;
+  const data=build();
+  schedule(a,master,a.currentTime+0.04,data);
+  showDur(data.total);
+}
+
+function showDur(t){ $("dur").textContent=t.toFixed(1)+"s"; }
+
+// ---- WAV export so the clip can be dropped into a game ----
+function bufferToWav(buf){
+  const sr=buf.sampleRate, d=buf.getChannelData(0), len=d.length;
+  const ab=new ArrayBuffer(44+len*2), v=new DataView(ab); let o=0;
+  const str=s=>{for(let i=0;i<s.length;i++)v.setUint8(o++,s.charCodeAt(i));};
+  const u16=x=>{v.setUint16(o,x,true);o+=2;}, u32=x=>{v.setUint32(o,x,true);o+=4;};
+  str("RIFF");u32(36+len*2);str("WAVE");str("fmt ");u32(16);u16(1);u16(1);u32(sr);u32(sr*2);u16(2);u16(16);str("data");u32(len*2);
+  for(let i=0;i<len;i++){ const s=Math.max(-1,Math.min(1,d[i])); v.setInt16(o,s<0?s*0x8000:s*0x7fff,true); o+=2; }
+  return new Blob([ab],{type:"audio/wav"});
+}
+async function download(){
+  const data=build();
+  const sr=44100, off=new OfflineAudioContext(1,Math.ceil(sr*data.total),sr);
+  const m=off.createGain(); m.gain.value=0.7; m.connect(off.destination);
+  schedule(off,m,0,data);
+  const buf=await off.startRendering();
+  const blob=bufferToWav(buf);
+  const safe=($("text").value||"voice").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").slice(0,24)||"voice";
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download=`${safe}-${emotion}.wav`; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+  showDur(data.total);
+}
+
+// ---- chip rows ----
+function chipRow(el, names, current, onPick){
+  names.forEach(name=>{
+    const b=document.createElement("button");
+    b.textContent=name; if(name===current)b.classList.add("on");
+    b.addEventListener("click",()=>{ [...el.children].forEach(c=>c.classList.remove("on")); b.classList.add("on"); onPick(name); });
+    el.appendChild(b);
+  });
+}
+chipRow($("emos"),["neutral","happy","sad","angry","curious","robotic"],emotion,v=>{emotion=v;play();});
+chipRow($("voices"),["robot","instrument"],voice,v=>{voice=v;play();});
+
+$("play").addEventListener("click",play);
+$("dl").addEventListener("click",download);
+$("text").addEventListener("keydown",e=>{ if(e.key==="Enter")play(); });
+
+showDur(build().total);
+})();
+</script>
+</body>
+</html>

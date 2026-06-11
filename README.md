@@ -10,6 +10,7 @@ A collection of interactive creative-coding toys, hosted with GitHub Pages. The 
 - **[Flow](flow/)**: generative flow-field line art. Tap to grow a field from a point, tweak line count, curl, and scale, save the result as a PNG.
 - **[Kaleidoscope](kaleidoscope/)**: draw with mirrored radial symmetry to build a chunky pixel mandala. Adjust segment count and pixel size, toggle spin or single-color, save as PNG.
 - **[ASMR](asmr/)**: a little room of textured pads (squish, keys, pop, drip, wood, chime, crunch, boing). Tap or use number keys for satisfying synthesized sounds; letter keys add soft clacks.
+- **[Voice](voice/)**: type a line and generate robotic or instrument speech blips, lasting about as long as the line takes to say. Pick an emotion (neutral, happy, sad, angry, curious, robotic) and download the clip as a WAV to drop into a game.
 
 ## Adding a new toy
 
