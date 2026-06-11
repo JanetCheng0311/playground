@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="Blow, pop and style realistic iridescent soap bubbles. Upload a photo and rope off where the bubbles live.">
+<meta property="og:title" content="Bubble Playground">
+<meta property="og:description" content="Blow, pop and style realistic iridescent soap bubbles in your browser.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='26' fill='none' stroke='%235fb0ec' stroke-width='4'/%3E%3Cellipse cx='23' cy='22' rx='8' ry='5' fill='white' opacity='.9' transform='rotate(-30 23 22)'/%3E%3C/svg%3E">
+<title>Bubble Playground</title>
+<style>
+  :root{
+    --sky-1:#bfe3ff;
+    --sky-2:#8ec9f5;
+    --sky-3:#5fb0ec;
+    --ink:#123a5c;
+    --ink-soft:#3d6a8f;
+    --glass:rgba(255,255,255,.55);
+    --glass-border:rgba(255,255,255,.75);
+    --accent:#1d7fd6;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);
+    background:linear-gradient(165deg,var(--sky-1) 0%,var(--sky-2) 55%,var(--sky-3) 100%);
+    touch-action:none;
+    user-select:none;-webkit-user-select:none;
+  }
+  #bgImage{
+    position:fixed;inset:0;width:100%;height:100%;
+    object-fit:cover;display:none;pointer-events:none;
+  }
+  canvas#stage{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+
+  /* ---------- top bar ---------- */
+  header{
+    position:fixed;top:0;left:0;right:0;z-index:20;
+    display:flex;align-items:center;gap:10px;
+    padding:10px 14px;
+    pointer-events:none;
+  }
+  header h1{
+    font-size:17px;font-weight:700;letter-spacing:-.02em;
+    padding:8px 14px;border-radius:var(--radius);
+    background:var(--glass);border:1px solid var(--glass-border);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 4px 18px rgba(18,58,92,.10);
+    pointer-events:auto;
+  }
+  .bar-btns{display:flex;gap:8px;margin-left:auto;pointer-events:auto}
+  button{
+    font:inherit;font-size:14px;font-weight:600;color:var(--ink);
+    padding:9px 14px;border-radius:var(--radius);
+    border:1px solid var(--glass-border);
+    background:var(--glass);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 4px 14px rgba(18,58,92,.10);
+    cursor:pointer;transition:transform .12s ease, background .15s ease;
+  }
+  button:hover{background:rgba(255,255,255,.72)}
+  button:active{transform:translateY(1px) scale(.98)}
+  button.primary{background:var(--accent);color:#fff;border-color:rgba(255,255,255,.35)}
+  button.primary:hover{background:#2a8de2}
+  button.toggled{background:var(--accent);color:#fff;border-color:rgba(255,255,255,.35)}
+
+  /* ---------- control panel ---------- */
+  #panel{
+    position:fixed;right:14px;top:64px;z-index:20;width:280px;
+    background:var(--glass);border:1px solid var(--glass-border);
+    border-radius:20px;
+    backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 12px 38px rgba(18,58,92,.16);
+    padding:16px;
+    display:none;flex-direction:column;gap:14px;
+    max-height:calc(100dvh - 86px);overflow-y:auto;
+  }
+  #panel.open{display:flex}
+  #panel h2{font-size:13px;font-weight:700;text-transform:none;color:var(--ink)}
+  .ctl{display:flex;flex-direction:column;gap:5px}
+  .ctl label{font-size:12.5px;font-weight:600;color:var(--ink-soft);display:flex;justify-content:space-between}
+  .ctl label output{font-variant-numeric:tabular-nums;color:var(--ink)}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:26px;background:transparent;cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track{
+    height:6px;border-radius:3px;background:rgba(18,58,92,.18);
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;
+    background:#fff;border:2px solid var(--accent);margin-top:-6px;
+    box-shadow:0 2px 6px rgba(18,58,92,.25);
+  }
+  input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:rgba(18,58,92,.18)}
+  input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid var(--accent)}
+  .row{display:flex;gap:8px}
+  .row button{flex:1;font-size:13px;padding:8px 6px}
+  .divider{height:1px;background:rgba(18,58,92,.14)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chips:empty::after{content:"Nothing saved yet";font-size:11.5px;color:var(--ink-soft)}
+  #presetChips:empty::after{content:""}
+  .chip{
+    font-size:12px;font-weight:600;padding:6px 10px;border-radius:999px;
+    background:rgba(255,255,255,.6);border:1px solid var(--glass-border);cursor:pointer;
+  }
+  .chip:hover{background:#fff}
+  .hint{font-size:11.5px;color:var(--ink-soft);line-height:1.45}
+
+  /* ---------- toast ---------- */
+  #toast{
+    position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);
+    z-index:30;padding:10px 18px;border-radius:999px;
+    background:rgba(18,58,92,.85);color:#fff;font-size:13.5px;font-weight:600;
+    transition:transform .3s cubic-bezier(.16,1,.3,1);pointer-events:none;
+    backdrop-filter:blur(8px);
+  }
+  #toast.show{transform:translateX(-50%) translateY(0)}
+
+  .short{display:none}
+  @media (max-width:640px){
+    header{padding:8px 10px;gap:6px}
+    header h1{font-size:14px;padding:8px 11px;white-space:nowrap}
+    button{font-size:13px;padding:8px 10px;white-space:nowrap}
+    .long{display:none}
+    .short{display:inline}
+    #panel{right:10px;left:10px;width:auto;top:58px}
+  }
+  @media (prefers-reduced-motion: reduce){
+    #toast{transition:none}
+  }
+</style>
+</head>
+<body>
+<img id="bgImage" alt="">
+<canvas id="stage"></canvas>
+
+<header>
+  <h1><span class="long">Bubble Playground</span><span class="short">Bubbles</span></h1>
+  <div class="bar-btns">
+    <button id="btnSound" title="Toggle pop sound" aria-pressed="true">Sound on</button>
+    <button id="btnLasso" title="Draw a rope around the area where bubbles appear"><span class="long">Rope select</span><span class="short">Rope</span></button>
+    <button id="btnClear" title="Pop every bubble">Clear</button>
+    <button id="btnPanel" class="primary">Customize</button>
+  </div>
+</header>
+
+<aside id="panel">
+  <h2>Bubble style</h2>
+  <div class="ctl">
+    <label>Size <output id="oSize">90</output></label>
+    <input type="range" id="rSize" min="20" max="200" value="90">
+  </div>
+  <div class="ctl">
+    <label>Rainbow shimmer <output id="oIrid">70%</output></label>
+    <input type="range" id="rIrid" min="0" max="100" value="70">
+  </div>
+  <div class="ctl">
+    <label>Edge wobble <output id="oWobble">50%</output></label>
+    <input type="range" id="rWobble" min="0" max="100" value="50">
+  </div>
+  <div class="ctl">
+    <label>Tint hue <output id="oHue">200°</output></label>
+    <input type="range" id="rHue" min="0" max="360" value="200">
+  </div>
+  <div class="ctl">
+    <label>Transparency <output id="oAlpha">80%</output></label>
+    <input type="range" id="rAlpha" min="20" max="100" value="80">
+  </div>
+  <div class="ctl">
+    <label>Bubble flow <output id="oRate">12/s</output></label>
+    <input type="range" id="rRate" min="0" max="40" value="12">
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="row">
+    <button id="btnSaveStyle">Save my style</button>
+    <button id="btnBurst">Burst of 20</button>
+  </div>
+  <h2>Presets</h2>
+  <div id="presetChips" class="chips"></div>
+  <h2>My styles</h2>
+  <div id="styleChips" class="chips"></div>
+
+  <div class="divider"></div>
+
+  <h2>Background</h2>
+  <div class="row">
+    <button id="btnUpload">Upload image</button>
+    <button id="btnRemoveBg">Remove</button>
+  </div>
+  <p class="hint">After uploading, tap <strong>Rope select</strong> and drag a loop around the area where bubbles should appear. Double-tap the rope area to clear the selection.</p>
+  <input type="file" id="fileInput" accept="image/*" hidden>
+</aside>
+
+<div id="toast"></div>
+
+<script>
+(() => {
+"use strict";
+
+const canvas = document.getElementById("stage");
+const ctx = canvas.getContext("2d");
+const bgImage = document.getElementById("bgImage");
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+let W = 0, H = 0, DPR = Math.min(devicePixelRatio || 1, 2);
+function resize(){
+  W = innerWidth; H = innerHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+addEventListener("resize", resize);
+resize();
+
+/* ---------------- style state ---------------- */
+const style = { size: 90, irid: .7, wobble: .5, hue: 200, alpha: .8, rate: 12 };
+
+const $ = id => document.getElementById(id);
+const sliders = [
+  ["rSize","oSize", v => { style.size = +v; return v; }],
+  ["rIrid","oIrid", v => { style.irid = v/100; return v + "%"; }],
+  ["rWobble","oWobble", v => { style.wobble = v/100; return v + "%"; }],
+  ["rHue","oHue", v => { style.hue = +v; return v + "°"; }],
+  ["rAlpha","oAlpha", v => { style.alpha = v/100; return v + "%"; }],
+  ["rRate","oRate", v => { style.rate = +v; return v + "/s"; }],
+];
+sliders.forEach(([rid, oid, apply]) => {
+  const r = $(rid), o = $(oid);
+  const sync = () => { o.textContent = apply(r.value); };
+  r.addEventListener("input", sync);
+  sync();
+});
+function pushStyleToUI(){
+  $("rSize").value = style.size;
+  $("rIrid").value = Math.round(style.irid*100);
+  $("rWobble").value = Math.round(style.wobble*100);
+  $("rHue").value = style.hue;
+  $("rAlpha").value = Math.round(style.alpha*100);
+  $("rRate").value = style.rate;
+  sliders.forEach(([rid, oid, apply]) => { $(oid).textContent = apply($(rid).value); });
+}
+
+/* ---------------- saved styles ---------------- */
+const chipsEl = $("styleChips");
+let savedStyles = [];
+try { savedStyles = JSON.parse(localStorage.getItem("bubbleStyles") || "[]"); } catch(e){}
+function renderChips(){
+  chipsEl.innerHTML = "";
+  savedStyles.forEach((s, i) => {
+    const c = document.createElement("button");
+    c.className = "chip";
+    c.textContent = s.name;
+    c.title = "Tap to apply. Long-press to delete.";
+    let t;
+    c.addEventListener("pointerdown", () => { t = setTimeout(() => {
+      savedStyles.splice(i,1); persistStyles(); renderChips(); toast("Style deleted");
+    }, 700); });
+    c.addEventListener("pointerup", () => clearTimeout(t));
+    c.addEventListener("pointerleave", () => clearTimeout(t));
+    c.addEventListener("click", () => { Object.assign(style, s.v); pushStyleToUI(); toast("Style applied: " + s.name); });
+    chipsEl.appendChild(c);
+  });
+}
+function persistStyles(){ localStorage.setItem("bubbleStyles", JSON.stringify(savedStyles)); }
+renderChips();
+
+/* built-in presets */
+const presets = [
+  { name:"Classic",  v:{ size:90,  irid:.7,  wobble:.5, hue:200, alpha:.8,  rate:12 } },
+  { name:"Sunset",   v:{ size:120, irid:.9,  wobble:.35, hue:25,  alpha:.7,  rate:8 } },
+  { name:"Mint fizz",v:{ size:45,  irid:.5,  wobble:.7, hue:150, alpha:.85, rate:28 } },
+  { name:"Galaxy",   v:{ size:150, irid:1,   wobble:.25, hue:265, alpha:.6,  rate:5 } },
+  { name:"Crystal",  v:{ size:80,  irid:.15, wobble:.1, hue:200, alpha:.95, rate:10 } },
+];
+const presetEl = $("presetChips");
+presets.forEach(p => {
+  const c = document.createElement("button");
+  c.className = "chip";
+  c.textContent = p.name;
+  c.addEventListener("click", () => { Object.assign(style, p.v); pushStyleToUI(); spawn(8); toast(p.name + " applied"); });
+  presetEl.appendChild(c);
+});
+
+$("btnSaveStyle").addEventListener("click", () => {
+  const name = "Style " + (savedStyles.length + 1);
+  savedStyles.push({ name, v: { ...style } });
+  persistStyles(); renderChips(); toast("Saved as " + name);
+});
+
+/* ---------------- toast ---------------- */
+let toastTimer;
+function toast(msg){
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+/* ---------------- lasso (rope) selection ---------------- */
+let lassoMode = false;
+let lassoPath = [];      // in-progress points
+let region = null;       // closed polygon [{x,y},...]
+let regionBounds = null;
+
+$("btnLasso").addEventListener("click", () => {
+  lassoMode = !lassoMode;
+  $("btnLasso").classList.toggle("toggled", lassoMode);
+  if (lassoMode) toast("Drag a loop where bubbles should appear");
+});
+
+function setRegion(points){
+  if (points.length < 8) { region = null; regionBounds = null; return; }
+  region = points;
+  let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+  for (const p of points){
+    if (p.x<minX) minX=p.x; if (p.x>maxX) maxX=p.x;
+    if (p.y<minY) minY=p.y; if (p.y>maxY) maxY=p.y;
+  }
+  regionBounds = {minX,minY,maxX,maxY};
+}
+function pointInRegion(x, y){
+  if (!region) return true;
+  const b = regionBounds;
+  if (x<b.minX||x>b.maxX||y<b.minY||y>b.maxY) return false;
+  let inside = false;
+  for (let i=0, j=region.length-1; i<region.length; j=i++){
+    const a=region[i], c=region[j];
+    if ((a.y>y)!==(c.y>y) && x < (c.x-a.x)*(y-a.y)/(c.y-a.y)+a.x) inside=!inside;
+  }
+  return inside;
+}
+function randomPointInRegion(){
+  if (!region) return { x: Math.random()*W, y: H + 60 };
+  const b = regionBounds;
+  for (let i=0;i<40;i++){
+    const x = b.minX + Math.random()*(b.maxX-b.minX);
+    const y = b.minY + Math.random()*(b.maxY-b.minY);
+    if (pointInRegion(x,y)) return {x,y};
+  }
+  return { x:(b.minX+b.maxX)/2, y:(b.minY+b.maxY)/2 };
+}
+
+/* ---------------- bubbles ---------------- */
+const TWO_PI = Math.PI*2;
+const bubbles = [];
+const pops = [];
+const MAX_BUBBLES = 220;
+
+function makeBubble(x, y, opts = {}){
+  const s = opts.styleSnapshot || style;
+  const r = (s.size/2) * (0.55 + Math.random()*0.9);
+  return {
+    x, y, r,
+    vx: (Math.random()-.5)*0.35,
+    vy: region ? (Math.random()-.5)*0.25 : -(0.25 + Math.random()*0.55) * (r < 40 ? 1.4 : 1),
+    drift: Math.random()*TWO_PI,
+    driftSpeed: 0.004 + Math.random()*0.008,
+    wobblePhase: Math.random()*TWO_PI,
+    wobbleAmp: s.wobble,
+    irid: s.irid,
+    hue: s.hue,
+    alpha: s.alpha,
+    hueOffset: Math.random()*360,
+    born: performance.now(),
+    lobes: 3 + (Math.random()*3|0),
+  };
+}
+
+function spawn(n, at){
+  for (let i=0;i<n;i++){
+    if (bubbles.length >= MAX_BUBBLES) bubbles.shift();
+    let p;
+    if (at) p = { x: at.x + (Math.random()-.5)*80, y: at.y + (Math.random()-.5)*80 };
+    else p = randomPointInRegion();
+    bubbles.push(makeBubble(p.x, p.y));
+  }
+}
+
+/* pop sound: tiny WebAudio blip */
+let audioCtx = null;
+let soundOn = localStorage.getItem("bubbleSound") !== "off";
+function popSound(){
+  if (!soundOn) return;
+  try{
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(520 + Math.random()*340, audioCtx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(140, audioCtx.currentTime + .09);
+    g.gain.setValueAtTime(.12, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.0001, audioCtx.currentTime + .1);
+    o.connect(g).connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + .11);
+  }catch(e){}
+}
+
+function popBubble(i){
+  const b = bubbles[i];
+  bubbles.splice(i,1);
+  popSound();
+  const shards = 8 + (Math.random()*6|0);
+  for (let k=0;k<shards;k++){
+    const a = (k/shards)*TWO_PI + Math.random()*.4;
+    pops.push({
+      x: b.x + Math.cos(a)*b.r*.8,
+      y: b.y + Math.sin(a)*b.r*.8,
+      vx: Math.cos(a)*(1.5+Math.random()*2.5),
+      vy: Math.sin(a)*(1.5+Math.random()*2.5),
+      r: 1.5 + Math.random()*3,
+      life: 1,
+      hue: (b.hue + b.hueOffset + Math.random()*120)%360,
+    });
+  }
+}
+
+/* ---------------- drawing ---------------- */
+function bubblePath(b, t){
+  // distorted edge: sum of low-frequency sin lobes
+  ctx.beginPath();
+  const steps = 36;
+  const amp = b.r * 0.10 * b.wobbleAmp;
+  for (let i=0;i<=steps;i++){
+    const a = (i/steps)*TWO_PI;
+    const wob =
+      Math.sin(a*b.lobes + b.wobblePhase + t*0.0016) * amp +
+      Math.sin(a*(b.lobes+2) - t*0.0011 + b.wobblePhase*2) * amp*0.5;
+    const rr = b.r + wob;
+    const px = b.x + Math.cos(a)*rr;
+    const py = b.y + Math.sin(a)*rr;
+    i ? ctx.lineTo(px,py) : ctx.moveTo(px,py);
+  }
+  ctx.closePath();
+}
+
+function drawBubble(b, t){
+  const grow = Math.min(1, (t - b.born)/350);
+  const scale = reduceMotion ? 1 : 0.4 + 0.6*(1-Math.pow(1-grow,3));
+  const r = b.r;
+  b._drawR = r*scale;
+
+  ctx.save();
+  if (scale !== 1){
+    ctx.translate(b.x, b.y); ctx.scale(scale, scale); ctx.translate(-b.x, -b.y);
+  }
+
+  bubblePath(b, t);
+
+  // glass body: nearly transparent with tinted film
+  const body = ctx.createRadialGradient(b.x - r*.25, b.y - r*.3, r*.1, b.x, b.y, r*1.05);
+  body.addColorStop(0, `hsla(${b.hue},70%,96%,${.06*b.alpha})`);
+  body.addColorStop(.65, `hsla(${b.hue},65%,85%,${.05*b.alpha})`);
+  body.addColorStop(.88, `hsla(${b.hue},70%,80%,${.16*b.alpha})`);
+  body.addColorStop(1, `hsla(${b.hue},75%,75%,${.30*b.alpha})`);
+  ctx.fillStyle = body;
+  ctx.fill();
+
+  // iridescent rim: rotating rainbow strokes clipped to edge band
+  if (b.irid > 0.02){
+    ctx.save();
+    ctx.clip();
+    const spin = reduceMotion ? b.hueOffset : b.hueOffset + t*0.02;
+    const segs = 7;
+    for (let i=0;i<segs;i++){
+      const a0 = (i/segs)*TWO_PI + spin*0.01;
+      const hue = (spin + i*(360/segs))%360;
+      const gx = b.x + Math.cos(a0)*r*.9;
+      const gy = b.y + Math.sin(a0)*r*.9;
+      const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, r*.85);
+      g.addColorStop(0, `hsla(${hue},95%,70%,${.34*b.irid*b.alpha})`);
+      g.addColorStop(1, "hsla(0,0%,100%,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(b.x-r*1.3, b.y-r*1.3, r*2.6, r*2.6);
+    }
+    // keep center clear so it stays see-through
+    const clearC = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, r);
+    clearC.addColorStop(0, `hsla(${b.hue},40%,98%,${.10*b.alpha})`);
+    clearC.addColorStop(.55, "hsla(0,0%,100%,0)");
+    ctx.fillStyle = clearC;
+    ctx.fillRect(b.x-r, b.y-r, r*2, r*2);
+    ctx.restore();
+  }
+
+  // edge line
+  bubblePath(b, t);
+  ctx.strokeStyle = `hsla(${b.hue},80%,92%,${.55*b.alpha})`;
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
+  // specular highlights
+  const hx = b.x - r*.38, hy = b.y - r*.42;
+  const hl = ctx.createRadialGradient(hx, hy, 0, hx, hy, r*.45);
+  hl.addColorStop(0, `hsla(0,0%,100%,${.85*b.alpha})`);
+  hl.addColorStop(.35, `hsla(0,0%,100%,${.25*b.alpha})`);
+  hl.addColorStop(1, "hsla(0,0%,100%,0)");
+  ctx.fillStyle = hl;
+  ctx.beginPath(); ctx.ellipse(hx, hy, r*.34, r*.2, -0.7, 0, TWO_PI); ctx.fill();
+
+  const hx2 = b.x + r*.3, hy2 = b.y + r*.45;
+  const hl2 = ctx.createRadialGradient(hx2, hy2, 0, hx2, hy2, r*.3);
+  hl2.addColorStop(0, `hsla(0,0%,100%,${.30*b.alpha})`);
+  hl2.addColorStop(1, "hsla(0,0%,100%,0)");
+  ctx.fillStyle = hl2;
+  ctx.beginPath(); ctx.ellipse(hx2, hy2, r*.18, r*.1, .6, 0, TWO_PI); ctx.fill();
+
+  ctx.restore();
+}
+
+function drawRope(points, closed){
+  if (points.length < 2) return;
+  ctx.save();
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  // rope: two-tone dashed twisted look
+  ctx.beginPath();
+  points.forEach((p,i)=> i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+  if (closed) ctx.closePath();
+  ctx.strokeStyle = "rgba(18,58,92,.85)";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.setLineDash([8,8]);
+  ctx.strokeStyle = "rgba(255,255,255,.95)";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  if (closed){
+    ctx.beginPath();
+    points.forEach((p,i)=> i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+    ctx.closePath();
+    ctx.fillStyle = "rgba(95,176,236,.08)";
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ---------------- input ---------------- */
+let lassoDrawing = false;
+let lastTap = 0;
+
+canvas.addEventListener("pointerdown", e => {
+  const x = e.clientX, y = e.clientY;
+  if (lassoMode){
+    lassoDrawing = true;
+    lassoPath = [{x,y}];
+    canvas.setPointerCapture(e.pointerId);
+    return;
+  }
+  // double-tap inside region clears it
+  const now = performance.now();
+  if (region && now - lastTap < 320 && pointInRegion(x,y)){
+    region = null; regionBounds = null;
+    toast("Selection cleared, bubbles everywhere again");
+    lastTap = 0;
+    return;
+  }
+  lastTap = now;
+
+  // pop topmost bubble under pointer (generous touch radius)
+  sweeping = true;
+  const slack = e.pointerType === "touch" ? 18 : 6;
+  for (let i = bubbles.length-1; i >= 0; i--){
+    const b = bubbles[i];
+    const d = Math.hypot(b.x-x, b.y-y);
+    if (d <= (b._drawR || b.r) + slack){ popBubble(i); return; }
+  }
+  // empty space: blow a few bubbles at the pointer
+  spawn(3, {x,y});
+});
+
+let sweeping = false;
+canvas.addEventListener("pointermove", e => {
+  if (lassoMode && lassoDrawing){
+    const last = lassoPath[lassoPath.length-1];
+    if (Math.hypot(e.clientX-last.x, e.clientY-last.y) > 4){
+      lassoPath.push({x:e.clientX, y:e.clientY});
+    }
+    return;
+  }
+  // swipe-to-pop: drag a finger or held mouse across bubbles
+  if (sweeping){
+    const slack = e.pointerType === "touch" ? 16 : 4;
+    for (let i = bubbles.length-1; i >= 0; i--){
+      const b = bubbles[i];
+      if (Math.hypot(b.x-e.clientX, b.y-e.clientY) <= (b._drawR || b.r) + slack){
+        popBubble(i);
+      }
+    }
+  }
+});
+canvas.addEventListener("pointerup", () => { sweeping = false; });
+canvas.addEventListener("pointercancel", () => { sweeping = false; lassoDrawing = false; });
+
+canvas.addEventListener("pointerup", e => {
+  if (lassoMode && lassoDrawing){
+    lassoDrawing = false;
+    setRegion(lassoPath.slice());
+    lassoPath = [];
+    lassoMode = false;
+    $("btnLasso").classList.remove("toggled");
+    if (region){
+      // clear bubbles outside the new region
+      for (let i=bubbles.length-1;i>=0;i--){
+        if (!pointInRegion(bubbles[i].x, bubbles[i].y)) bubbles.splice(i,1);
+      }
+      toast("Bubbles will appear inside the rope");
+    } else {
+      toast("Loop was too small, try again");
+    }
+  }
+});
+
+/* ---------------- top bar actions ---------------- */
+$("btnClear").addEventListener("click", () => {
+  // pop everything with a little cascade instead of a silent wipe
+  const n = bubbles.length;
+  if (!n){ toast("Nothing to clear"); return; }
+  const wasOn = soundOn;
+  soundOn = false; // avoid a wall of sound
+  while (bubbles.length) popBubble(bubbles.length - 1);
+  soundOn = wasOn;
+  popSound();
+  toast(n + " bubbles popped");
+});
+
+const btnSound = $("btnSound");
+function syncSoundBtn(){
+  btnSound.textContent = soundOn ? "Sound on" : "Muted";
+  btnSound.setAttribute("aria-pressed", soundOn);
+  btnSound.classList.toggle("toggled", !soundOn);
+}
+syncSoundBtn();
+btnSound.addEventListener("click", () => {
+  soundOn = !soundOn;
+  localStorage.setItem("bubbleSound", soundOn ? "on" : "off");
+  syncSoundBtn();
+  if (soundOn) popSound();
+});
+$("btnPanel").addEventListener("click", () => { $("panel").classList.toggle("open"); });
+$("btnBurst").addEventListener("click", () => spawn(20));
+$("btnUpload").addEventListener("click", () => $("fileInput").click());
+$("btnRemoveBg").addEventListener("click", () => {
+  bgImage.style.display = "none";
+  if (bgImage.dataset.url){ URL.revokeObjectURL(bgImage.dataset.url); delete bgImage.dataset.url; }
+  bgImage.removeAttribute("src");
+  toast("Background removed");
+});
+$("fileInput").addEventListener("change", e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  if (bgImage.dataset.url) URL.revokeObjectURL(bgImage.dataset.url);
+  const url = URL.createObjectURL(f);
+  bgImage.src = url;
+  bgImage.dataset.url = url;
+  bgImage.style.display = "block";
+  toast("Background set. Try Rope select to pick an area");
+  e.target.value = "";
+});
+
+// close panel when tapping the canvas on small screens
+canvas.addEventListener("pointerdown", () => {
+  if (innerWidth < 640) $("panel").classList.remove("open");
+});
+
+/* ---------------- main loop ---------------- */
+let spawnAccum = 0, lastT = performance.now();
+
+function frame(t){
+  const dt = Math.min(50, t - lastT); lastT = t;
+  ctx.clearRect(0,0,W,H);
+
+  // ambient spawning
+  spawnAccum += (style.rate * dt) / 1000;
+  while (spawnAccum >= 1){ spawnAccum -= 1; spawn(1); }
+
+  // update + draw bubbles
+  const speed = reduceMotion ? 0.25 : 1;
+  for (let i = bubbles.length-1; i >= 0; i--){
+    const b = bubbles[i];
+    b.drift += b.driftSpeed*dt*speed;
+    b.x += (b.vx + Math.sin(b.drift)*0.3) * dt*0.06*speed;
+    b.y += b.vy * dt*0.06*speed;
+
+    if (region){
+      // gently keep bubbles inside the rope
+      if (!pointInRegion(b.x, b.y)){
+        const cx = (regionBounds.minX+regionBounds.maxX)/2;
+        const cy = (regionBounds.minY+regionBounds.maxY)/2;
+        b.vx += (cx-b.x)*0.0004*dt; b.vy += (cy-b.y)*0.0004*dt;
+      }
+    } else if (b.y < -b.r*2 || b.x < -b.r*2 || b.x > W+b.r*2){
+      bubbles.splice(i,1); continue;
+    }
+    drawBubble(b, t);
+  }
+
+  // pop particles
+  for (let i = pops.length-1; i >= 0; i--){
+    const p = pops[i];
+    p.x += p.vx*dt*0.08; p.y += p.vy*dt*0.08 + dt*0.01;
+    p.life -= dt*0.0035;
+    if (p.life <= 0){ pops.splice(i,1); continue; }
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = `hsla(${p.hue},90%,75%,.9)`;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r*p.life,0,TWO_PI); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // rope overlay
+  if (lassoDrawing) drawRope(lassoPath, false);
+  else if (region) drawRope(region, true);
+
+  requestAnimationFrame(frame);
+}
+
+// opening fill: scatter across the whole screen
+for (let i=0, n=(reduceMotion?10:26); i<n; i++){
+  const p = region ? randomPointInRegion() : { x: Math.random()*W, y: Math.random()*H };
+  bubbles.push(makeBubble(p.x, p.y));
+}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
