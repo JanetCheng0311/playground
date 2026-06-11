@@ -20,50 +20,50 @@
 
   header{
     position:fixed;top:0;left:0;right:0;z-index:10;
-    display:flex;align-items:center;gap:10px;
-    padding:14px 16px;pointer-events:none;
+    display:flex;align-items:baseline;gap:26px;
+    padding:22px clamp(20px,4vw,40px);
+    pointer-events:none;
+    font-size:14px;font-weight:500;
   }
-  header a.home{
-    pointer-events:auto;text-decoration:none;color:var(--white);
-    font-weight:700;text-transform:uppercase;letter-spacing:.02em;
-    font-size:16px;border:2px solid var(--white);border-radius:999px;padding:7px 14px;
-    transition:background .15s ease,color .15s ease;
+  header a, header button{
+    pointer-events:auto;
+    font:inherit;color:var(--white);
+    background:none;border:none;cursor:pointer;
+    text-decoration:none;
+    padding:2px 0;
+    border-bottom:1px solid transparent;
+    transition:border-color .15s ease, opacity .15s ease;
   }
-  header a.home:hover{background:var(--white);color:var(--blue)}
-  .bar{display:flex;gap:8px;margin-left:auto;pointer-events:auto;flex-wrap:wrap;justify-content:flex-end}
-  button{
-    font:inherit;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
-    color:var(--white);background:transparent;
-    border:2px solid var(--white);border-radius:999px;padding:8px 15px;cursor:pointer;
-    transition:background .15s ease,color .15s ease,transform .12s ease;
-  }
-  button:hover{background:var(--white);color:var(--blue)}
-  button:active{transform:translateY(1px) scale(.98)}
+  header a:hover, header button:hover{border-bottom-color:var(--white)}
+  header a:focus-visible, header button:focus-visible{outline:2px solid var(--white);outline-offset:4px}
+  header .title{font-weight:600;margin-right:auto;pointer-events:none}
+  header .title em{font-style:normal;opacity:.6;font-weight:400;margin-left:10px}
 
   .ctl{
-    position:fixed;left:16px;bottom:16px;z-index:10;
-    display:flex;flex-direction:column;gap:8px;
-    font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    position:fixed;left:clamp(20px,4vw,40px);bottom:22px;z-index:10;
+    display:flex;flex-direction:column;gap:10px;
+    font-size:13px;font-weight:500;
   }
-  .ctl label{display:flex;align-items:center;gap:10px}
+  .ctl label{display:flex;align-items:center;gap:12px}
+  .ctl label span{width:46px;opacity:.75}
   input[type=range]{
-    -webkit-appearance:none;appearance:none;width:150px;height:24px;background:transparent;cursor:pointer;
+    -webkit-appearance:none;appearance:none;width:140px;height:22px;background:transparent;cursor:pointer;
   }
-  input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--white)}
+  input[type=range]::-webkit-slider-runnable-track{height:1px;background:rgba(255,255,255,.6)}
   input[type=range]::-webkit-slider-thumb{
-    -webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;
-    background:var(--blue);border:2.5px solid var(--white);margin-top:-7px;
+    -webkit-appearance:none;appearance:none;width:13px;height:13px;border-radius:50%;
+    background:var(--white);margin-top:-6px;
   }
-  input[type=range]::-moz-range-track{height:2px;background:var(--white)}
-  input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:var(--blue);border:2.5px solid var(--white)}
+  input[type=range]::-moz-range-track{height:1px;background:rgba(255,255,255,.6)}
+  input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--white);border:none}
 
   .hint{
-    position:fixed;right:16px;bottom:16px;z-index:10;
-    font-size:12px;font-weight:600;opacity:.85;max-width:26ch;text-align:right;line-height:1.5;
+    position:fixed;right:clamp(20px,4vw,40px);bottom:22px;z-index:10;
+    font-size:12px;font-weight:400;opacity:.6;max-width:24ch;text-align:right;line-height:1.6;
   }
   @media (max-width:640px){
     .hint{display:none}
-    header{padding:10px}
+    header{gap:18px;padding:16px}
   }
 </style>
 </head>
@@ -71,19 +71,18 @@
 <canvas id="stage"></canvas>
 
 <header>
-  <a class="home" href="../">Playground</a>
-  <div class="bar">
-    <button id="btnNew">New field</button>
-    <button id="btnSave">Save PNG</button>
-  </div>
+  <span class="title">Flow<em>generative line fields</em></span>
+  <button id="btnNew">new</button>
+  <button id="btnSave">save png</button>
+  <a href="../">playground</a>
 </header>
 
 <div class="ctl">
-  <label>Lines <input type="range" id="rLines" min="200" max="3000" value="1200"></label>
-  <label>Swirl <input type="range" id="rSwirl" min="1" max="10" value="4"></label>
+  <label><span>lines</span><input type="range" id="rLines" min="400" max="4000" value="1800"></label>
+  <label><span>scale</span><input type="range" id="rScale" min="1" max="10" value="4"></label>
 </div>
 
-<p class="hint">Tap anywhere to grow a new field from that point.</p>
+<p class="hint">tap anywhere for a new field grown from that point</p>
 
 <script>
 (() => {
@@ -102,91 +101,99 @@ function resize(){
 }
 addEventListener("resize", resize);
 
-/* simple seeded value noise for the vector field */
+/* ---------- seeded classic 2D Perlin noise (the p5.js flow-field staple) ---------- */
 let seed = 1;
 function rnd(){ seed = (seed*1664525 + 1013904223) % 4294967296; return seed/4294967296; }
-let grid, gw, gh, cell;
-function buildField(){
-  cell = 40;
-  gw = Math.ceil(W/cell)+2; gh = Math.ceil(H/cell)+2;
-  grid = new Float32Array(gw*gh);
-  for (let i=0;i<grid.length;i++) grid[i] = rnd()*Math.PI*2;
-  // smooth a few passes so neighbours agree (coherent flow)
-  for (let p=0;p<3;p++){
-    const g2 = grid.slice();
-    for (let y=1;y<gh-1;y++) for (let x=1;x<gw-1;x++){
-      const i = y*gw+x;
-      // average angles via vectors to avoid wrap issues
-      let vx=0, vy=0;
-      for (const j of [i, i-1, i+1, i-gw, i+gw]){ vx+=Math.cos(g2[j]); vy+=Math.sin(g2[j]); }
-      grid[i] = Math.atan2(vy, vx);
-    }
+let perm = new Uint8Array(512);
+function reseedNoise(){
+  const p = new Uint8Array(256);
+  for (let i=0;i<256;i++) p[i] = i;
+  for (let i=255;i>0;i--){ const j = (rnd()*(i+1))|0; const tmp=p[i]; p[i]=p[j]; p[j]=tmp; }
+  for (let i=0;i<512;i++) perm[i] = p[i&255];
+}
+function fade(t){ return t*t*t*(t*(t*6-15)+10); }
+function grad2(h, x, y){
+  switch(h&7){
+    case 0: return  x+y; case 1: return  x-y; case 2: return -x+y; case 3: return -x-y;
+    case 4: return  x;   case 5: return -x;   case 6: return  y;   default: return -y;
   }
 }
-function angleAt(x, y, swirl){
-  // bilinear interpolation between the 4 surrounding cells (via vectors,
-  // so angle wrap-around blends correctly) keeps the curves smooth
-  const fx = Math.max(0, Math.min(gw-1.001, x/cell));
-  const fy = Math.max(0, Math.min(gh-1.001, y/cell));
-  const x0 = fx|0, y0 = fy|0, tx = fx-x0, ty = fy-y0;
-  const i = y0*gw + x0;
-  const a00 = grid[i], a10 = grid[i+1], a01 = grid[i+gw], a11 = grid[i+gw+1];
-  const vx = Math.cos(a00)*(1-tx)*(1-ty) + Math.cos(a10)*tx*(1-ty) + Math.cos(a01)*(1-tx)*ty + Math.cos(a11)*tx*ty;
-  const vy = Math.sin(a00)*(1-tx)*(1-ty) + Math.sin(a10)*tx*(1-ty) + Math.sin(a01)*(1-tx)*ty + Math.sin(a11)*tx*ty;
-  return Math.atan2(vy, vx)*swirl*0.5;
+function noise2(x, y){
+  const X = Math.floor(x)&255, Y = Math.floor(y)&255;
+  x -= Math.floor(x); y -= Math.floor(y);
+  const u = fade(x), v = fade(y);
+  const aa = perm[perm[X]+Y],   ab = perm[perm[X]+Y+1];
+  const ba = perm[perm[X+1]+Y], bb = perm[perm[X+1]+Y+1];
+  const lerp = (a,b,t) => a+(b-a)*t;
+  return lerp(
+    lerp(grad2(aa,x,y),   grad2(ba,x-1,y),   u),
+    lerp(grad2(ab,x,y-1), grad2(bb,x-1,y-1), u), v
+  ); // roughly -1..1
 }
 
-/* particles trace the field, drawn incrementally so it "grows" */
+/* ---------- particles: long silky strands traced through the field ---------- */
 let particles = [];
 let drawing = false;
+let noiseScale = 0.004;
+
+function fieldAngle(x, y){
+  // two octaves: broad sweep + gentle detail, angle range 2 turns for loops
+  const n = noise2(x*noiseScale, y*noiseScale)
+          + 0.4*noise2(x*noiseScale*2.7 + 31.7, y*noiseScale*2.7 + 11.3);
+  return n * Math.PI * 2.2;
+}
 
 function makeParticles(n, origin){
   particles = [];
   for (let i=0;i<n;i++){
     let x, y;
     if (origin){
-      const a = rnd()*Math.PI*2, d = rnd()*Math.min(W,H)*0.45;
+      // gaussian-ish cloud around the tap point
+      const a = rnd()*Math.PI*2, d = (rnd()+rnd()+rnd())/3 * Math.min(W,H)*0.55;
       x = origin.x + Math.cos(a)*d; y = origin.y + Math.sin(a)*d;
     } else { x = rnd()*W; y = rnd()*H; }
-    particles.push({ x, y, life: 40 + rnd()*160, w: .5 + rnd()*1.6, o: .25 + rnd()*.75 });
+    particles.push({
+      x, y,
+      life: 120 + rnd()*420,
+      w: rnd() < .85 ? .6 : 1.4,         // mostly hairlines, a few bolder threads
+      o: .05 + rnd()*.12,                // low opacity accumulates into silk
+    });
   }
 }
 
-let swirl = 4;
 function step(){
   if (!particles.length){ drawing = false; return; }
   ctx.lineCap = "round";
-  const batch = reduceMotion ? particles.length : 6; // reduced motion: render instantly
-  for (let pass=0; pass<batch; pass++){
+  const passes = reduceMotion ? 1e9 : 14;  // reduced motion: render instantly
+  for (let pass=0; pass<passes && particles.length; pass++){
     for (let i=particles.length-1;i>=0;i--){
       const p = particles[i];
-      const a = angleAt(p.x, p.y, swirl);
-      const nx = p.x + Math.cos(a)*2.2;
-      const ny = p.y + Math.sin(a)*2.2;
-      ctx.strokeStyle = `rgba(255,255,255,${p.o*0.5})`;
+      const a = fieldAngle(p.x, p.y);
+      const nx = p.x + Math.cos(a)*1.6;
+      const ny = p.y + Math.sin(a)*1.6;
+      ctx.strokeStyle = `rgba(255,255,255,${p.o})`;
       ctx.lineWidth = p.w;
       ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(nx,ny); ctx.stroke();
       p.x = nx; p.y = ny;
-      if (--p.life <= 0 || p.x<-20||p.x>W+20||p.y<-20||p.y>H+20) particles.splice(i,1);
+      if (--p.life <= 0 || p.x<-30||p.x>W+30||p.y<-30||p.y>H+30) particles.splice(i,1);
     }
-    if (!particles.length) break;
   }
-  if (particles.length){ requestAnimationFrame(step); }
+  if (particles.length) requestAnimationFrame(step);
   else drawing = false;
 }
 
 function restart(origin){
-  buildField();
+  reseedNoise();
+  noiseScale = 0.0012 * (+document.getElementById("rScale").value);
   ctx.fillStyle = "#0033ff";
   ctx.fillRect(0,0,W,H);
-  swirl = +document.getElementById("rSwirl").value;
   makeParticles(+document.getElementById("rLines").value, origin);
   if (!drawing){ drawing = true; requestAnimationFrame(step); }
 }
 
 document.getElementById("btnNew").addEventListener("click", () => { seed = (Math.random()*1e9)|0; restart(); });
 document.getElementById("rLines").addEventListener("change", () => restart());
-document.getElementById("rSwirl").addEventListener("change", () => restart());
+document.getElementById("rScale").addEventListener("change", () => restart());
 canvas.addEventListener("pointerdown", e => { seed = (Math.random()*1e9)|0; restart({x:e.clientX, y:e.clientY}); });
 
 document.getElementById("btnSave").addEventListener("click", () => {
