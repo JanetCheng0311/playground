@@ -56,8 +56,9 @@
   #play{font-size:17px;padding:13px 30px;background:var(--white);color:var(--blue);border:none}
   #play:hover{transform:translateY(-2px)}
   #play:active{transform:translateY(0) scale(.97)}
-  #dl{font-size:15px;padding:12px 22px;background:none;color:var(--white);border:2px solid var(--white)}
-  #dl:hover{background:rgba(255,255,255,.12)}
+  #dl,#mp3{font-size:15px;padding:12px 22px;background:none;color:var(--white);border:2px solid var(--white)}
+  #dl:hover,#mp3:hover{background:rgba(255,255,255,.12)}
+  #mp3[disabled]{opacity:.5;cursor:default}
   .dur{font-size:13px;opacity:.65;font-variant-numeric:tabular-nums}
   @media (max-width:640px){ header{gap:16px;padding:16px} }
 </style>
@@ -84,6 +85,7 @@
   </div>
   <div class="actions">
     <button id="play">▶ play</button>
+    <button id="mp3">download mp3</button>
     <button id="dl">download wav</button>
     <span class="dur" id="dur"></span>
   </div>
@@ -201,18 +203,49 @@ function bufferToWav(buf){
   for(let i=0;i<len;i++){ const s=Math.max(-1,Math.min(1,d[i])); v.setInt16(o,s<0?s*0x8000:s*0x7fff,true); o+=2; }
   return new Blob([ab],{type:"audio/wav"});
 }
-async function download(){
+const SR=44100;
+async function render(){
   const data=build();
-  const sr=44100, off=new OfflineAudioContext(1,Math.ceil(sr*data.total),sr);
+  const off=new OfflineAudioContext(1,Math.ceil(SR*data.total),SR);
   const m=off.createGain(); m.gain.value=0.7; m.connect(off.destination);
   schedule(off,m,0,data);
-  const buf=await off.startRendering();
-  const blob=bufferToWav(buf);
+  showDur(data.total);
+  return off.startRendering();
+}
+function save(blob,ext){
   const safe=($("text").value||"voice").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").slice(0,24)||"voice";
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
-  a.download=`${safe}-${emotion}.wav`; a.click();
+  a.download=`${safe}-${emotion}.${ext}`; a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),1500);
-  showDur(data.total);
+}
+async function download(){ save(bufferToWav(await render()),"wav"); }
+
+// MP3 export: load a small encoder on demand, then encode the rendered PCM
+let lamePromise=null;
+function loadLame(){
+  if(window.lamejs) return Promise.resolve();
+  if(!lamePromise) lamePromise=new Promise((res,rej)=>{
+    const s=document.createElement("script");
+    s.src="https://cdn.jsdelivr.net/npm/lamejs@1.2.0/lame.min.js";
+    s.onload=res; s.onerror=()=>rej(new Error("encoder load failed"));
+    document.head.appendChild(s);
+  });
+  return lamePromise;
+}
+async function downloadMp3(){
+  const btn=$("mp3"); btn.disabled=true; const orig=btn.textContent; btn.textContent="encoding…";
+  try{
+    await loadLame();
+    const buf=await render();
+    const ch=buf.getChannelData(0), i16=new Int16Array(ch.length);
+    for(let i=0;i<ch.length;i++){ const s=Math.max(-1,Math.min(1,ch[i])); i16[i]=s<0?s*0x8000:s*0x7fff; }
+    const enc=new lamejs.Mp3Encoder(1,SR,128), block=1152, out=[];
+    for(let i=0;i<i16.length;i+=block){ const c=i16.subarray(i,i+block); const m=enc.encodeBuffer(c); if(m.length)out.push(m); }
+    const fin=enc.flush(); if(fin.length)out.push(fin);
+    save(new Blob(out,{type:"audio/mp3"}),"mp3");
+  }catch(e){
+    alert("Couldn't load the MP3 encoder (need a connection). The WAV download still works offline.");
+  }finally{ btn.disabled=false; btn.textContent=orig; }
 }
 
 // ---- chip rows ----
@@ -228,6 +261,7 @@ chipRow($("emos"),["neutral","happy","sad","angry","curious","robotic"],emotion,
 chipRow($("voices"),["robot","instrument","chiptune","deep","squeak","bell","alien","buzz"],voice,v=>{voice=v;play();});
 
 $("play").addEventListener("click",play);
+$("mp3").addEventListener("click",downloadMp3);
 $("dl").addEventListener("click",download);
 $("text").addEventListener("keydown",e=>{ if(e.key==="Enter")play(); });
 
