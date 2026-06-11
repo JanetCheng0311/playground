@@ -79,6 +79,7 @@
 
 <div class="ctl">
   <label><span>lines</span><input type="range" id="rLines" min="600" max="6000" value="2800"></label>
+  <label><span>curl</span><input type="range" id="rCurl" min="0" max="10" value="3"></label>
   <label><span>scale</span><input type="range" id="rScale" min="1" max="10" value="4"></label>
 </div>
 
@@ -139,6 +140,7 @@ function noise2(x, y){
    fibrous texture. */
 let drawing = false;
 let noiseScale = 0.004;
+let curl = .3;                                 // 0 = flowing & straight, 1 = tight curls
 let queue = [];
 
 const angDiff = (t, h) => ((t - h + Math.PI*3) % (Math.PI*2)) - Math.PI;
@@ -152,20 +154,27 @@ function buildStrands(count, origin){
   const cy = origin ? origin.y : H*(.25 + rnd()*.5);
   const spread = Math.min(W,H) * (tangle ? .38 : .5);
 
+  // how far the field direction is allowed to swing, and how hard a strand
+  // steers toward it: both rise with curl so the slider goes from long
+  // flowing currents to dense curls
+  const swing = tangle ? (0.5 + curl*2.4) : (0.35 + curl*1.6);
+  const turn  = tangle ? (0.05 + curl*0.20) : (0.03 + curl*0.10);
+  const jitter = 0.015 + curl*0.05;            // tiny per-step wander keeps it organic
+
   for (let i=0;i<count;i++){
     const a0 = rnd()*Math.PI*2;
     const d0 = (rnd()+rnd()+rnd())/3 * spread;
     let x = cx + Math.cos(a0)*d0;
     let y = cy + Math.sin(a0)*d0;
     let heading = tangle ? rnd()*Math.PI*2 : bias + (rnd()-.5)*.9;
-    const steps = 140 + (rnd()*420|0);
-    const turn = tangle ? .22 : .09;           // steering strength
+    const steps = 160 + (rnd()*460|0);
     const pts = [{x,y}];
     for (let s=0;s<steps;s++){
+      // two noise octaves give the field a smooth, organic grain
       const n = noise2(x*noiseScale, y*noiseScale)
-              + .5*noise2(x*noiseScale*2.3 + 41.3, y*noiseScale*2.3 + 7.7);
-      const target = tangle ? n*Math.PI*2.6 : bias + n*1.5;
-      heading += angDiff(target, heading)*turn + (rnd()-.5)*.05;
+              + .45*noise2(x*noiseScale*2.3 + 41.3, y*noiseScale*2.3 + 7.7);
+      const target = tangle ? n*Math.PI*swing : bias + n*swing;
+      heading += angDiff(target, heading)*turn + (rnd()-.5)*jitter;
       x += Math.cos(heading)*2.2;
       y += Math.sin(heading)*2.2;
       if (x<-40||x>W+40||y<-40||y>H+40) break;
@@ -200,6 +209,7 @@ function step(){
 function restart(origin){
   reseedNoise();
   noiseScale = 0.0009 * (+document.getElementById("rScale").value);
+  curl = (+document.getElementById("rCurl").value) / 10;
   ctx.fillStyle = "#0033ff";
   ctx.fillRect(0,0,W,H);
   buildStrands(+document.getElementById("rLines").value, origin);
@@ -208,6 +218,7 @@ function restart(origin){
 
 document.getElementById("btnNew").addEventListener("click", () => { seed = (Math.random()*1e9)|0; restart(); });
 document.getElementById("rLines").addEventListener("change", () => restart());
+document.getElementById("rCurl").addEventListener("change", () => restart());
 document.getElementById("rScale").addEventListener("change", () => restart());
 canvas.addEventListener("pointerdown", e => { seed = (Math.random()*1e9)|0; restart({x:e.clientX, y:e.clientY}); });
 
