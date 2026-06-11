@@ -68,8 +68,11 @@
   <a href="../">playground</a>
 </header>
 <main>
-  <div class="line">
-    <input id="text" type="text" value="hello traveler" maxlength="120" placeholder="type a line…" autocomplete="off">
+  <div class="group">
+    <span class="lbl">type your line here</span>
+    <div class="line">
+      <input id="text" type="text" value="hello traveler" maxlength="120" placeholder="type what your character says…" autocomplete="off">
+    </div>
   </div>
   <div class="group">
     <span class="lbl">emotion</span>
@@ -114,15 +117,25 @@ const EMO={
   curious:{base:235,tempo:0.95,gain:0.5,contour:p=>p>0.65?(p-0.65)/0.35*6:0},
   robotic:{base:140,tempo:1.0,gain:0.5,mono:true,contour:p=>0},
 };
+// each voice = waveform + pitch multiplier + optional extras (detune beat, harmonic, noise, long tail)
+const VOICES={
+  robot:     {wave:"square",   mult:1.0},
+  instrument:{wave:"triangle", mult:1.0},
+  chiptune:  {wave:"square",   mult:2.0, short:true},                 // bright, an octave up
+  deep:      {wave:"sawtooth", mult:0.5},                             // low monster
+  squeak:    {wave:"square",   mult:2.6, short:true, gain:0.8},       // tiny & high
+  bell:      {wave:"sine",     mult:1.5, ring:true, decay:2.4, gain:0.9}, // glassy with harmonic tail
+  alien:     {wave:"sawtooth", mult:1.2, second:true, detune:24},     // detuned wobble
+  buzz:      {wave:"sawtooth", mult:1.0, noise:true, gain:0.85},      // gritty static
+};
 let emotion="neutral", voice="robot";
 
 function build(){
   const text=$("text").value||"hello";
-  const E=EMO[emotion];
-  const wave = voice==="instrument"
-    ? (emotion==="sad"?"sine":"triangle")
-    : (E.harsh?"sawtooth":"square");
-  const per=0.078/E.tempo;          // seconds per character ≈ speaking pace
+  const E=EMO[emotion], V=VOICES[voice];
+  // emotion can roughen the tone for the simple voices
+  const wave = (emotion==="angry" && (voice==="robot"||voice==="instrument")) ? "sawtooth" : V.wave;
+  const per=0.078/E.tempo*(V.short?0.85:1);     // seconds per character ≈ speaking pace
   const chars=[...text];
   const n=Math.max(1,chars.length);
   const evs=[]; let t=0;
@@ -132,24 +145,40 @@ function build(){
     if(/[.,!?;:]/.test(ch)){ t+=per*1.7; return; }
     const vowel=/[aeiou]/i.test(ch);
     const note = E.mono ? 0 : noteFor(ch);
-    let freq = E.base*Math.pow(2,(note+E.contour(p))/12);
+    let freq = E.base*V.mult*Math.pow(2,(note+E.contour(p))/12);
     if(E.vib) freq *= 1+Math.sin(i*1.4)*0.025*E.vib;
     const dur = per*(vowel?1.5:1)*0.88;
-    evs.push({t,freq,dur,wave,gain:E.gain});
+    evs.push({t,freq,dur,wave,gain:E.gain*(V.gain||1)});
     t += per*(vowel?1.45:1);
   });
-  return {events:evs,total:t+0.18};
+  return {events:evs,total:t+0.18*(V.decay||1),V};
 }
 
+function getNoise(ctx){
+  if(!ctx._nb){ const len=ctx.sampleRate*0.3|0, b=ctx.createBuffer(1,len,ctx.sampleRate), d=b.getChannelData(0);
+    for(let i=0;i<len;i++)d[i]=Math.random()*2-1; ctx._nb=b; }
+  return ctx._nb;
+}
 function schedule(ctx,dest,t0,data){
+  const V=data.V;
+  const oscN=1+(V.second?1:0)+(V.ring?1:0);
   data.events.forEach(ev=>{
-    const o=ctx.createOscillator(), g=ctx.createGain();
-    o.type=ev.wave; o.frequency.value=ev.freq;
-    const s=t0+ev.t, e=s+ev.dur;
+    const s=t0+ev.t, e=s+ev.dur*(V.decay||1);
+    const g=ctx.createGain();
     g.gain.setValueAtTime(0.0001,s);
-    g.gain.exponentialRampToValueAtTime(ev.gain,s+0.008);
+    g.gain.exponentialRampToValueAtTime(ev.gain/Math.sqrt(oscN),s+0.008);
     g.gain.exponentialRampToValueAtTime(0.0001,e);
-    o.connect(g).connect(dest); o.start(s); o.stop(e+0.02);
+    g.connect(dest);
+    const osc=(ratio,detune,type)=>{ const o=ctx.createOscillator(); o.type=type||ev.wave; o.frequency.value=ev.freq*(ratio||1); if(detune)o.detune.value=detune; o.connect(g); o.start(s); o.stop(e+0.02); };
+    osc();
+    if(V.second) osc(1,V.detune||14);
+    if(V.ring)   osc(2,0,"sine");      // octave harmonic -> bell shimmer
+    if(V.noise){
+      const ns=ctx.createBufferSource(); ns.buffer=getNoise(ctx);
+      const nf=ctx.createBiquadFilter(); nf.type="bandpass"; nf.frequency.value=ev.freq*2; nf.Q.value=0.8;
+      const ng=ctx.createGain(); ng.gain.setValueAtTime(ev.gain*0.3,s); ng.gain.exponentialRampToValueAtTime(0.0001,s+ev.dur*0.7);
+      ns.connect(nf).connect(ng).connect(dest); ns.start(s); ns.stop(s+ev.dur);
+    }
   });
 }
 
@@ -196,7 +225,7 @@ function chipRow(el, names, current, onPick){
   });
 }
 chipRow($("emos"),["neutral","happy","sad","angry","curious","robotic"],emotion,v=>{emotion=v;play();});
-chipRow($("voices"),["robot","instrument"],voice,v=>{voice=v;play();});
+chipRow($("voices"),["robot","instrument","chiptune","deep","squeak","bell","alien","buzz"],voice,v=>{voice=v;play();});
 
 $("play").addEventListener("click",play);
 $("dl").addEventListener("click",download);
