@@ -6,8 +6,8 @@ A collection of interactive creative-coding toys, hosted with GitHub Pages. The 
 
 ## Toys
 
-- **[Bubbles](bubbles/)**: realistic soap bubbles with iridescent rim film and organic wobble. Pop them by tap or swipe, style them with sliders and presets, upload a background photo and rope off where bubbles appear.
-- **[Flow](flow/)**: generative flow-field line art. Tap to grow a field from a point, tweak line count and swirl, save the result as a PNG.
+- **[Shapes](shapes/)**: fill the screen with shapes (circle, square, triangle, diamond, pentagon, hexagon, star, or a mix). Adjust size and amount, switch between solid and outline, and toggle optional float and shake motion. Tap to add or remove individual shapes; save the result as a PNG.
+- **[Flow](flow/)**: generative flow-field line art. Tap to grow a field from a point, tweak line count, curl, and scale, save the result as a PNG.
 
 ## Adding a new toy
 
