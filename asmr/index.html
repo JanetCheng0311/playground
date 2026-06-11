@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="A little ASMR room. Tap textured objects for satisfying sounds.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230033ff'/%3E%3Ccircle cx='32' cy='32' r='16' fill='none' stroke='white' stroke-width='5'/%3E%3C/svg%3E">
+<title>ASMR — Playground</title>
+<style>
+  :root{ --blue:#0033ff; --white:#fff; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:var(--blue);color:var(--white);
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:manipulation;
+    display:flex;flex-direction:column;min-height:100dvh;
+  }
+  header{
+    display:flex;align-items:baseline;gap:24px;
+    padding:22px clamp(20px,4vw,40px);font-size:14px;font-weight:500;flex:0 0 auto;
+  }
+  header a{color:var(--white);text-decoration:none;padding:2px 0;border-bottom:1px solid transparent;transition:border-color .15s}
+  header a:hover{border-bottom-color:var(--white)}
+  header .title{font-weight:600;margin-right:auto}
+  header .title em{font-style:normal;opacity:.6;font-weight:400;margin-left:10px}
+
+  main{
+    flex:1 1 auto;display:grid;gap:clamp(10px,1.6vw,18px);
+    grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;
+    padding:0 clamp(20px,4vw,40px) clamp(20px,4vw,40px);
+    min-height:0;
+  }
+  .pad{
+    border:1.5px solid rgba(255,255,255,.5);border-radius:18px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+    cursor:pointer;position:relative;overflow:hidden;
+    transition:transform .08s ease, background .15s ease;
+    background:rgba(255,255,255,.04);
+  }
+  .pad:hover{background:rgba(255,255,255,.09)}
+  .pad.hit{animation:squish .35s cubic-bezier(.3,1.4,.5,1)}
+  @keyframes squish{0%{transform:scale(1)}30%{transform:scale(.9,.86)}60%{transform:scale(1.03,1.05)}100%{transform:scale(1)}}
+  .pad svg{width:clamp(40px,7vw,72px);height:clamp(40px,7vw,72px)}
+  .pad b{font-size:13px;font-weight:600;letter-spacing:.04em;opacity:.85}
+  .pad .glow{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,rgba(255,255,255,.35),transparent 60%);opacity:0;pointer-events:none}
+  .pad.hit .glow{animation:flash .4s ease}
+  @keyframes flash{0%{opacity:.7}100%{opacity:0}}
+  @media (max-width:760px){ main{grid-template-columns:repeat(2,1fr)} }
+  @media (prefers-reduced-motion: reduce){ .pad.hit{animation:none} }
+</style>
+</head>
+<body>
+<header>
+  <span class="title">ASMR<em>tap to listen</em></span>
+  <a href="../">playground</a>
+</header>
+<main id="pads"></main>
+<script>
+(() => {
+"use strict";
+let actx=null, master=null, noiseBuf=null;
+function audio(){
+  if(actx){ if(actx.state==="suspended")actx.resume(); return actx; }
+  try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
+  master=actx.createGain(); master.gain.value=0.5; master.connect(actx.destination);
+  const len=(actx.sampleRate*1)|0; noiseBuf=actx.createBuffer(1,len,actx.sampleRate);
+  const d=noiseBuf.getChannelData(0); for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+  return actx;
+}
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function tone(type,f0,f1,dur,vol,dest){
+  const a=audio(); if(!a)return; const t=a.currentTime;
+  const o=a.createOscillator(),g=a.createGain();
+  o.type=type; o.frequency.setValueAtTime(f0,t);
+  if(f1!=null)o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),t+dur);
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol,t+0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(dest||master); o.start(t); o.stop(t+dur+0.02);
+}
+function noise(dur,vol,filter){
+  const a=audio(); if(!a)return; const t=a.currentTime;
+  const s=a.createBufferSource(); s.buffer=noiseBuf;
+  const g=a.createGain();
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  let node=s;
+  if(filter){ const f=a.createBiquadFilter(); f.type=filter.type; f.frequency.value=filter.freq; if(filter.q)f.Q.value=filter.q; s.connect(f); node=f; }
+  node.connect(g).connect(master); s.start(t); s.stop(t+dur+0.02);
+}
+
+const SOUNDS={
+  squish(){ noise(0.28,0.4,{type:"lowpass",freq:900}); tone("sine",180,90,0.28,0.18); },
+  keys(){ noise(0.04,0.5,{type:"bandpass",freq:2400,q:1.2}); tone("square",1400,700,0.03,0.05); },
+  pop(){ tone("sine",rnd(560,760),150,0.1,0.4); },
+  drip(){ tone("sine",1500,420,0.12,0.35); setTimeout(()=>tone("sine",900,500,0.08,0.12),90); },
+  wood(){ tone("triangle",420,300,0.12,0.4); noise(0.03,0.25,{type:"highpass",freq:1800}); },
+  chime(){ tone("sine",880,null,1.1,0.3); tone("sine",1320,null,1.1,0.16); tone("sine",1760,null,0.9,0.08); },
+  crunch(){ const a=audio(); if(!a)return; for(let i=0;i<10;i++) setTimeout(()=>noise(0.04,0.22,{type:"highpass",freq:2600}), i*18+rnd(0,12)); },
+  boing(){ const a=audio(); if(!a)return; const t=a.currentTime,o=a.createOscillator(),g=a.createGain();
+    o.type="sine"; o.frequency.setValueAtTime(520,t);
+    o.frequency.exponentialRampToValueAtTime(120,t+0.45);
+    const lfo=a.createOscillator(),lg=a.createGain(); lfo.frequency.value=14; lg.gain.value=40;
+    lfo.connect(lg).connect(o.frequency); lfo.start(t); lfo.stop(t+0.45);
+    g.gain.setValueAtTime(0.4,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
+    o.connect(g).connect(master); o.start(t); o.stop(t+0.5); },
+};
+
+const PADS=[
+  {k:"squish",label:"squish",c:"#ff8fcf"},
+  {k:"keys",  label:"keys",  c:"#ffffff"},
+  {k:"pop",   label:"pop",   c:"#8fe3ff"},
+  {k:"drip",  label:"drip",  c:"#9fd0ff"},
+  {k:"wood",  label:"wood",  c:"#ffce8f"},
+  {k:"chime", label:"chime", c:"#d6b8ff"},
+  {k:"crunch",label:"crunch",c:"#fff2a8"},
+  {k:"boing", label:"boing", c:"#a8ffc0"},
+];
+
+const wrap=document.getElementById("pads");
+PADS.forEach((p,i)=>{
+  const el=document.createElement("button");
+  el.className="pad"; el.setAttribute("aria-label",p.label);
+  el.innerHTML=`<span class="glow"></span>${iconFor(p)}<b>${p.label}</b>`;
+  const fire=()=>{ SOUNDS[p.k](); el.classList.remove("hit"); void el.offsetWidth; el.classList.add("hit"); };
+  el.addEventListener("pointerdown",fire);
+  el.dataset.key=String((i+1)%10);
+  wrap.appendChild(el);
+});
+
+function iconFor(p){
+  const c=p.c;
+  const map={
+    squish:`<svg viewBox="0 0 48 48"><ellipse cx="24" cy="26" rx="17" ry="13" fill="${c}"/></svg>`,
+    keys:`<svg viewBox="0 0 48 48"><rect x="8" y="14" width="32" height="20" rx="4" fill="none" stroke="${c}" stroke-width="3"/><rect x="14" y="20" width="6" height="6" fill="${c}"/><rect x="28" y="20" width="6" height="6" fill="${c}"/></svg>`,
+    pop:`<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="13" fill="none" stroke="${c}" stroke-width="3"/><circle cx="19" cy="19" r="3" fill="${c}"/></svg>`,
+    drip:`<svg viewBox="0 0 48 48"><path d="M24 8 C24 8 36 24 36 32 a12 12 0 0 1-24 0 C12 24 24 8 24 8Z" fill="${c}"/></svg>`,
+    wood:`<svg viewBox="0 0 48 48"><rect x="8" y="16" width="32" height="16" rx="3" fill="${c}"/></svg>`,
+    chime:`<svg viewBox="0 0 48 48"><line x1="14" y1="10" x2="14" y2="34" stroke="${c}" stroke-width="3"/><line x1="24" y1="10" x2="24" y2="38" stroke="${c}" stroke-width="3"/><line x1="34" y1="10" x2="34" y2="30" stroke="${c}" stroke-width="3"/></svg>`,
+    crunch:`<svg viewBox="0 0 48 48"><g fill="${c}"><rect x="12" y="14" width="5" height="5"/><rect x="22" y="20" width="5" height="5"/><rect x="32" y="13" width="5" height="5"/><rect x="16" y="28" width="5" height="5"/><rect x="28" y="30" width="5" height="5"/></g></svg>`,
+    boing:`<svg viewBox="0 0 48 48"><path d="M14 36 q5-8 10 0 t10 0" fill="none" stroke="${c}" stroke-width="3"/><path d="M14 28 q5-8 10 0 t10 0" fill="none" stroke="${c}" stroke-width="3"/><path d="M14 20 q5-8 10 0 t10 0" fill="none" stroke="${c}" stroke-width="3"/></svg>`,
+  };
+  return map[p.k];
+}
+
+// keyboard: number keys 1-8 trigger pads, any letter = soft key clack
+addEventListener("keydown",e=>{
+  if(e.repeat)return;
+  const n=parseInt(e.key,10);
+  const pads=[...document.querySelectorAll(".pad")];
+  if(n>=1&&n<=pads.length){ pads[n-1].dispatchEvent(new PointerEvent("pointerdown")); }
+  else if(/^[a-z]$/i.test(e.key)){ SOUNDS.keys(); }
+});
+})();
+</script>
+</body>
+</html>

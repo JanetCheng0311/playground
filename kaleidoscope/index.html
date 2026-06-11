@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="A pixel kaleidoscope. Draw and watch it mirror into a symmetric mandala.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23060608'/%3E%3Cg%3E%3Crect x='28' y='6' width='8' height='8' fill='%23ff3b6b'/%3E%3Crect x='44' y='28' width='8' height='8' fill='%2300d4ff'/%3E%3Crect x='28' y='50' width='8' height='8' fill='%23ffd23b'/%3E%3Crect x='12' y='28' width='8' height='8' fill='%2362ff8a'/%3E%3C/g%3E%3C/svg%3E">
+<title>Kaleidoscope — Playground</title>
+<style>
+  :root{ --bg:#060608; --white:#fff; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:var(--bg);color:var(--white);
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+  }
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+  header{
+    position:fixed;top:0;left:0;right:0;z-index:10;
+    display:flex;align-items:baseline;gap:24px;
+    padding:22px clamp(20px,4vw,40px);pointer-events:none;font-size:14px;font-weight:500;
+  }
+  header a, header button{
+    pointer-events:auto;font:inherit;color:var(--white);
+    background:none;border:none;cursor:pointer;text-decoration:none;padding:2px 0;
+    border-bottom:1px solid transparent;transition:border-color .15s ease;
+  }
+  header a:hover, header button:hover{border-bottom-color:var(--white)}
+  header .title{font-weight:600;margin-right:auto;pointer-events:none}
+  header .title em{font-style:normal;opacity:.55;font-weight:400;margin-left:10px}
+  header .spacer{flex:0 0 8px}
+  .panel{
+    position:fixed;left:clamp(20px,4vw,40px);bottom:22px;z-index:10;
+    display:flex;flex-direction:column;gap:9px;font-size:13px;font-weight:500;
+  }
+  .panel label{display:flex;align-items:center;gap:12px}
+  .panel label span{width:62px;opacity:.7}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:140px;height:22px;background:transparent;cursor:pointer}
+  input[type=range]::-webkit-slider-runnable-track{height:1px;background:rgba(255,255,255,.5)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:13px;height:13px;border-radius:50%;background:var(--white);margin-top:-6px}
+  input[type=range]::-moz-range-track{height:1px;background:rgba(255,255,255,.5)}
+  input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--white);border:none}
+  .toggles{display:flex;gap:18px;margin-top:2px}
+  .toggles button{font:inherit;font-size:13px;font-weight:500;color:var(--white);background:none;border:none;cursor:pointer;padding:2px 0;opacity:.5;border-bottom:1px solid transparent;transition:opacity .15s,border-color .15s}
+  .toggles button.on{opacity:1;border-bottom-color:var(--white)}
+  .hint{position:fixed;right:clamp(20px,4vw,40px);bottom:22px;z-index:10;font-size:12px;opacity:.5;max-width:22ch;text-align:right;line-height:1.6}
+  @media (max-width:640px){.hint{display:none}header{gap:16px;padding:16px}.panel{bottom:16px;left:16px}}
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<header>
+  <span class="title">Kaleidoscope<em>pixel mandala</em></span>
+  <button id="btnClear">clear</button>
+  <button id="btnSave">save png</button>
+  <span class="spacer"></span>
+  <a href="../">playground</a>
+</header>
+<div class="panel">
+  <label><span>segments</span><input type="range" id="rSeg" min="3" max="16" value="8"></label>
+  <label><span>pixel</span><input type="range" id="rPix" min="6" max="40" value="16"></label>
+  <div class="toggles">
+    <button id="tSpin">spin</button>
+    <button id="tFixed">single color</button>
+  </div>
+</div>
+<p class="hint">drag to draw, it mirrors around the center</p>
+<script>
+(() => {
+"use strict";
+const canvas=document.getElementById("stage"), ctx=canvas.getContext("2d");
+const reduceMotion=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DPR=Math.min(devicePixelRatio||1,2), TWO_PI=Math.PI*2;
+let W=0,H=0;
+function resize(){ W=innerWidth;H=innerHeight;canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);clear(); }
+addEventListener("resize",resize);
+
+const set={ seg:8, pix:16, spin:false, fixed:false };
+let spinAng=0;
+
+function clear(){ ctx.fillStyle="#060608"; ctx.fillRect(0,0,W,H); }
+
+function pixelAt(px,py,hue){
+  const g=set.pix;
+  const gx=Math.floor(px/g)*g, gy=Math.floor(py/g)*g;
+  ctx.fillStyle=`hsl(${hue},85%,${set.fixed?58:60}%)`;
+  ctx.fillRect(gx,gy,g,g);
+}
+function stamp(x,y,t){
+  const cx=W/2, cy=H/2;
+  const dx=x-cx, dy=y-cy;
+  const ang0=Math.atan2(dy,dx), r=Math.hypot(dx,dy);
+  const hue = set.fixed ? 200 : ((ang0*180/Math.PI)+r*0.4+t*0.04)%360;
+  const base = spinAng;
+  for(let s=0;s<set.seg;s++){
+    const a=base + s/set.seg*TWO_PI;
+    const ca=Math.cos(a), sa=Math.sin(a);
+    const rx=dx*ca-dy*sa, ry=dx*sa+dy*ca;
+    pixelAt(cx+rx, cy+ry, hue);          // rotated copy
+    pixelAt(cx+rx, cy-ry, (hue+20)%360);  // mirrored copy -> dihedral symmetry
+  }
+}
+
+let drawing=false, last=null;
+function paint(x,y){
+  const t=performance.now();
+  if(last){ // interpolate so fast strokes stay connected
+    const dx=x-last.x, dy=y-last.y, steps=Math.max(1,Math.hypot(dx,dy)/(set.pix*0.6));
+    for(let i=1;i<=steps;i++) stamp(last.x+dx*i/steps, last.y+dy*i/steps, t);
+  } else stamp(x,y,t);
+  last={x,y};
+}
+canvas.addEventListener("pointerdown",e=>{drawing=true;last=null;paint(e.clientX,e.clientY);});
+canvas.addEventListener("pointermove",e=>{if(drawing)paint(e.clientX,e.clientY);});
+addEventListener("pointerup",()=>{drawing=false;last=null;});
+
+// optional slow spin of the symmetry axis
+function loop(){ if(set.spin&&!reduceMotion){ spinAng+=0.004; } requestAnimationFrame(loop); }
+
+const $=id=>document.getElementById(id);
+$("rSeg").addEventListener("input",e=>set.seg=+e.target.value);
+$("rPix").addEventListener("input",e=>set.pix=+e.target.value);
+function toggle(b,fn){const on=b.classList.toggle("on");fn(on);}
+$("tSpin").addEventListener("click",e=>toggle(e.currentTarget,v=>set.spin=v));
+$("tFixed").addEventListener("click",e=>toggle(e.currentTarget,v=>set.fixed=v));
+$("btnClear").addEventListener("click",clear);
+$("btnSave").addEventListener("click",()=>{const a=document.createElement("a");a.download="kaleidoscope.png";a.href=canvas.toDataURL("image/png");a.click();});
+
+resize();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
