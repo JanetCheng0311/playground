@@ -11,7 +11,10 @@ A collection of interactive creative-coding toys, hosted with GitHub Pages. The 
 - **[Kaleidoscope](kaleidoscope/)**: draw with mirrored radial symmetry to build a chunky pixel mandala. Adjust segment count and pixel size, toggle spin or single-color, save as PNG.
 - **[ASMR](asmr/)**: a little room of textured pads (squish, keys, pop, drip, wood, chime, crunch, boing). Tap or use number keys for satisfying synthesized sounds; letter keys add soft clacks.
 - **[Voice](voice/)**: type a line and generate robotic or instrument speech blips, lasting about as long as the line takes to say. Pick an emotion (neutral, happy, sad, angry, curious, robotic) and a voice (robot, instrument, chiptune, deep, squeak, bell, alien, buzz); download the clip as WAV or MP3 to drop into a game.
-- **[Modular](synth/)**: a small VCV-style modular synth. Drag patch cables between modules (Clock, Seq8, VCO, LFO, VCF, Out) to route signal, write a melody with the step bars, turn the knobs, and randomize. Real WebAudio routing rebuilds as you patch.
+- **[Modular](synth/)**: a small VCV-style modular synth. Drag patch cables between modules (Clock, Seq8, VCO, LFO, VCF, Out) to route signal, write a melody with the step bars (8 or 16), turn the knobs (incl. detune + drive for an electric tone), and randomize. Real WebAudio routing rebuilds as you patch; responsive wrapping layout.
+- **[Ripples](ripples/)**: touch the water and watch ripples spread and interfere across the surface. Drag to make waves, toggle rain, switch color themes, calm to reset.
+- **[Spiro](spiro/)**: draw glowing spirograph curves. Tune the outer/inner gears and pen offset, regenerate, switch palettes, and save the art as a PNG.
+- **[Truchet](truchet/)**: generative Truchet arc-tile patterns that flow into mazes and loops. Shuffle, resize, switch color themes, tap a tile to flip it, and save as PNG.
 
 ## Adding a new toy
 
