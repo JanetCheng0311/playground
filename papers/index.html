@@ -42,7 +42,7 @@
   <a href="../">playground</a>
 </header>
 <div class="panel">
-  <label><span>count</span><input type="range" id="rN" min="20" max="200" value="90"></label>
+  <label><span>count</span><input type="range" id="rN" min="20" max="160" value="70"></label>
   <label><span>wind</span><input type="range" id="rW" min="10" max="100" value="45"></label>
 </div>
 <p class="hint">move to push the air, tap for a gust</p>
@@ -63,7 +63,7 @@ function cross(a,b){ return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]
 const rand=(a,b)=>a+Math.random()*(b-a);
 
 // ---- subdivided sheet mesh (SUB x SUB cells) ----
-const SUB=5;                              // cells per side -> ripples & folds
+const SUB=9;                              // cells per side -> finer ripples & folds
 const GV=SUB+1;                           // vertices per side
 const LU=[], LV=[];                       // local grid in [-1,1]
 for(let j=0;j<GV;j++)for(let i=0;i<GV;i++){ LU.push(i/SUB*2-1); LV.push(j/SUB*2-1); }
