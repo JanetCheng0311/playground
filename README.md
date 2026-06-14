@@ -18,6 +18,7 @@ A collection of interactive creative-coding toys, hosted with GitHub Pages. The 
 - **[Phyllotaxis](phyllotaxis/)**: grow a sunflower spiral from the golden angle. Tune spacing and dot size, cycle palettes, tap for a new bloom, save as PNG.
 - **[Swarm](swarm/)**: a living swarm of flocking particles (boids) that follow your touch. Adjust count and calmness, attract/repel, switch colors, tap to scatter.
 - **[Mondrian](mondrian/)**: generate De Stijl compositions — recursive blocks of primary color with bold black grids. Change density, cycle palettes, tap for a new piece, save as PNG.
+- **[Papers](papers/)**: a 3D scene of paper sheets tumbling on the wind (hand-rolled perspective + lighting, no libraries). Adjust count and wind, gust on tap, move to push the air, cycle themes (white paper, autumn leaves, sticky notes, kraft).
 
 The Kaleidoscope now renders glossy reflective circle/square gems (no pixel grid), and Voice has a **batch** box: paste one quote per line and download all clips as a single ZIP of MP3s.
 

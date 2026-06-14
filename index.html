@@ -12,19 +12,21 @@
     --white:#ffffff;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
+  html{height:100%}
   body{
     background:var(--blue);
     color:var(--white);
     font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
     min-height:100dvh;
-    overflow:hidden;
+    overflow-x:hidden;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
   }
 
   main{
     min-height:100dvh;
     display:flex;flex-direction:column;
-    justify-content:space-between;
+    gap:clamp(20px,4vh,40px);
     padding:clamp(28px,5vh,56px) clamp(24px,6vw,80px);
   }
 
@@ -150,6 +152,11 @@
       <a href="mondrian/">
         <b>Mondrian</b>
         <span>de stijl color blocks</span>
+        <span class="arrow" aria-hidden="true">&#8594;</span>
+      </a>
+      <a href="papers/">
+        <b>Papers</b>
+        <span>3d sheets in the wind</span>
         <span class="arrow" aria-hidden="true">&#8594;</span>
       </a>
     </nav>
