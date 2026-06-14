@@ -2,7 +2,7 @@
 
 A collection of interactive creative-coding toys, hosted with GitHub Pages. The landing page is a minimal index in pure blue and white; each toy lives in its own folder.
 
-**Live:** https://janetcheng0311.github.io/Bubble-/
+**Live:** https://janetcheng0311.github.io/playground/
 
 ## Toys
 
