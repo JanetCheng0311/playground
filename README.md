@@ -15,6 +15,11 @@ A collection of interactive creative-coding toys, hosted with GitHub Pages. The 
 - **[Ripples](ripples/)**: touch the water and watch ripples spread and interfere across the surface. Drag to make waves, toggle rain, switch color themes, calm to reset.
 - **[Spiro](spiro/)**: draw glowing spirograph curves. Tune the outer/inner gears and pen offset, regenerate, switch palettes, and save the art as a PNG.
 - **[Truchet](truchet/)**: generative Truchet arc-tile patterns that flow into mazes and loops. Shuffle, resize, switch color themes, tap a tile to flip it, and save as PNG.
+- **[Phyllotaxis](phyllotaxis/)**: grow a sunflower spiral from the golden angle. Tune spacing and dot size, cycle palettes, tap for a new bloom, save as PNG.
+- **[Swarm](swarm/)**: a living swarm of flocking particles (boids) that follow your touch. Adjust count and calmness, attract/repel, switch colors, tap to scatter.
+- **[Mondrian](mondrian/)**: generate De Stijl compositions — recursive blocks of primary color with bold black grids. Change density, cycle palettes, tap for a new piece, save as PNG.
+
+The Kaleidoscope now renders glossy reflective circle/square gems (no pixel grid), and Voice has a **batch** box: paste one quote per line and download all clips as a single ZIP of MP3s.
 
 ## Adding a new toy
 

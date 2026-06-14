@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="Generate compositions in the style of De Stijl — recursive blocks of primary color.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23f4f1ea'/%3E%3Crect x='4' y='4' width='24' height='24' fill='%23e23b2b'/%3E%3Crect x='34' y='34' width='26' height='26' fill='%231f56c4'/%3E%3C/svg%3E">
+<title>Mondrian — Playground</title>
+<style>
+  :root{ --ink:#16140f; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{background:#f4f1ea;color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:pointer}
+  header{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:baseline;gap:24px;
+    padding:22px clamp(20px,4vw,40px);font-size:14px;font-weight:500;mix-blend-mode:difference}
+  header *{color:#fff}
+  header a,header button{font:inherit;background:none;border:none;cursor:pointer;text-decoration:none;padding:2px 0;
+    border-bottom:1px solid transparent;transition:border-color .15s}
+  header a:hover,header button:hover{border-bottom-color:#fff}
+  header .title{font-weight:600;margin-right:auto}
+  header .title em{font-style:normal;opacity:.65;font-weight:400;margin-left:10px}
+  header .spacer{flex:0 0 8px}
+  .panel{position:fixed;left:clamp(20px,4vw,40px);bottom:22px;z-index:10;display:flex;align-items:center;gap:18px;
+    font-size:13px;font-weight:600;mix-blend-mode:difference}
+  .panel *{color:#fff}
+  .panel button{font:inherit;background:none;border:none;cursor:pointer;padding:2px 0;border-bottom:1px solid transparent}
+  .panel button:hover{border-bottom-color:#fff}
+  .panel label{display:flex;align-items:center;gap:10px}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:120px;height:20px;background:transparent;cursor:pointer}
+  input[type=range]::-webkit-slider-runnable-track{height:1px;background:#fff}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:13px;height:13px;border-radius:50%;background:#fff;margin-top:-6px}
+  input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:#fff;border:none}
+  .hint{position:fixed;right:clamp(20px,4vw,40px);bottom:22px;z-index:10;font-size:12px;color:var(--ink);opacity:.55;max-width:18ch;text-align:right;line-height:1.6}
+  @media (max-width:640px){.hint{display:none}header{gap:16px;padding:16px}}
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<header>
+  <span class="title">Mondrian<em>de stijl blocks</em></span>
+  <button id="neu">new</button>
+  <button id="theme">palette</button>
+  <button id="save">save png</button>
+  <span class="spacer"></span>
+  <a href="../">playground</a>
+</header>
+<div class="panel">
+  <label>density<input type="range" id="rD" min="1" max="6" value="4"></label>
+</div>
+<p class="hint">tap for a new composition</p>
+<script>
+(() => {
+"use strict";
+const canvas=document.getElementById("stage"), ctx=canvas.getContext("2d");
+const DPR=Math.min(devicePixelRatio||1,2);
+let W,H;
+function resize(){ W=innerWidth;H=innerHeight;canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0); gen(); }
+addEventListener("resize",resize);
+
+// palettes: [paper, line, ...fills]
+const THEMES=[
+  ["#f4f1ea","#16140f","#e23b2b","#1f56c4","#f4c20d","#f4f1ea","#f4f1ea"],
+  ["#11131a","#f4f1ea","#ff5d73","#42d6c3","#ffd23b","#11131a","#11131a"],
+  ["#f6efe4","#2a2118","#d2552f","#3f7d6e","#e7b34a","#f6efe4","#f6efe4"],
+  ["#e8edf2","#0a1a2f","#2f6df0","#0a1a2f","#e8edf2","#e8edf2","#e8edf2"],
+];
+let theme=0, depth=4;
+const $=id=>document.getElementById(id);
+const rnd=(a,b)=>a+Math.random()*(b-a);
+
+function split(x,y,w,h,d,T,line){
+  // stop splitting: draw a fill (mostly paper, some primary blocks)
+  if(d<=0 || (d<3 && Math.random()<0.4) || w<70 || h<70){
+    const fills=T.slice(2);
+    ctx.fillStyle=fills[(Math.random()*fills.length)|0];
+    ctx.fillRect(x,y,w,h);
+    ctx.strokeStyle=T[1]; ctx.lineWidth=line; ctx.strokeRect(x,y,w,h);
+    return;
+  }
+  const vert = w>h ? Math.random()<0.72 : Math.random()<0.28; // split along longer side mostly
+  const f=rnd(0.32,0.68);
+  if(vert){ const cw=Math.round(w*f); split(x,y,cw,h,d-1,T,line); split(x+cw,y,w-cw,h,d-1,T,line); }
+  else    { const chh=Math.round(h*f); split(x,y,w,chh,d-1,T,line); split(x,y+chh,w,h-chh,d-1,T,line); }
+}
+function gen(){
+  depth=+$("rD").value;
+  const T=THEMES[theme], line=Math.max(5,Math.min(W,H)*0.012);
+  ctx.fillStyle=T[0]; ctx.fillRect(0,0,W,H);
+  split(0,0,W,H,depth+1,T,line);
+  // bold outer frame
+  ctx.strokeStyle=T[1]; ctx.lineWidth=line*1.4; ctx.strokeRect(line/2,line/2,W-line,H-line);
+}
+$("rD").addEventListener("input",gen);
+$("neu").addEventListener("click",gen);
+$("theme").addEventListener("click",()=>{ theme=(theme+1)%THEMES.length; gen(); });
+$("save").addEventListener("click",()=>{ const a=document.createElement("a"); a.download="mondrian.png"; a.href=canvas.toDataURL("image/png"); a.click(); });
+canvas.addEventListener("pointerdown",gen);
+resize();
+})();
+</script>
+</body>
+</html>

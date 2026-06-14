@@ -60,6 +60,15 @@
   #dl:hover,#mp3:hover{background:rgba(255,255,255,.12)}
   #mp3[disabled]{opacity:.5;cursor:default}
   .dur{font-size:13px;opacity:.65;font-variant-numeric:tabular-nums}
+  .batch{margin-top:14px;gap:8px}
+  .batch textarea{width:100%;max-width:640px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.35);
+    border-radius:12px;color:var(--white);font:inherit;font-size:15px;padding:12px 14px;resize:vertical;outline:none;line-height:1.5}
+  .batch textarea::placeholder{color:rgba(255,255,255,.45)}
+  .batch textarea:focus{border-color:var(--white)}
+  #batchBtn{align-self:flex-start;font:inherit;font-weight:600;font-size:15px;cursor:pointer;border-radius:999px;
+    padding:12px 22px;background:none;color:var(--white);border:2px solid var(--white)}
+  #batchBtn:hover{background:rgba(255,255,255,.12)}
+  #batchBtn[disabled]{opacity:.5;cursor:default}
   @media (max-width:640px){ header{gap:16px;padding:16px} }
 </style>
 </head>
@@ -88,6 +97,11 @@
     <button id="mp3">download mp3</button>
     <button id="dl">download wav</button>
     <span class="dur" id="dur"></span>
+  </div>
+  <div class="group batch">
+    <span class="lbl">batch — one quote per line</span>
+    <textarea id="batch" rows="4" placeholder="line one of dialogue&#10;line two&#10;line three"></textarea>
+    <button id="batchBtn">download all (zip of mp3)</button>
   </div>
 </main>
 <script>
@@ -132,8 +146,8 @@ const VOICES={
 };
 let emotion="neutral", voice="robot";
 
-function build(){
-  const text=$("text").value||"hello";
+function build(textArg){
+  const text=(textArg!=null?textArg:$("text").value)||"hello";
   const E=EMO[emotion], V=VOICES[voice];
   // emotion can roughen the tone for the simple voices
   const wave = (emotion==="angry" && (voice==="robot"||voice==="instrument")) ? "sawtooth" : V.wave;
@@ -204,21 +218,69 @@ function bufferToWav(buf){
   return new Blob([ab],{type:"audio/wav"});
 }
 const SR=44100;
-async function render(){
-  const data=build();
+async function render(textArg){
+  const data=build(textArg);
   const off=new OfflineAudioContext(1,Math.ceil(SR*data.total),SR);
   const m=off.createGain(); m.gain.value=0.7; m.connect(off.destination);
   schedule(off,m,0,data);
   showDur(data.total);
   return off.startRendering();
 }
-function save(blob,ext){
-  const safe=($("text").value||"voice").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").slice(0,24)||"voice";
+function slug(s){ return (s||"voice").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,24)||"voice"; }
+function saveBlob(blob,name){
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
-  a.download=`${safe}-${emotion}.${ext}`; a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+  a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1500);
 }
+function save(blob,ext){ saveBlob(blob,`${slug($("text").value)}-${emotion}.${ext}`); }
 async function download(){ save(bufferToWav(await render()),"wav"); }
+
+function bufToMp3(buf){
+  const ch=buf.getChannelData(0), i16=new Int16Array(ch.length);
+  for(let i=0;i<ch.length;i++){ const s=Math.max(-1,Math.min(1,ch[i])); i16[i]=s<0?s*0x8000:s*0x7fff; }
+  const enc=new lamejs.Mp3Encoder(1,SR,128), block=1152, out=[];
+  for(let i=0;i<i16.length;i+=block){ const c=i16.subarray(i,i+block); const m=enc.encodeBuffer(c); if(m.length)out.push(m); }
+  const fin=enc.flush(); if(fin.length)out.push(fin);
+  let len=0; out.forEach(a=>len+=a.length); const all=new Uint8Array(len); let o=0; out.forEach(a=>{all.set(a,o);o+=a.length;});
+  return all;
+}
+
+// ---- minimal ZIP (store, no compression) so many clips download as one file ----
+function crc32(b){ let c=~0; for(let i=0;i<b.length;i++){ c^=b[i]; for(let k=0;k<8;k++) c=(c>>>1)^(0xEDB88320&-(c&1)); } return ~c>>>0; }
+function makeZip(files){
+  const enc=new TextEncoder(), parts=[]; let off=0; const central=[];
+  const le=(n,bytes)=>{ const a=new Uint8Array(bytes); for(let i=0;i<bytes;i++){a[i]=n&255;n=Math.floor(n/256);} return a; };
+  const push=a=>{parts.push(a);off+=a.length;};
+  files.forEach(f=>{
+    const name=enc.encode(f.name), data=f.bytes, crc=crc32(data), lo=off;
+    push(le(0x04034b50,4));push(le(20,2));push(le(0,2));push(le(0,2));push(le(0,2));push(le(0,2));
+    push(le(crc,4));push(le(data.length,4));push(le(data.length,4));push(le(name.length,2));push(le(0,2));
+    push(name);push(data);
+    const c=[le(0x02014b50,4),le(20,2),le(20,2),le(0,2),le(0,2),le(0,2),le(0,2),le(crc,4),le(data.length,4),le(data.length,4),le(name.length,2),le(0,2),le(0,2),le(0,2),le(0,2),le(0,4),le(lo,4),name];
+    central.push(c);
+  });
+  const cdOff=off; let cdSize=0;
+  central.forEach(c=>c.forEach(a=>{push(a);cdSize+=a.length;}));
+  push(le(0x06054b50,4));push(le(0,2));push(le(0,2));push(le(files.length,2));push(le(files.length,2));push(le(cdSize,4));push(le(cdOff,4));push(le(0,2));
+  let total=0; parts.forEach(p=>total+=p.length); const out=new Uint8Array(total); let o=0; parts.forEach(p=>{out.set(p,o);o+=p.length;});
+  return new Blob([out],{type:"application/zip"});
+}
+async function downloadBatch(){
+  const lines=$("batch").value.split("\n").map(s=>s.trim()).filter(Boolean);
+  if(!lines.length){ alert("Type one quote per line in the batch box first."); return; }
+  const btn=$("batchBtn"), orig=btn.textContent; btn.disabled=true;
+  try{
+    await loadLame();
+    const files=[], used={};
+    for(let i=0;i<lines.length;i++){
+      btn.textContent=`encoding ${i+1}/${lines.length}…`;
+      const buf=await render(lines[i]);
+      let nm=slug(lines[i]); if(used[nm])nm+="-"+i; used[nm]=1;
+      files.push({name:`${String(i+1).padStart(2,"0")}_${nm}.mp3`, bytes:bufToMp3(buf)});
+    }
+    saveBlob(makeZip(files), `voices-${emotion}-${files.length}.zip`);
+  }catch(e){ alert("Batch needs a connection to load the MP3 encoder."); }
+  finally{ btn.disabled=false; btn.textContent=orig; }
+}
 
 // MP3 export: load a small encoder on demand, then encode the rendered PCM
 let lamePromise=null;
@@ -261,6 +323,7 @@ chipRow($("emos"),["neutral","happy","sad","angry","curious","robotic"],emotion,
 chipRow($("voices"),["robot","instrument","chiptune","deep","squeak","bell","alien","buzz"],voice,v=>{voice=v;play();});
 
 $("play").addEventListener("click",play);
+$("batchBtn").addEventListener("click",downloadBatch);
 $("mp3").addEventListener("click",downloadMp3);
 $("dl").addEventListener("click",download);
 $("text").addEventListener("keydown",e=>{ if(e.key==="Enter")play(); });

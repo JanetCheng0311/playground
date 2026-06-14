@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="Grow sunflower spirals from the golden angle. Tune spacing and color, save the art.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230b0a10'/%3E%3Cg fill='%23ffd24a'%3E%3Ccircle cx='32' cy='32' r='4'/%3E%3Ccircle cx='44' cy='30' r='3'/%3E%3Ccircle cx='22' cy='40' r='3'/%3E%3Ccircle cx='40' cy='44' r='3'/%3E%3Ccircle cx='24' cy='22' r='3'/%3E%3C/g%3E%3C/svg%3E">
+<title>Phyllotaxis — Playground</title>
+<style>
+  :root{ --white:#fff; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{background:#0b0a10;color:var(--white);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:pointer}
+  header{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:baseline;gap:24px;
+    padding:22px clamp(20px,4vw,40px);pointer-events:none;font-size:14px;font-weight:500}
+  header a,header button{pointer-events:auto;font:inherit;color:var(--white);background:none;border:none;cursor:pointer;
+    text-decoration:none;padding:2px 0;border-bottom:1px solid transparent;transition:border-color .15s}
+  header a:hover,header button:hover{border-bottom-color:var(--white)}
+  header .title{font-weight:600;margin-right:auto;pointer-events:none}
+  header .title em{font-style:normal;opacity:.55;font-weight:400;margin-left:10px}
+  header .spacer{flex:0 0 8px}
+  .panel{position:fixed;left:clamp(20px,4vw,40px);bottom:22px;z-index:10;display:flex;flex-direction:column;gap:9px;font-size:13px;font-weight:500}
+  .panel label{display:flex;align-items:center;gap:12px}
+  .panel label span{width:52px;opacity:.7}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:150px;height:22px;background:transparent;cursor:pointer}
+  input[type=range]::-webkit-slider-runnable-track{height:1px;background:rgba(255,255,255,.5)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:13px;height:13px;border-radius:50%;background:var(--white);margin-top:-6px}
+  input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--white);border:none}
+  .hint{position:fixed;right:clamp(20px,4vw,40px);bottom:22px;z-index:10;font-size:12px;opacity:.5;max-width:20ch;text-align:right;line-height:1.6}
+  @media (max-width:640px){.hint{display:none}header{gap:16px;padding:16px}}
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<header>
+  <span class="title">Phyllotaxis<em>golden-angle spiral</em></span>
+  <button id="neu">new</button>
+  <button id="theme">color</button>
+  <button id="save">save png</button>
+  <span class="spacer"></span>
+  <a href="../">playground</a>
+</header>
+<div class="panel">
+  <label><span>spacing</span><input type="range" id="rC" min="4" max="18" value="9"></label>
+  <label><span>dot</span><input type="range" id="rD" min="2" max="14" value="6"></label>
+</div>
+<p class="hint">tap for a new bloom</p>
+<script>
+(() => {
+"use strict";
+const canvas=document.getElementById("stage"), ctx=canvas.getContext("2d");
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+let W,H,cx,cy;
+function resize(){ W=innerWidth;H=innerHeight;canvas.width=W;canvas.height=H;cx=W/2;cy=H/2; restart(); }
+addEventListener("resize",resize);
+
+const THEMES=[ p=>`hsl(${(p*0.6+10)%360},85%,60%)`,          // rainbow
+  p=>`hsl(${(40+p*0.18)%360},90%,${55+20*Math.sin(p*0.05)}%)`,// gold/amber
+  p=>`hsl(${(200+p*0.25)%360},80%,62%)`,                      // ocean
+  p=>`hsl(${(320+p*0.2)%360},75%,64%)` ];                     // berry
+let theme=0, angle=137.5, c=9, dot=6, n=0, maxN=2200;
+const $=id=>document.getElementById(id);
+
+function restart(){
+  c=+$("rC").value; dot=+$("rD").value;
+  ctx.fillStyle="#0b0a10"; ctx.fillRect(0,0,W,H); n=0;
+  maxN=Math.min(3000, Math.floor((Math.min(W,H)*0.46/c)**2));
+}
+function loop(){
+  const batch=reduce?maxN:18;
+  const ga=angle*Math.PI/180;
+  for(let k=0;k<batch && n<maxN;k++,n++){
+    const a=n*ga, r=c*Math.sqrt(n);
+    const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
+    const rr=dot*(0.4+0.6*Math.min(1,n/maxN));
+    const col=THEMES[theme](n);
+    const g=ctx.createRadialGradient(x-rr*0.3,y-rr*0.3,rr*0.1,x,y,rr);
+    g.addColorStop(0,"rgba(255,255,255,.9)"); g.addColorStop(0.4,col); g.addColorStop(1,"rgba(0,0,0,0)");
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,rr,0,7); ctx.fill();
+  }
+  requestAnimationFrame(loop);
+}
+$("rC").addEventListener("input",restart);
+$("rD").addEventListener("input",e=>dot=+e.target.value);
+$("neu").addEventListener("click",()=>{ angle=137.5+(Math.random()-0.5)*1.2; theme=(Math.random()*THEMES.length)|0; restart(); });
+$("theme").addEventListener("click",()=>{ theme=(theme+1)%THEMES.length; restart(); });
+$("save").addEventListener("click",()=>{ const a=document.createElement("a"); a.download="phyllotaxis.png"; a.href=canvas.toDataURL("image/png"); a.click(); });
+canvas.addEventListener("pointerdown",()=>{ angle=137.5+(Math.random()-0.5)*1.2; restart(); });
+resize();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

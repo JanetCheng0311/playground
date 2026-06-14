@@ -26,6 +26,11 @@
     border-bottom:1px solid transparent;transition:opacity .15s,border-color .15s}
   .panel button:hover{opacity:.85}
   .panel button.on{opacity:1;border-bottom-color:var(--white)}
+  .panel label{display:flex;align-items:center;gap:8px;opacity:.85}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:110px;height:20px;background:transparent;cursor:pointer}
+  input[type=range]::-webkit-slider-runnable-track{height:1px;background:rgba(255,255,255,.6)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:12px;height:12px;border-radius:50%;background:#fff;margin-top:-6px}
+  input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:none}
   .hint{position:fixed;right:clamp(20px,4vw,40px);bottom:22px;z-index:10;font-size:12px;opacity:.5;max-width:20ch;text-align:right;line-height:1.6}
   @media (max-width:640px){.hint{display:none}header{gap:16px;padding:16px}}
 </style>
@@ -34,6 +39,7 @@
 <canvas id="stage"></canvas>
 <header>
   <span class="title">Ripples<em>touch the water</em></span>
+  <label style="pointer-events:auto;display:flex;align-items:center;gap:8px;opacity:.85">size<input type="range" id="size" min="1" max="9" value="3"></label>
   <button id="rain">rain</button>
   <button id="theme">color</button>
   <button id="clear">calm</button>
@@ -46,7 +52,7 @@
 "use strict";
 const canvas=document.getElementById("stage"), ctx=canvas.getContext("2d");
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
-const CELL=6;
+const CELL=4;
 let W,H,cols,rows,a,b,off,octx,img;
 
 function resize(){
@@ -68,8 +74,9 @@ const THEMES=[
 ];
 let theme=0;
 
+let sizeR=3;
 function drop(px,py,amp){
-  const gx=Math.round(px/CELL), gy=Math.round(py/CELL), R=2;
+  const gx=Math.round(px/CELL), gy=Math.round(py/CELL), R=sizeR;
   for(let y=-R;y<=R;y++)for(let x=-R;x<=R;x++){
     const cx=gx+x, cy=gy+y; if(cx<1||cy<1||cx>=cols-1||cy>=rows-1)continue;
     if(x*x+y*y<=R*R) a[cy*cols+cx]+=amp;
@@ -125,6 +132,7 @@ canvas.addEventListener("pointermove",e=>{ if(!down)return;
 });
 addEventListener("pointerup",()=>down=false);
 
+document.getElementById("size").addEventListener("input",e=>sizeR=+e.target.value);
 document.getElementById("rain").addEventListener("click",e=>{rain=!rain;e.currentTarget.classList.toggle("on",rain);});
 document.getElementById("theme").addEventListener("click",()=>theme=(theme+1)%THEMES.length);
 document.getElementById("clear").addEventListener("click",()=>{a.fill(0);b.fill(0);});

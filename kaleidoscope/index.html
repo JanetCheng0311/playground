@@ -51,7 +51,7 @@
 <body>
 <canvas id="stage"></canvas>
 <header>
-  <span class="title">Kaleidoscope<em>pixel mandala</em></span>
+  <span class="title">Kaleidoscope<em>glossy mandala</em></span>
   <button id="btnClear">clear</button>
   <button id="btnSave">save png</button>
   <span class="spacer"></span>
@@ -59,7 +59,7 @@
 </header>
 <div class="panel">
   <label><span>segments</span><input type="range" id="rSeg" min="3" max="16" value="8"></label>
-  <label><span>pixel</span><input type="range" id="rPix" min="6" max="40" value="16"></label>
+  <label><span>size</span><input type="range" id="rPix" min="10" max="60" value="28"></label>
   <div class="toggles">
     <button id="tAuto">auto</button>
     <button id="tSpin">spin</button>
@@ -77,36 +77,37 @@ let W=0,H=0;
 function resize(){ W=innerWidth;H=innerHeight;canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);clear(); }
 addEventListener("resize",resize);
 
-const set={ seg:8, pix:16, spin:false, fixed:false, auto:false };
+const set={ seg:8, pix:28, spin:false, fixed:false, auto:false };
 let spinAng=0;
 
 function clear(){ ctx.shadowBlur=0; ctx.fillStyle="#060608"; ctx.fillRect(0,0,W,H); }
 
-function pixelAt(px,py,hue){
-  const g=set.pix;
-  const gx=Math.floor(px/g)*g, gy=Math.floor(py/g)*g;
-  const col=`hsl(${hue},90%,${set.fixed?58:62}%)`;
-  // glow halo makes the pixels shine
-  ctx.shadowColor=col; ctx.shadowBlur=g*1.1;
-  ctx.fillStyle=col;
-  ctx.fillRect(gx,gy,g,g);
-  // bright hot core for sparkle
-  ctx.shadowBlur=0;
-  ctx.fillStyle=`hsla(${hue},95%,88%,.55)`;
-  ctx.fillRect(gx+g*0.3, gy+g*0.3, g*0.4, g*0.4);
+// draw a glossy gem (circle or square) with a light-reflective radial gradient
+function pixelAt(px,py,hue,square){
+  const r=set.pix*0.62;
+  const l=set.fixed?60:62;
+  const grad=ctx.createRadialGradient(px-r*0.35, py-r*0.4, r*0.05, px, py, r);
+  grad.addColorStop(0,  `hsla(${hue},100%,92%,0.95)`);   // specular highlight
+  grad.addColorStop(0.3,`hsla(${hue},90%,${l+8}%,0.85)`);
+  grad.addColorStop(0.75,`hsla(${hue},85%,${l}%,0.55)`);
+  grad.addColorStop(1,  `hsla(${hue},80%,${l-12}%,0)`);  // soft edge -> glassy
+  ctx.fillStyle=grad;
+  if(square){ ctx.fillRect(px-r,py-r,r*2,r*2); }   // axis-aligned so the gradient stays centered
+  else { ctx.beginPath(); ctx.arc(px,py,r,0,TWO_PI); ctx.fill(); }
 }
 function stamp(x,y,t){
   const cx=W/2, cy=H/2;
   const dx=x-cx, dy=y-cy;
   const ang0=Math.atan2(dy,dx), r=Math.hypot(dx,dy);
   const hue = set.fixed ? 200 : ((ang0*180/Math.PI)+r*0.4+t*0.04)%360;
+  const sq = (Math.floor(r/40)%2)===0;       // alternate circles / squares by ring
   const base = spinAng;
   for(let s=0;s<set.seg;s++){
     const a=base + s/set.seg*TWO_PI;
     const ca=Math.cos(a), sa=Math.sin(a);
     const rx=dx*ca-dy*sa, ry=dx*sa+dy*ca;
-    pixelAt(cx+rx, cy+ry, hue);          // rotated copy
-    pixelAt(cx+rx, cy-ry, (hue+20)%360);  // mirrored copy -> dihedral symmetry
+    pixelAt(cx+rx, cy+ry, hue, sq);          // rotated copy
+    pixelAt(cx+rx, cy-ry, (hue+20)%360, sq);  // mirrored copy -> dihedral symmetry
   }
 }
 
