@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="description" content="Sheets of paper tumbling through the air on a 3D wind.">
+<meta name="description" content="Sheets of paper tumbling and rippling through the air on a 3D wind.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23aec6df'/%3E%3Cg fill='%23fff' stroke='%23c4cedd'%3E%3Crect x='10' y='14' width='20' height='26' transform='rotate(-12 20 27)'/%3E%3Crect x='34' y='26' width='18' height='24' transform='rotate(16 43 38)'/%3E%3C/g%3E%3C/svg%3E">
 <title>Papers — Playground</title>
 <style>
@@ -28,9 +28,6 @@
   input[type=range]::-webkit-slider-runnable-track{height:2px;background:rgba(34,48,63,.4)}
   input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;border-radius:50%;background:var(--ink);margin-top:-6px}
   input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--ink);border:none}
-  .toggles{display:flex;gap:16px}
-  .toggles button{font:inherit;font-size:13px;font-weight:600;color:var(--ink);background:none;border:none;cursor:pointer;padding:2px 0;opacity:.55;border-bottom:1px solid transparent;transition:opacity .15s,border-color .15s}
-  .toggles button.on{opacity:1;border-bottom-color:var(--ink)}
   .hint{position:fixed;right:clamp(20px,4vw,40px);bottom:22px;z-index:10;font-size:12px;color:var(--ink);opacity:.55;max-width:20ch;text-align:right;line-height:1.6}
   @media (max-width:640px){.hint{display:none}header{gap:16px;padding:16px}}
 </style>
@@ -45,7 +42,7 @@
   <a href="../">playground</a>
 </header>
 <div class="panel">
-  <label><span>count</span><input type="range" id="rN" min="20" max="240" value="110"></label>
+  <label><span>count</span><input type="range" id="rN" min="20" max="200" value="90"></label>
   <label><span>wind</span><input type="range" id="rW" min="10" max="100" value="45"></label>
 </div>
 <p class="hint">move to push the air, tap for a gust</p>
@@ -59,115 +56,130 @@ let W,H;
 function resize(){ W=innerWidth;H=innerHeight;canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0); }
 addEventListener("resize",resize); resize();
 
-// scene space: x right, y down, z into screen. camera at z=-FOCAL looking +z.
 const FOCAL=560, ZNEAR=120, ZFAR=900;
-const LIGHT=norm([-0.5,-0.55,-0.67]);
+const LIGHT=norm([-0.45,-0.5,-0.74]);
 function norm(v){ const m=Math.hypot(v[0],v[1],v[2])||1; return [v[0]/m,v[1]/m,v[2]/m]; }
+function cross(a,b){ return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]; }
+const rand=(a,b)=>a+Math.random()*(b-a);
+
+// ---- subdivided sheet mesh (SUB x SUB cells) ----
+const SUB=5;                              // cells per side -> ripples & folds
+const GV=SUB+1;                           // vertices per side
+const LU=[], LV=[];                       // local grid in [-1,1]
+for(let j=0;j<GV;j++)for(let i=0;i<GV;i++){ LU.push(i/SUB*2-1); LV.push(j/SUB*2-1); }
 
 const THEMES=[
-  {bg:["#cfe0f0","#a9c2dc"], cols:["#ffffff","#f5f6f8","#eef0f4"]},      // white paper
+  {bg:["#cfe0f0","#a9c2dc"], cols:["#ffffff","#f6f7f9","#eef0f4"]},        // white paper
   {bg:["#f3e9d6","#e3cda0"], cols:["#e8743b","#e0a93b","#c14b2a","#f0c267"]}, // autumn leaves
-  {bg:["#1a2230","#0e1420"], cols:["#ff6f91","#62d0ff","#ffd23b","#9af2c0"]}, // sticky notes (night)
-  {bg:["#efe7df","#d8ccbf"], cols:["#cdbfae","#b7a690","#e4dccf"]},      // kraft
+  {bg:["#161d2b","#0c1018"], cols:["#ff6f91","#62d0ff","#ffd23b","#9af2c0"]}, // sticky notes (night)
+  {bg:["#efe7df","#d8ccbf"], cols:["#cdbfae","#b7a690","#e4dccf"]},        // kraft
 ];
 let theme=0, windK=0.45;
 let mx=W/2, my=H/2, gust=0;
 
 let papers=[];
-function makePapers(n){
-  papers=[];
-  const T=THEMES[theme];
-  for(let i=0;i<n;i++) papers.push(newPaper(T,true));
-}
+function makePapers(n){ papers=[]; const T=THEMES[theme]; for(let i=0;i<n;i++) papers.push(newPaper(T,true)); }
 function newPaper(T,anywhere){
   return {
-    x: anywhere ? rand(-W*0.7,W*0.7) : -W*0.7-rand(0,W*0.4),
-    y: rand(-H*0.6,H*0.6),
-    z: rand(ZNEAR,ZFAR),
-    w: rand(26,52), h: rand(34,64),
-    th: rand(0,6.28), ph: rand(0,6.28),                 // orientation angles
-    sp1:(Math.random()-0.5)*0.05, sp2:(Math.random()-0.5)*0.05, // tumble speeds
-    vy:(Math.random()-0.5)*0.3, vz:(Math.random()-0.5)*0.4,
+    x: anywhere ? rand(-W*0.6,W*0.6) : -W*0.7-rand(0,W*0.5),
+    baseY: rand(-H*0.55,H*0.55), y:0,
+    baseZ: rand(ZNEAR+20,ZFAR-40), z:0,
+    w: rand(28,54), h: rand(36,66),
+    th: rand(0,6.28), ph: rand(0,6.28),
+    spTh:(Math.random()-0.5)*0.016, spPh:(Math.random()-0.5)*0.016,   // gentle tumble
+    fy: rand(0.4,0.9), py: rand(0,6.28), bobY: rand(10,28),           // smooth vertical bob
+    fz: rand(0.3,0.7), pz: rand(0,6.28), bobZ: rand(14,40),           // smooth depth sway
+    drift: rand(0.85,1.25),                                          // along-wind speed factor
+    curlPh: rand(0,6.28), curlA: rand(0.12,0.26),                    // ripple amount
     col: T.cols[(Math.random()*T.cols.length)|0],
+    _sx:null,_sy:null,
   };
 }
-const rand=(a,b)=>a+Math.random()*(b-a);
+makePapers(90);
 
-function step(){
-  const base=windK*2.4;
+function step(t){
+  const wind=windK*2.6;
   for(const p of papers){
-    // wind: drift +x with swirling turbulence from sin field
-    const t=performance.now()*0.0006;
-    const turbY=Math.sin(p.x*0.01+p.z*0.008+t*2)*0.5;
-    const turbZ=Math.cos(p.y*0.012+t*1.7)*0.4;
-    p.x += base*(1.1+0.5*Math.sin(p.y*0.01+t)) + gust;
-    p.y += p.vy + turbY;
-    p.z += p.vz + turbZ;
-    p.th += p.sp1*(1+windK); p.ph += p.sp2*(1+windK);
-    // mouse pushes nearby papers
-    const sx=p._sx, sy=p._sy;
-    if(sx!=null){ const dx=sx-mx, dy=sy-my, d=Math.hypot(dx,dy); if(d<160){ p.x+=dx/d*(160-d)*0.05; p.y+=dy/d*(160-d)*0.04; } }
-    // recycle when blown off the right / out of depth
-    if(p.x>W*0.8 || p.z<ZNEAR-40 || p.z>ZFAR+80){ Object.assign(p, newPaper(THEMES[theme],false)); }
+    p.x += wind*p.drift + gust;
+    p.baseY += Math.sin(t*0.21+p.py)*0.15;                 // very slow vertical drift
+    p.y = p.baseY + Math.sin(t*p.fy+p.py)*p.bobY;          // smooth bob
+    p.z = p.baseZ + Math.sin(t*p.fz+p.pz)*p.bobZ;          // smooth sway
+    p.th += p.spTh*(0.6+windK);
+    p.ph += p.spPh*(0.6+windK);
+    p.curlPh += 0.025*(0.5+windK);
+    if(p._sx!=null){ const dx=p._sx-mx, dy=p._sy-my, d=Math.hypot(dx,dy); if(d<150){ const f=(150-d)*0.04; p.x+=dx/d*f; p.baseY+=dy/d*f; } }
+    if(p.x>W*1.3){ Object.assign(p, newPaper(THEMES[theme],false)); }
   }
-  gust*=0.9;
+  gust*=0.88;
 }
 
-function basis(p){
-  // surface normal from spherical angles; u,v tangent vectors scaled by size
-  const n=[Math.sin(p.ph)*Math.cos(p.th), Math.sin(p.ph)*Math.sin(p.th), Math.cos(p.ph)];
-  let u=norm(cross(n,[0,1,0])); if(!isFinite(u[0])) u=[1,0,0];
-  const v=cross(n,u);
-  return {n, u:[u[0]*p.w,u[1]*p.w,u[2]*p.w], v:[v[0]*p.h,v[1]*p.h,v[2]*p.h]};
-}
-function cross(a,b){ return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]; }
 function project(x,y,z){ const s=FOCAL/(FOCAL+z); return [W/2+x*s, H/2+y*s, s]; }
 
-function draw(){
+const wx=new Float64Array(GV*GV), wy=new Float64Array(GV*GV), wz=new Float64Array(GV*GV);
+const sx=new Float64Array(GV*GV), sy=new Float64Array(GV*GV);
+const cells=[];
+
+function tint(hex,f){ const r=parseInt(hex.slice(1,3),16)*f, g=parseInt(hex.slice(3,5),16)*f, b=parseInt(hex.slice(5,7),16)*f;
+  return `rgb(${r<0?0:r>255?255:r|0},${g<0?0:g>255?255:g|0},${b<0?0:b>255?255:b|0})`; }
+
+function drawPaper(p){
+  // orientation basis
+  const n=[Math.sin(p.ph)*Math.cos(p.th), Math.sin(p.ph)*Math.sin(p.th), Math.cos(p.ph)];
+  let uu=norm(cross(n,[0,1,0])); if(!isFinite(uu[0])||(!uu[0]&&!uu[1]&&!uu[2])) uu=[1,0,0];
+  const vv=cross(n,uu);
+  const A=(p.w+p.h)*p.curlA;                       // ripple amplitude
+  // build vertices with a soft double-wave curl along the surface normal
+  for(let k=0;k<GV*GV;k++){
+    const lu=LU[k], lv=LV[k];
+    const curl=A*(Math.sin(lu*3.1+p.curlPh) + 0.55*Math.sin(lv*2.6 - p.curlPh*0.8) + 0.35*Math.sin((lu+lv)*2.2+p.curlPh*1.3));
+    const ox=lu*p.w*uu[0]+lv*p.h*vv[0]+curl*n[0];
+    const oy=lu*p.w*uu[1]+lv*p.h*vv[1]+curl*n[1];
+    const oz=lu*p.w*uu[2]+lv*p.h*vv[2]+curl*n[2];
+    wx[k]=p.x+ox; wy[k]=p.y+oy; wz[k]=p.z+oz;
+    const s=FOCAL/(FOCAL+wz[k]); sx[k]=W/2+wx[k]*s; sy[k]=H/2+wy[k]*s;
+  }
+  p._sx=sx[(GV*GV-1)>>1]; p._sy=sy[(GV*GV-1)>>1];
+  // collect cells with depth for back-to-front order within the sheet
+  cells.length=0;
+  for(let j=0;j<SUB;j++)for(let i=0;i<SUB;i++){
+    const a=j*GV+i, b=a+1, c=a+GV+1, d=a+GV;
+    cells.push([a,b,c,d,(wz[a]+wz[c])*0.5]);
+  }
+  cells.sort((m,n2)=>n2[4]-m[4]);
+  for(const cl of cells){
+    const a=cl[0],b=cl[1],c=cl[2],d=cl[3];
+    // cell normal from world edges -> shading (double-sided)
+    const e1=[wx[b]-wx[a],wy[b]-wy[a],wz[b]-wz[a]], e2=[wx[d]-wx[a],wy[d]-wy[a],wz[d]-wz[a]];
+    const cn=norm(cross(e1,e2));
+    const lit=Math.abs(cn[0]*LIGHT[0]+cn[1]*LIGHT[1]+cn[2]*LIGHT[2]);
+    ctx.beginPath();
+    ctx.moveTo(sx[a],sy[a]); ctx.lineTo(sx[b],sy[b]); ctx.lineTo(sx[c],sy[c]); ctx.lineTo(sx[d],sy[d]); ctx.closePath();
+    ctx.fillStyle=tint(p.col,0.42+0.58*lit);
+    ctx.fill();
+    ctx.strokeStyle="rgba(0,0,0,0.05)"; ctx.lineWidth=0.6; ctx.stroke();   // faint fold lines
+  }
+}
+
+let last=0;
+function draw(now){
+  const t=now*0.001;
   const T=THEMES[theme];
   const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,T.bg[0]); g.addColorStop(1,T.bg[1]);
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-  if(!reduce) step();
-  papers.sort((a,b)=>b.z-a.z);              // far first (painter's)
-  for(const p of papers){
-    const B=basis(p);
-    const c=[
-      project(p.x-B.u[0]-B.v[0], p.y-B.u[1]-B.v[1], p.z-B.u[2]-B.v[2]),
-      project(p.x+B.u[0]-B.v[0], p.y+B.u[1]-B.v[1], p.z+B.u[2]-B.v[2]),
-      project(p.x+B.u[0]+B.v[0], p.y+B.u[1]+B.v[1], p.z+B.u[2]+B.v[2]),
-      project(p.x-B.u[0]+B.v[0], p.y-B.u[1]+B.v[1], p.z-B.u[2]+B.v[2]),
-    ];
-    p._sx=(c[0][0]+c[2][0])/2; p._sy=(c[0][1]+c[2][1])/2;
-    // shading: how much the sheet faces the light (double-sided)
-    const lit=Math.abs(B.n[0]*LIGHT[0]+B.n[1]*LIGHT[1]+B.n[2]*LIGHT[2]);
-    const shade=0.45+0.55*lit;
-    ctx.beginPath(); ctx.moveTo(c[0][0],c[0][1]);
-    for(let i=1;i<4;i++) ctx.lineTo(c[i][0],c[i][1]);
-    ctx.closePath();
-    ctx.fillStyle=tint(p.col,shade);
-    ctx.fill();
-    // soft edge so thin (edge-on) sheets read crisply
-    ctx.strokeStyle="rgba(0,0,0,0.10)"; ctx.lineWidth=1; ctx.stroke();
-    // subtle highlight streak on well-lit faces
-    if(shade>0.85){ ctx.strokeStyle="rgba(255,255,255,0.35)"; ctx.lineWidth=1.5;
-      ctx.beginPath(); ctx.moveTo(c[0][0],c[0][1]); ctx.lineTo(c[2][0],c[2][1]); ctx.stroke(); }
-  }
+  if(!reduce) step(t);
+  papers.sort((a,b)=>b.z-a.z);
+  for(const p of papers) drawPaper(p);
   requestAnimationFrame(draw);
-}
-function tint(hex,f){
-  const r=parseInt(hex.slice(1,3),16)*f, g=parseInt(hex.slice(3,5),16)*f, b=parseInt(hex.slice(5,7),16)*f;
-  return `rgb(${r|0},${g|0},${b|0})`;
 }
 
 addEventListener("pointermove",e=>{mx=e.clientX;my=e.clientY;});
-canvas.addEventListener("pointerdown",()=>{ gust=14; });
+canvas.addEventListener("pointerdown",()=>{ gust=12; });
 const $=id=>document.getElementById(id);
 $("rN").addEventListener("input",e=>makePapers(+e.target.value));
 $("rW").addEventListener("input",e=>windK=+e.target.value/100);
-$("gust").addEventListener("click",()=>gust=18);
+$("gust").addEventListener("click",()=>gust=16);
 $("theme").addEventListener("click",()=>{ theme=(theme+1)%THEMES.length; const T=THEMES[theme]; papers.forEach(p=>p.col=T.cols[(Math.random()*T.cols.length)|0]); });
 windK=+$("rW").value/100;
-makePapers(+$("rN").value);
 requestAnimationFrame(draw);
 })();
 </script>
