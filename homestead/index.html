@@ -34,8 +34,11 @@
   .dpad button{border:1.5px solid rgba(255,255,255,.5);background:rgba(255,255,255,.12);color:#fff;border-radius:12px;font-size:19px;font-weight:700;cursor:pointer}
   .dpad button:active{background:rgba(255,255,255,.3)}
   .dpad .u{grid-area:1/2}.dpad .l{grid-area:2/1}.dpad .r{grid-area:2/3}.dpad .d{grid-area:3/2}
+  .actcol{pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:8px}
   .act{pointer-events:auto;width:82px;height:82px;border-radius:50%;border:1.5px solid rgba(255,255,255,.6);background:rgba(255,255,255,.18);color:#fff;font-size:14px;font-weight:700;cursor:pointer}
   .act:active{background:rgba(255,255,255,.34)}
+  .act2{pointer-events:auto;width:56px;height:56px;border-radius:50%;border:1.5px solid rgba(255,255,255,.5);background:rgba(255,255,255,.14);color:#fff;font-size:20px;cursor:pointer}
+  .act2:active{background:rgba(255,255,255,.3)}
   .shop{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(0,12,60,.55);backdrop-filter:blur(4px);padding:16px}
   .shop.open{display:flex}
   .shop .card{background:#0a2acc;border:1px solid rgba(255,255,255,.3);border-radius:20px;width:min(470px,100%);max-height:88vh;overflow-y:auto;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.4)}
@@ -83,6 +86,7 @@
   .craftlist{max-height:30vh;overflow-y:auto}
   .craftlist .item{cursor:pointer}
   .craftlist .item .dot{width:20px;height:20px;border-radius:5px;flex:0 0 auto;align-self:center}
+  .craftlist .clue{display:block;font-size:11px;color:#ffb3b3;margin-top:3px;opacity:.95}
   #heldStack{position:fixed;z-index:60;width:40px;height:40px;border-radius:8px;display:none;place-items:center;pointer-events:none;transform:translate(-50%,-50%);background:rgba(10,20,60,.85);border:1.5px solid rgba(255,255,255,.5)}
   #heldStack.show{display:grid}
   #heldStack .n{position:absolute;right:2px;bottom:0;font-size:11px;font-weight:800;text-shadow:0 1px 2px #000}
@@ -124,12 +128,14 @@
 </header>
 <main><canvas id="stage"></canvas></main>
 <div class="toolbar">
+  <button id="talkBtn">💬 Talk <em>(T)</em></button>
   <button id="bagBtn">🎒 Bag <em>(I)</em></button>
+  <button id="mapBtn">🗺 Map <em>(M)</em></button>
   <button id="helpBtn">？ Help</button>
 </div>
 <div class="bar" id="bar"></div>
 <div id="barTip"></div>
-<p class="hint">WASD/arrows move · 1–0 pick item · E/Space to act — till & plant, chop/mine, fish, fight slimes, place items · hold use to remove a fence you built · follow the road east to the village & its fisher · open the bag (I) to craft · see help for more</p>
+<p class="hint">WASD/arrows move (double-tap a direction to run) · 1–0 pick item · E/Space to act (till, chop/mine, fish, fight, place) · hold use ~1.5s to remove anything you placed · press T to talk to the cat/fisher · M for the map · I for bag & crafting</p>
 <div class="shop" id="shop"><div class="card">
   <h2>🐾 Whiskers' Shop <span class="c">coins <b id="shopCoins">0</b></span></h2>
   <h3>buy seeds</h3><div id="buyList"></div>
@@ -179,7 +185,7 @@
 </div></div>
 <div class="pad">
   <div class="dpad"><button class="u" data-dir="u">↑</button><button class="l" data-dir="l">←</button><button class="r" data-dir="r">→</button><button class="d" data-dir="d">↓</button></div>
-  <button class="act" id="actBtn">use</button>
+  <div class="actcol"><button class="act2" id="talkBtn2">💬</button><button class="act" id="actBtn">use</button></div>
 </div>
 <script>
 (() => {
@@ -255,7 +261,7 @@ let scene="out", area="home", G, GR, GC, GW, GH, gridOut, gridHome, gridVillage,
 let catX=0, catY=0, npcX=0, npcY=0;
 const player={x:0,y:0,dir:"d",fx:0,fy:1,moving:false,hp:5,maxHp:5,inv:0,kx:0,ky:0,swing:0};
 const mobs=[]; const fx=[]; let spawnT=0;
-let coins=25, clock=0, selSlot=0, outX, outY, metCat=false, metFisher=false;
+let coins=25, clock=0, selSlot=0, outX, outY, metCat=false, metFisher=false, mapOpen=false;
 const BAGN=30; const bag=new Array(BAGN).fill(null);
 
 // home road row
@@ -266,7 +272,9 @@ const VROAD_R=9, RIVER_C=14, SEA_C0=39, SAND_C=38, NPC_R=6, NPC_C=36;
 
 const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor"]);
 const WATER=new Set(["pond","river","sea"]);
-const BREAKABLE=new Set(["pfence","mfence"]);   // player-built walls (NOT the farm "fence")
+// player-placed tiles that can be removed (hold use) — maps the tile back to the item you get
+const TILE2ITEM={ pfence:"fence", mfence:"mfence", chair:"chair", table:"table", lamp:"lamp", rug:"rug", torch:"torch", lantern:"lantern", goldlamp:"goldlamp", oillamp:"oillamp", ppath:"ppath" };
+const BREAKABLE=new Set(Object.keys(TILE2ITEM));   // NOT the farm "fence" (only expand that via the cat)
 const FARMLAND=new Set(["grass","soil","path","ppath"]);
 const PLACEABLE_ON=new Set(["grass","wild","path","ppath","floor","rug","road"]);
 const LIGHTS=new Set(["torch","lamp","lantern","goldlamp","oillamp"]);
@@ -387,12 +395,14 @@ function tryAttack(){ const range=TILE*1.6,dmg=hasAxe?2:1; let hit=false;
     if(dd<range&&(fwd>-10||dd<TILE*0.9)&&lat<TILE*1.1){ m.hp-=dmg;m.flash=0.18;const d=dd||1;m.kx=dx/d*7;m.ky=dy/d*7;hit=true;SND.hit();
       if(m.hp<=0){ const drop=3+(Math.random()*5|0); coins+=drop; gainItem("goo",1,m.x,m.y); float(m.x,m.y-30,"+"+drop+"c","#ffe27a"); burst(m.x,m.y,"#7be0a0",12); syncUI(); } } }
   mobs.splice(0,mobs.length,...mobs.filter(m=>m.hp>0)); return hit; }
+function talkInteract(){ if(scene!=="out"){ return; }
+  if(area==="home"&&Math.hypot(catX-player.x,catY-player.y)<TILE*1.7){ if(nearThreat())return blockTalk(); SND.meow(); if(metCat)openShop(); else {metCat=true;save();talkToCat();} return; }
+  if(area==="village"){ if(Math.hypot(npcX-player.x,npcY-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); if(metFisher)openMarket(); else {metFisher=true;save();talkToFisher();} return; }
+    for(const v of villagers){ if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); startDialog(v.lines.map(t=>({who:"vill",name:v.name,face:v.face,col:v.col,text:t})),null); return; } } }
+  float(player.x,player.y-22,"no one to talk to here","#cfe0ff"); }
 function interact(){ player.swing=0.18;
   if(scene==="in"){ const f=facedCell(); if(!f)return; const t=gridIn[f.r][f.c]; if(t.type==="bed")sleep(); else if(t.type==="mat")exitHouse(); return; }
-  // exterior
-  if(area==="home"&&Math.hypot(catX-player.x,catY-player.y)<TILE*1.5){ if(nearThreat())return blockTalk(); SND.meow(); if(metCat){openShop();} else {metCat=true;save();talkToCat();} return; }
-  if(area==="village"&&Math.hypot(npcX-player.x,npcY-player.y)<TILE*1.6){ if(nearThreat())return blockTalk(); SND.meow(); if(metFisher){openMarket();} else {metFisher=true;save();talkToFisher();} return; }
-  if(area==="village"){ for(const v of villagers){ if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.6){ if(nearThreat())return blockTalk(); SND.meow(); startDialog(v.lines.map(t=>({who:"vill",name:v.name,face:v.face,col:v.col,text:t})),null); return; } } }
+  // exterior — use is for working the land/fighting; talking is on its own button
   SND.swing();
   if(tryAttack()){ save(); return; }
   const f=facedCell(); if(!f)return; const t=gridOut[f.r][f.c]; const cx=f.c*TILE+TILE/2,cy=f.r*TILE+TILE/2;
@@ -435,7 +445,7 @@ function startHold(){ if(holdUse)return; holdUse=true; holdStart=now(); holdBrok
 function endHold(){ holdUse=false; holdBroke=false; }
 function holdTarget(){ if(scene!=="out"||!holdUse)return null; const f=facedCell(); if(!f)return null; const t=gridOut[f.r][f.c]; return BREAKABLE.has(t.type)?f:null; }
 function updateHold(){ const f=holdTarget(); if(!f){ return; } const prog=(now()-holdStart)/1.2;
-  if(prog>=1&&!holdBroke){ holdBroke=true; const t=gridOut[f.r][f.c]; const give=t.type==="mfence"?"iron":"wood"; t.type=inFarm(f.r,f.c)?"grass":"wild";
+  if(prog>=1&&!holdBroke){ holdBroke=true; const t=gridOut[f.r][f.c]; const give=TILE2ITEM[t.type]||"wood"; t.type=inFarm(f.r,f.c)?"grass":"wild";
     SND.chop(); burst(f.c*TILE+TILE/2,f.r*TILE+TILE/2,"#d9c19a",8); gainItem(give,1,f.c*TILE+TILE/2,f.r*TILE+TILE/2); save(); } }
 function gotoArea(a){ setArea(a); setScene("out"); SND.door(); transCD=0.6; mobs.length=0; hover=null;
   if(a==="village"){ player.x=1*TILE+TILE/2; player.y=VROAD_R*TILE+TILE/2; player.dir="r";player.fx=1;player.fy=0; }
@@ -449,24 +459,31 @@ function hurt(dmg,fx0,fy0){ if(player.inv>0||scene!=="out"||dialogOpen)return; p
   if(player.hp<=0){ player.x=doorC*TILE+TILE/2;player.y=(doorR+1)*TILE+TILE/2;player.hp=player.maxHp;player.inv=2;mobs.length=0; float(player.x,player.y-30,"fainted! home safe","#fff"); } save(); }
 
 /* ---- input ---- */
-const keys={};
+const keys={}; let running=false,lastTapDir="",lastTapT=-1;
+function dirTap(d){ const t=now(); if(d===lastTapDir&&t-lastTapT<0.30)running=true; lastTapDir=d; lastTapT=t; }   // double-tap a direction to run
+function anyMove(){ return keys.u||keys.d||keys.l||keys.r; }
 addEventListener("keydown",e=>{ const k=e.key.toLowerCase();
   if(dialogOpen){ if(k==="e"||k===" "||k==="enter")advanceDialog(); else if(k==="escape")endDialog(); e.preventDefault(); return; }
-  if(["arrowup","w"].includes(k)){keys.u=1;e.preventDefault();} else if(["arrowdown","s"].includes(k)){keys.d=1;e.preventDefault();}
-  else if(["arrowleft","a"].includes(k)){keys.l=1;e.preventDefault();} else if(["arrowright","d"].includes(k)){keys.r=1;e.preventDefault();}
+  if(["arrowup","w"].includes(k)){if(!e.repeat)dirTap("u");keys.u=1;e.preventDefault();} else if(["arrowdown","s"].includes(k)){if(!e.repeat)dirTap("d");keys.d=1;e.preventDefault();}
+  else if(["arrowleft","a"].includes(k)){if(!e.repeat)dirTap("l");keys.l=1;e.preventDefault();} else if(["arrowright","d"].includes(k)){if(!e.repeat)dirTap("r");keys.r=1;e.preventDefault();}
   else if(k==="e"||k===" "){ e.preventDefault(); if(e.repeat)return; audio(); startHold(); interact(); }
+  else if(k==="t"){ e.preventDefault(); if(e.repeat)return; audio(); talkInteract(); }
+  else if(k==="m"){ e.preventDefault(); mapOpen=!mapOpen; }
   else if(k==="i"||k==="tab"||k==="b"){ e.preventDefault(); baguiEl.classList.contains("open")?closeBag():openBag(); }
   else if(k==="escape"){ if(baguiEl.classList.contains("open"))closeBag(); document.querySelectorAll(".shop.open").forEach(s=>s.classList.remove("open")); }
   else if(/^[0-9]$/.test(k)){ selSlot=(k==="0")?9:(+k-1); renderBar(); } });
 addEventListener("keyup",e=>{ const k=e.key.toLowerCase();
   if(["arrowup","w"].includes(k))keys.u=0; else if(["arrowdown","s"].includes(k))keys.d=0; else if(["arrowleft","a"].includes(k))keys.l=0; else if(["arrowright","d"].includes(k))keys.r=0;
-  else if(k==="e"||k===" ")endHold(); });
-document.querySelectorAll(".dpad button").forEach(b=>{ const d=b.dataset.dir;const on=e=>{e.preventDefault();keys[d]=1;},off=e=>{e.preventDefault();keys[d]=0;};
+  else if(k==="e"||k===" ")endHold(); if(!anyMove())running=false; });
+document.querySelectorAll(".dpad button").forEach(b=>{ const d=b.dataset.dir;const on=e=>{e.preventDefault();dirTap(d);keys[d]=1;},off=e=>{e.preventDefault();keys[d]=0;if(!anyMove())running=false;};
   b.addEventListener("pointerdown",on);b.addEventListener("pointerup",off);b.addEventListener("pointerleave",off);b.addEventListener("pointercancel",off); });
 const actBtn=document.getElementById("actBtn");
 actBtn.addEventListener("pointerdown",e=>{e.preventDefault();audio();if(dialogOpen){advanceDialog();return;}startHold();interact();});
 actBtn.addEventListener("pointerup",e=>{e.preventDefault();endHold();});
 actBtn.addEventListener("pointerleave",()=>endHold()); actBtn.addEventListener("pointercancel",()=>endHold());
+document.getElementById("talkBtn").addEventListener("click",()=>{audio();talkInteract();});
+document.getElementById("talkBtn2").addEventListener("pointerdown",e=>{e.preventDefault();audio();if(dialogOpen){advanceDialog();return;}talkInteract();});
+document.getElementById("mapBtn").addEventListener("click",()=>{mapOpen=!mapOpen;});
 
 /* ---- physics ---- */
 function isObst(px,py){ const c=Math.floor(px/TILE),r=Math.floor(py/TILE); if(r<0||c<0||r>=GR||c>=GC)return true; return OBST.has(G[r][c].type); }
@@ -474,7 +491,8 @@ function blocked(px,py,h){ return isObst(px-h,py-h)||isObst(px+h,py-h)||isObst(p
 function moveEnt(o,vx,vy,h){ if(!isFinite(vx)||!isFinite(vy))return; const nx=o.x+vx; if(!blocked(nx,o.y,h))o.x=nx; const ny=o.y+vy; if(!blocked(o.x,ny,h))o.y=ny; }
 function update(dt){ if(dialogOpen){ player.moving=false; return; }   // freeze the world while chatting
   if(transCD>0)transCD-=dt;
-  const sp=132*dt; let vx=0,vy=0; if(keys.l)vx-=1;if(keys.r)vx+=1;if(keys.u)vy-=1;if(keys.d)vy+=1; player.moving=!!(vx||vy);
+  let vx=0,vy=0; if(keys.l)vx-=1;if(keys.r)vx+=1;if(keys.u)vy-=1;if(keys.d)vy+=1; player.moving=!!(vx||vy);
+  if(!player.moving)running=false; const sp=(running?224:132)*dt;
   if(vx||vy){ const m=Math.hypot(vx,vy);vx/=m;vy/=m;
     if(Math.abs(vx)>Math.abs(vy)){player.dir=vx<0?"l":"r";player.fx=vx<0?-1:1;player.fy=0;}else{player.dir=vy<0?"u":"d";player.fy=vy<0?-1:1;player.fx=0;}
     moveEnt(player,vx*sp,vy*sp,11); if(soundOn){const t=now();if(t-lastStep>0.32){SND.step();lastStep=t;}} }
@@ -616,7 +634,16 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
     for(let r=0;r<gridOut.length;r++)for(let c=0;c<gridOut[0].length;c++){ if(LIGHTS.has(gridOut[r][c].type)){ const x=c*TILE+TILE/2-camX,y=r*TILE+TILE/2-camY; if(x<-80||y<-80||x>VW+80||y>VH+80)continue; const g=ctx.createRadialGradient(x,y,4,x,y,70); g.addColorStop(0,"rgba(255,200,120,.55)");g.addColorStop(1,"rgba(255,200,120,0)"); ctx.fillStyle=g; ctx.beginPath();ctx.arc(x,y,70,0,7);ctx.fill(); } }
     ctx.globalCompositeOperation="source-over"; } }
   for(let i=0;i<player.maxHp;i++) heart(16+i*22,20,i<player.hp);
+  if(mapOpen) drawMinimap();
 }
+function drawMinimap(){ const rows=GR,cols=GC,cw=Math.max(1,Math.min(160/cols,160/rows)),W=cw*cols,H=cw*rows,ox=VW-W-12,oy=12;
+  ctx.fillStyle="rgba(8,16,48,.85)"; ctx.fillRect(ox-5,oy-5,W+10,H+10); ctx.strokeStyle="rgba(255,255,255,.45)"; ctx.lineWidth=1; ctx.strokeRect(ox-5,oy-5,W+10,H+10);
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){ ctx.fillStyle=tileColor(G[r][c]); ctx.fillRect(ox+c*cw,oy+r*cw,Math.ceil(cw),Math.ceil(cw)); }
+  const dot=(px,py,col,s)=>{ ctx.fillStyle=col; ctx.fillRect(ox+(px/TILE)*cw-s,oy+(py/TILE)*cw-s,s*2,s*2); };
+  if(scene==="out"&&area==="home") dot(catX,catY,"#f3a64b",2);
+  if(scene==="out"&&area==="village"){ dot(npcX,npcY,"#3a7d8f",2); villagers.forEach(v=>dot(v.x,v.y,"#c9a0e0",1.5)); }
+  dot(player.x,player.y,"#fff",2.5);
+  ctx.fillStyle="rgba(255,255,255,.6)"; ctx.font="700 9px Helvetica"; ctx.textAlign="left"; ctx.fillText((area==="village"?"VILLAGE":"HOMESTEAD")+(scene==="in"?" · indoors":""),ox-2,oy+H+13); }
 let hover=null; // kept for compatibility; map name-tooltips were removed (names show on hover in the hotbar & bag instead)
 let lastT=0;
 function frame(ts){ const nw=ts/1000,dt=lastT?Math.min(0.05,nw-lastT):0;lastT=nw; update(dt); draw();
@@ -708,12 +735,19 @@ function craftOutputClick(){ const R=matchRecipe(); if(!R)return; craftGrid.fill
   if(R.once==="axe"){ hasAxe=true; float(player.x,player.y-20,"sturdy axe!","#fff"); } else addItem(R.give,1); SND.craft();
   renderCraftGrid(); renderBag(); renderHeld(); syncUI(); save(); }
 function returnGridToBag(){ for(let i=0;i<9;i++){ const c=craftGrid[i]; if(c){ addItem(c.key,c.count); craftGrid[i]=null; } } if(held){ addItem(held.key,held.count); held=null; } renderHeld(); }
+/* where each material comes from — shown as a clue when you're short */
+const HOWTO={ wood:"chop trees", stone:"mine rocks", goo:"defeat slimes", iron:"mine iron rocks", gold:"mine gold rocks",
+  sand:"scoop sand on the village beach", glass:"craft from 2 sand", oil:"scoop oil seeps in the village", fish:"fish water with a rod or net" };
+function missingFor(R){ return Object.entries(R.cost).filter(([m,n])=>countItem(m)<n).map(([m,n])=>({m,short:n-countItem(m)})); }
+function clueText(miss){ return miss.map(x=>`${x.short} more ${itemName(x.m)} — ${HOWTO[x.m]||"craft it"}`).join("; "); }
 /* recipe book — click a row to auto-fill the grid from your bag */
-function renderRecipes(){ recipeListEl.innerHTML=RECIPES.map(R=>{ const cs=Object.entries(R.cost).map(([m,n])=>`${n} ${itemName(m)}`).join(" + ");
-    const title=R.once?"Sturdy Axe":itemName(R.give),owned=R.once==="axe"&&hasAxe;
-    return `<div class="item" data-fill="${R.key}"><span class="dot" style="background:${craftIcon(R)}"></span><div><b>${title}</b><span>needs ${cs}${owned?" · owned":""}</span></div></div>`; }).join(""); }
+function renderRecipes(){ recipeListEl.innerHTML=RECIPES.map(R=>{
+    const parts=Object.entries(R.cost).map(([m,n])=>{ const ok=countItem(m)>=n; return `<span style="color:${ok?'#bfe6c2':'#ff9a9a'}">${n} ${itemName(m)}</span>`; }).join(" + ");
+    const miss=missingFor(R), title=R.once?"Sturdy Axe":itemName(R.give), owned=R.once==="axe"&&hasAxe;
+    const clue=(miss.length&&!owned)?`<span class="clue">get ${clueText(miss)}</span>`:"";
+    return `<div class="item" data-fill="${R.key}"><span class="dot" style="background:${craftIcon(R)}"></span><div><b>${title}${owned?" · owned":""}</b><span>needs ${parts}</span>${clue}</div></div>`; }).join(""); }
 function fillFromRecipe(key){ const R=RECIPES.find(x=>x.key===key); if(!R||(R.once==="axe"&&hasAxe))return;
-  if(!Object.entries(R.cost).every(([m,n])=>countItem(m)>=n)){ craftHintEl.textContent="you don't have those materials yet"; return; }
+  const miss=missingFor(R); if(miss.length){ craftHintEl.textContent="need "+clueText(miss); return; }
   returnGridToBag(); let i=0; for(const [m,n] of Object.entries(R.cost)) for(let j=0;j<n&&i<9;j++){ if(removeItem(m,1))craftGrid[i++]={key:m,count:1}; }
   renderCraftGrid(); renderBag(); }
 function openBag(){ document.getElementById("bagCoins").textContent=coins; invName.innerHTML=""; renderBag(); renderCraftGrid(); renderRecipes(); baguiEl.classList.add("open"); }
@@ -728,9 +762,10 @@ recipeListEl.addEventListener("click",e=>{ const row=e.target.closest&&e.target.
 const helpEl=document.getElementById("help");
 function renderHelp(){ const tiles=["grass","soil","tree","rock","iron","gold","oil","pond","river","sea","sand","road","church","shop","door","torch","lamp","fence","pfence","mfence","cat","npc","villager","slime"];
   const items=["seed_carrot","crop_carrot","wood","stone","goo","iron","gold","oil","fish","sand","glass","salve","rod","net","torch","fence","mfence","ppath","lantern","goldlamp","oillamp","chair","table","lamp","rug"];
-  const tips=["Walk WASD / arrows. Press E or Space (or the round button) to act on the tile you face.",
-    "Follow the <b>road</b> off the east edge to reach the <b>village</b> — its sea & river are for fishing, and Pelle the Fisher sells a rod & net.",
-    "The <b>farm fence</b> can't be broken — expand your farm at the cat shop. Fences <i>you</i> place (wood or metal) can be removed by <b>holding</b> use on them for 1–2 seconds.",
+  const tips=["Walk WASD / arrows — <b>double-tap</b> a direction to <b>run</b>. Press E or Space (or the round button) to act on the tile you face.",
+    "Press <b>T</b> (or the 💬 button) to <b>talk</b> to the cat, fisher or villagers — separate from the use button, so you can farm and gather right next to them. You can't talk while a monster is attacking you.",
+    "Press <b>M</b> for the <b>map</b>. Follow the <b>road</b> off the east edge to reach the <b>village</b> — its sea & river are for fishing, and Pelle the Fisher sells a rod & net.",
+    "<b>Anything you place</b> — fences, chairs, tables, lamps, rugs, torches, paths — can be picked back up into your bag by <b>holding</b> use on it for ~1.5s (a yellow ring fills). The <b>farm fence</b> can't be broken — expand your farm at the cat shop.",
     "Mine <b>iron</b> & <b>gold</b>, scoop <b>sand</b> at the beach and <b>oil</b> from village seeps. To craft, open the bag and <b>drop items into the 3×3 grid</b> — when they match a recipe the result lights up, click it to make it. Tap the <b>recipe book</b> to auto-fill the grid.",
     "Use <b>save file</b> to download your progress, and <b>load file</b> to bring it back on any device."];
   const tH=tiles.map(k=>{ const d=DESC[k]; return d?`<div class="item"><b>${d[0]}</b><span>${d[1]}</span></div>`:""; }).join("");
