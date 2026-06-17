@@ -32,6 +32,20 @@
   .seeds button.on{background:var(--white);color:var(--blue);border-color:var(--white)}
   .seeds button small{font-size:10.5px;font-weight:600;opacity:.75}
   .hint{font-size:12px;opacity:.6;text-align:center;max-width:34ch;line-height:1.5}
+  .shop{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(0,12,60,.55);backdrop-filter:blur(4px);padding:16px}
+  .shop.open{display:flex}
+  .shop .card{background:#0a2acc;border:1px solid rgba(255,255,255,.3);border-radius:20px;width:min(440px,100%);max-height:88vh;overflow-y:auto;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+  .shop h2{font-size:16px;font-weight:700;display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+  .shop h2 .c{margin-left:auto;font-size:14px;font-variant-numeric:tabular-nums}
+  .shop h3{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin:18px 0 8px}
+  .shop .item{display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid rgba(255,255,255,.16)}
+  .shop .item div{display:flex;flex-direction:column;gap:2px;flex:1}
+  .shop .item b{font-size:14px;font-weight:600}
+  .shop .item span{font-size:11.5px;opacity:.7}
+  .shop .item .sw{width:26px;height:26px;border-radius:7px;flex:0 0 auto;border:1px solid rgba(255,255,255,.4)}
+  .shop .item button{font:inherit;font-size:12px;font-weight:700;color:#0a2acc;background:#fff;border:none;border-radius:999px;padding:7px 14px;cursor:pointer;min-width:58px}
+  .shop .item button[disabled]{opacity:.4;cursor:default}
+  .shop .close{margin-top:18px;width:100%;font:inherit;font-weight:700;color:#fff;background:none;border:1.5px solid rgba(255,255,255,.5);border-radius:999px;padding:11px;cursor:pointer}
   @media (max-width:640px){header{gap:12px;padding:14px}}
 </style>
 </head>
@@ -39,11 +53,20 @@
 <header>
   <span class="title">Farm<em>tap to grow</em></span>
   <span class="stat">coins <b id="coins">0</b></span>
+  <button id="shopBtn">shop</button>
   <button id="snd">sound</button>
   <button id="new">new farm</button>
   <a href="../">playground</a>
 </header>
 <main><canvas id="stage"></canvas></main>
+<div class="shop" id="shop">
+  <div class="card">
+    <h2>Shop <span class="c">coins <b id="shopCoins">0</b></span></h2>
+    <h3>skills</h3><div id="upList"></div>
+    <h3>field skins</h3><div id="skinList"></div>
+    <button class="close" id="shopClose">close</button>
+  </div>
+</div>
 <div class="panel">
   <div class="seeds" id="seeds"></div>
   <p class="hint">tap grass to till · tap soil to plant the chosen seed · tap a sprout to water it (grows faster) · tap a glowing crop to harvest</p>
@@ -62,12 +85,30 @@ const CROPS={
   pumpkin:{name:"pumpkin",cost:18,sell:55, dur:16, c:"#e8702a", leaf:"#3f9d54"},
 };
 const CKEYS=Object.keys(CROPS);
-let grid, coins, seed="carrot";
-const fx=[];                      // floating texts / particles
 
-function reset(){ grid=Array.from({length:N*N},()=>({state:"grass",crop:null})); coins=25; seed="carrot"; save(); syncUI(); }
-function load(){ try{ const s=JSON.parse(localStorage.getItem("farm2")); if(s&&s.grid&&s.grid.length===N*N){ grid=s.grid; coins=s.coins; return true; } }catch(e){} return false; }
-function save(){ localStorage.setItem("farm2", JSON.stringify({grid,coins})); }
+const SKINS={
+  meadow:{name:"Meadow", cost:0,   grass:"#7ec850", soil:"#9c6b3f"},
+  desert:{name:"Desert", cost:50,  grass:"#d8c27a", soil:"#b98a4e"},
+  midnight:{name:"Midnight",cost:80,grass:"#356b53", soil:"#3b2b1d"},
+  tundra:{name:"Tundra", cost:90,  grass:"#bcd3d8", soil:"#8a9aa0"},
+  sakura:{name:"Sakura", cost:130, grass:"#efb6cf", soil:"#b07a8a"},
+};
+const SKKEYS=Object.keys(SKINS);
+const UPGRADES=[
+  {key:"fert", name:"Fertilizer", desc:"crops grow 25% faster per level", max:5, cost:l=>30*(l+1)},
+  {key:"rich", name:"Rich soil",  desc:"crops sell for 20% more per level", max:5, cost:l=>40*(l+1)},
+  {key:"sprinkler",name:"Sprinkler",desc:"auto-waters every crop, no tapping", max:1, cost:l=>140},
+];
+
+let grid, coins, seed="carrot", skills, skinsOwned, skin;
+const fx=[];                      // floating texts / particles
+const sprinklerOn=()=>skills.sprinkler>0;
+
+function reset(){ grid=Array.from({length:N*N},()=>({state:"grass",crop:null})); coins=25; seed="carrot";
+  skills={fert:0,rich:0,sprinkler:0}; skinsOwned=["meadow"]; skin="meadow"; save(); syncUI(); }
+function load(){ try{ const s=JSON.parse(localStorage.getItem("farm2")); if(s&&s.grid&&s.grid.length===N*N){
+    grid=s.grid; coins=s.coins; skills=Object.assign({fert:0,rich:0,sprinkler:0},s.skills||{}); skinsOwned=s.skinsOwned||["meadow"]; skin=s.skin||"meadow"; return true; } }catch(e){} return false; }
+function save(){ localStorage.setItem("farm2", JSON.stringify({grid,coins,skills,skinsOwned,skin})); }
 function syncUI(){ document.getElementById("coins").textContent=coins; }
 
 function resize(){
@@ -108,7 +149,7 @@ function act(i){
   if(t.state==="grass"){ t.state="soil"; SND.till(); burst(x,y,"#6b4a2b",5); }
   else if(!t.crop){ const C=CROPS[seed]; if(coins>=C.cost){ coins-=C.cost; t.crop={type:seed,grow:0,boost:0}; SND.plant(); float(x,y-10,"-"+C.cost,"#ffd"); syncUI(); }
                      else { SND.no(); float(x,y-10,"need "+C.cost+"c","#ffb3b3"); } }
-  else if(t.crop.grow>=1){ const C=CROPS[t.crop.type]; coins+=C.sell; t.crop=null; SND.harvest(); SND.coin(); burst(x,y-14,C.c,14); float(x,y-22,"+"+C.sell,"#ffe27a"); syncUI(); }
+  else if(t.crop.grow>=1){ const C=CROPS[t.crop.type]; const val=Math.round(C.sell*(1+skills.rich*0.2)); coins+=val; t.crop=null; SND.harvest(); SND.coin(); burst(x,y-14,C.c,14); float(x,y-22,"+"+val,"#ffe27a"); syncUI(); }
   else { t.crop.boost=now()+4; SND.water(); splash(x,y-10); }
   save();
 }
@@ -117,7 +158,9 @@ function act(i){
 let lastT=0;
 function drawTile(r,c,t,nw){
   const [x,y]=iso(r,c);
-  const top=t.state==="grass"?"#7ec850":(t.crop&&now()<t.crop.boost?"#6b4a2b":"#9c6b3f");
+  const SK=SKINS[skin];
+  const boosted=t.crop&&(sprinklerOn()||now()<t.crop.boost);
+  const top=t.state==="grass"?SK.grass:(boosted?shade(SK.soil,0.7):SK.soil);
   ctx.fillStyle=shade(top,0.7); ctx.beginPath(); ctx.moveTo(x-TW/2,y);ctx.lineTo(x,y+TH/2);ctx.lineTo(x,y+TH/2+DZ);ctx.lineTo(x-TW/2,y+DZ);ctx.closePath();ctx.fill();
   ctx.fillStyle=shade(top,0.82); ctx.beginPath(); ctx.moveTo(x+TW/2,y);ctx.lineTo(x,y+TH/2);ctx.lineTo(x,y+TH/2+DZ);ctx.lineTo(x+TW/2,y+DZ);ctx.closePath();ctx.fill();
   ctx.fillStyle=(r*N+c===hover)?shade(top,1.12):top;
@@ -141,7 +184,8 @@ function drawCrop(x,y,cr,nw){
   } else if(ratio>0.45){ ctx.fillStyle=shade(C.c,0.8);ctx.beginPath();ctx.arc(x,y+4-h,3,0,7);ctx.fill(); }
 }
 function update(dt){
-  for(const t of grid){ if(t.crop && t.crop.grow<1){ const C=CROPS[t.crop.type]; const sp=(now()<t.crop.boost?2.6:1); t.crop.grow=Math.min(1,t.crop.grow+dt/C.dur*sp); } }
+  for(const t of grid){ if(t.crop && t.crop.grow<1){ const C=CROPS[t.crop.type];
+    const sp=(sprinklerOn()||now()<t.crop.boost?2.4:1)*(1+skills.fert*0.25); t.crop.grow=Math.min(1,t.crop.grow+dt/C.dur*sp); } }
   for(let i=fx.length-1;i>=0;i--){ const p=fx[i]; p.life-=dt*(p.kind==="text"?1.1:1.7);
     if(p.kind==="text"){ p.y-=dt*26; } else { p.x+=p.vx; p.y+=p.vy; p.vy+=0.18; }
     if(p.life<=0) fx.splice(i,1); }
@@ -173,6 +217,29 @@ const seedsEl=document.getElementById("seeds");
 CKEYS.forEach(k=>{ const C=CROPS[k]; const b=document.createElement("button");
   b.innerHTML=`${C.name}<small>${C.cost}c → ${C.sell}c</small>`; if(k===seed)b.classList.add("on");
   b.addEventListener("click",()=>{ seed=k; [...seedsEl.children].forEach(x=>x.classList.remove("on")); b.classList.add("on"); }); seedsEl.appendChild(b); });
+
+/* ---- shop ---- */
+const shopEl=document.getElementById("shop"), upList=document.getElementById("upList"), skinList=document.getElementById("skinList");
+function renderShop(){
+  document.getElementById("shopCoins").textContent=coins;
+  upList.innerHTML=UPGRADES.map(u=>{ const lvl=skills[u.key]||0, maxed=lvl>=u.max, cost=u.cost(lvl);
+    const lab=u.max>1?` (lvl ${lvl}/${u.max})`:(lvl?" (owned)":"");
+    return `<div class="item"><div><b>${u.name}${lab}</b><span>${u.desc}</span></div>
+      <button data-up="${u.key}" ${maxed||coins<cost?"disabled":""}>${maxed?"max":cost+"c"}</button></div>`; }).join("");
+  skinList.innerHTML=SKKEYS.map(k=>{ const s=SKINS[k], owned=skinsOwned.includes(k), eq=skin===k;
+    return `<div class="item"><span class="sw" style="background:linear-gradient(135deg,${s.grass},${s.soil})"></span>
+      <div><b>${s.name}</b><span>${owned?(eq?"equipped":"owned"):s.cost+"c"}</span></div>
+      <button data-skin="${k}" ${eq||(!owned&&coins<s.cost)?"disabled":""}>${eq?"✓":owned?"equip":"buy"}</button></div>`; }).join("");
+}
+shopEl.addEventListener("click",e=>{
+  const u=e.target.dataset?.up, k=e.target.dataset?.skin;
+  if(u){ const def=UPGRADES.find(d=>d.key===u), lvl=skills[u]||0; if(lvl<def.max && coins>=def.cost(lvl)){ coins-=def.cost(lvl); skills[u]=lvl+1; SND.coin(); save(); syncUI(); renderShop(); } }
+  else if(k){ const s=SKINS[k]; if(!skinsOwned.includes(k)){ if(coins<s.cost)return; coins-=s.cost; skinsOwned.push(k); SND.coin(); }
+    skin=k; save(); syncUI(); renderShop(); }
+});
+document.getElementById("shopBtn").addEventListener("click",()=>{ renderShop(); shopEl.classList.add("open"); });
+document.getElementById("shopClose").addEventListener("click",()=>shopEl.classList.remove("open"));
+shopEl.addEventListener("pointerdown",e=>{ if(e.target===shopEl) shopEl.classList.remove("open"); });
 
 const sndBtn=document.getElementById("snd");
 function syncSnd(){ sndBtn.textContent=soundOn?"sound":"muted"; sndBtn.classList.toggle("off",!soundOn); }
