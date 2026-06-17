@@ -31,9 +31,10 @@
   #over.show{display:flex}
   #over p{font-size:clamp(22px,4vw,34px);font-weight:800}
   #over button{font:inherit;font-weight:700;font-size:16px;color:var(--blue);background:var(--white);border:none;border-radius:999px;padding:12px 26px;cursor:pointer}
-  .pad{position:fixed;left:0;right:0;bottom:16px;z-index:10;display:none;justify-content:center;gap:10px}
-  .pad button{width:60px;height:54px;border-radius:14px;border:1.5px solid rgba(255,255,255,.5);background:rgba(255,255,255,.1);
+  .pad{position:fixed;left:0;right:0;bottom:16px;z-index:10;display:none;justify-content:center;gap:7px;padding:0 8px}
+  .pad button{flex:0 1 56px;height:54px;border-radius:14px;border:1.5px solid rgba(255,255,255,.5);background:rgba(255,255,255,.1);
     color:var(--white);font-size:20px;font-weight:700;cursor:pointer}
+  .pad #bHold{font-size:12px;letter-spacing:.04em}
   .pad button:active{background:rgba(255,255,255,.25)}
   .hint{padding:0 clamp(20px,4vw,40px) 18px;font-size:12px;opacity:.55;flex:0 0 auto}
   @media (max-width:760px){ .pad{display:flex} .hint{display:none} .side{display:none} main{padding-bottom:90px} }
@@ -53,20 +54,23 @@
     <div id="over"><p id="overMsg">Game over</p><button id="retry">play again</button></div>
   </div>
   <div class="side">
+    <span class="lbl">hold</span>
+    <canvas id="hold" width="96" height="96"></canvas>
     <span class="lbl">next</span>
     <canvas id="next" width="96" height="96"></canvas>
   </div>
 </main>
 <div class="pad">
-  <button id="bL">‹</button><button id="bRot">⟳</button><button id="bR">›</button><button id="bDown">↓</button><button id="bDrop">⤓</button>
+  <button id="bHold">hold</button><button id="bL">‹</button><button id="bRot">⟳</button><button id="bR">›</button><button id="bDown">↓</button><button id="bDrop">⤓</button>
 </div>
-<p class="hint">← → move · ↑ rotate · ↓ soft drop · space hard drop</p>
+<p class="hint">← → move · ↑ rotate · ↓ soft drop · space hard drop · C hold</p>
 <script>
 (() => {
 "use strict";
 const COLS=10, ROWS=20;
 const board=document.getElementById("board"), ctx=board.getContext("2d");
 const nextC=document.getElementById("next"), nctx=nextC.getContext("2d");
+const holdC=document.getElementById("hold"), hctx=holdC.getContext("2d");
 const DPR=Math.min(devicePixelRatio||1,2);
 let cs;                                   // cell size (css px)
 
@@ -81,7 +85,7 @@ const SHAPES=[
   [[0,0,1],[1,1,1]],           // L
 ];
 
-let grid, cur, nextPiece, score, lines, level, dropMs, acc, last, over, bag;
+let grid, cur, nextPiece, score, lines, level, dropMs, acc, last, over, bag, hold, holdUsed;
 
 function layout(){
   const maxH=Math.min(window.innerHeight-(window.innerWidth<760?200:170), 760);
@@ -111,7 +115,15 @@ function collides(sh,x,y){
 function rotate(sh){ const R=sh.length,C=sh[0].length, out=Array.from({length:C},()=>Array(R).fill(0));
   for(let r=0;r<R;r++)for(let c=0;c<C;c++) out[c][R-1-r]=sh[r][c]; return out; }
 
+function holdPiece(){
+  if(over||holdUsed)return;
+  if(hold==null){ hold=cur.type; spawn(); }
+  else { const t=hold; hold=cur.type; cur=makePiece(t); cur.x=(COLS-cur.shape[0].length)>>1; cur.y=0;
+    if(collides(cur.shape,cur.x,cur.y)){ over=true; document.getElementById("over").classList.add("show"); } }
+  holdUsed=true; drawHold(); draw();
+}
 function lockPiece(){
+  holdUsed=false;                          // a new piece may be held again
   for(let r=0;r<cur.shape.length;r++)for(let c=0;c<cur.shape[r].length;c++){ if(cur.shape[r][c]){ const gy=cur.y+r, gx=cur.x+c; if(gy>=0) grid[gy][gx]=cur.type+1; } }
   // clear lines
   let cleared=0;
@@ -142,11 +154,13 @@ function draw(){
     for(let r=0;r<cur.shape.length;r++)for(let c=0;c<cur.shape[r].length;c++){ if(cur.shape[r][c]){ const yy=cur.y+r; if(yy>=0) cellRect(cur.x+c,yy,COLORS[cur.type]); } }
   }
 }
-function drawNext(){
-  nctx.clearRect(0,0,96,96); const sh=SHAPES[nextPiece], w=sh[0].length, h=sh.length;
+function drawMini(g,type,dim){
+  g.clearRect(0,0,96,96); if(type==null)return; const sh=SHAPES[type], w=sh[0].length, h=sh.length;
   const u=Math.min(96/(w+1),96/(h+1)), ox=(96-w*u)/2, oy=(96-h*u)/2;
-  for(let r=0;r<h;r++)for(let c=0;c<w;c++){ if(sh[r][c]){ nctx.fillStyle=COLORS[nextPiece]; const p=u*0.08; nctx.fillRect(ox+c*u+p,oy+r*u+p,u-2*p,u-2*p);} }
+  for(let r=0;r<h;r++)for(let c=0;c<w;c++){ if(sh[r][c]){ g.fillStyle=COLORS[type]; g.globalAlpha=dim?0.4:1; const p=u*0.08; g.fillRect(ox+c*u+p,oy+r*u+p,u-2*p,u-2*p); g.globalAlpha=1;} }
 }
+function drawNext(){ drawMini(nctx,nextPiece,false); }
+function drawHold(){ drawMini(hctx,hold,holdUsed); }
 
 function loop(t){
   if(!over){ if(!last)last=t; acc+=t-last; last=t;
@@ -157,6 +171,7 @@ function loop(t){
 
 function reset(){
   grid=newGrid(); score=0; lines=0; level=1; dropMs=650; acc=0; last=0; over=false; bag=null;
+  hold=null; holdUsed=false; drawHold();
   nextPiece=bagNext();
   document.getElementById("score").textContent="0"; document.getElementById("lines").textContent="0";
   document.getElementById("over").classList.remove("show");
@@ -170,9 +185,10 @@ addEventListener("keydown",e=>{
   else if(k==="arrowdown"||k==="s"){softDrop();e.preventDefault();}
   else if(k==="arrowup"||k==="w"){tryRotate();e.preventDefault();}
   else if(k===" "){hardDrop();e.preventDefault();}
+  else if(k==="c"||k==="shift"){holdPiece();e.preventDefault();}
 });
 const press=(id,fn)=>{ const b=document.getElementById(id); b.addEventListener("click",fn); };
-press("bL",()=>step(-1)); press("bR",()=>step(1)); press("bRot",tryRotate); press("bDown",softDrop); press("bDrop",hardDrop);
+press("bL",()=>step(-1)); press("bR",()=>step(1)); press("bRot",tryRotate); press("bDown",softDrop); press("bDrop",hardDrop); press("bHold",holdPiece);
 document.getElementById("new").addEventListener("click",reset);
 document.getElementById("retry").addEventListener("click",reset);
 
