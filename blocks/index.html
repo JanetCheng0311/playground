@@ -37,7 +37,13 @@
   .pad #bHold{font-size:12px;letter-spacing:.04em}
   .pad button:active{background:rgba(255,255,255,.25)}
   .hint{padding:0 clamp(20px,4vw,40px) 18px;font-size:12px;opacity:.55;flex:0 0 auto}
-  @media (max-width:760px){ .pad{display:flex} .hint{display:none} .side{display:none} main{padding-bottom:90px} }
+  @media (max-width:760px){
+    .pad{display:flex} .hint{display:none}
+    main{padding-bottom:88px; gap:10px}
+    .side{gap:10px}
+    .side .lbl{font-size:10px}
+    #hold,#next{width:56px;height:56px}
+  }
 </style>
 </head>
 <body>
@@ -89,7 +95,7 @@ let grid, cur, nextPiece, score, lines, level, dropMs, acc, last, over, bag, hol
 
 function layout(){
   const maxH=Math.min(window.innerHeight-(window.innerWidth<760?200:170), 760);
-  const maxW=window.innerWidth-(window.innerWidth<760?32:170);
+  const maxW=window.innerWidth-(window.innerWidth<760?96:170);
   cs=Math.floor(Math.min(maxW/COLS, maxH/ROWS));
   cs=Math.max(14,cs);
   board.style.width=COLS*cs+"px"; board.style.height=ROWS*cs+"px";
