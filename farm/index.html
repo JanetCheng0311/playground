@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="A little isometric farm — till, plant, water and harvest crops to earn coins.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%230033ff'/%3E%3Cpath d='M32 18 L52 30 L32 42 L12 30 Z' fill='%237ec850'/%3E%3Cpath d='M32 26 L40 31 L32 36 L24 31 Z' fill='%239c6b3f'/%3E%3C/svg%3E">
+<title>Farm — Playground</title>
+<style>
+  :root{ --blue:#0033ff; --white:#fff; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{background:var(--blue);color:var(--white);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;min-height:100dvh;display:flex;flex-direction:column}
+  header{display:flex;align-items:baseline;gap:20px;padding:18px clamp(16px,4vw,40px);font-size:14px;font-weight:500;flex:0 0 auto;flex-wrap:wrap}
+  header a,header button{font:inherit;color:var(--white);background:none;border:none;cursor:pointer;text-decoration:none;
+    padding:2px 0;border-bottom:1px solid transparent;transition:border-color .15s}
+  header a:hover,header button:hover{border-bottom-color:var(--white)}
+  header .title{font-weight:600;margin-right:auto}
+  header .title em{font-style:normal;opacity:.6;font-weight:400;margin-left:10px}
+  header .stat{font-variant-numeric:tabular-nums;font-weight:600}
+  header .stat b{font-weight:700}
+  header button.off{opacity:.5}
+  main{flex:1 1 auto;display:flex;align-items:center;justify-content:center;min-height:0;padding:0 8px}
+  canvas{display:block;max-width:100%}
+  .panel{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px clamp(12px,4vw,40px) 20px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .row button{font:inherit;font-size:13px;font-weight:600;color:var(--white);background:rgba(255,255,255,.1);
+    border:1.5px solid rgba(255,255,255,.45);border-radius:999px;padding:8px 15px;cursor:pointer;transition:background .12s,transform .1s}
+  .row button:hover{background:rgba(255,255,255,.2)}
+  .row button:active{transform:translateY(1px) scale(.98)}
+  .row button.on{background:var(--white);color:var(--blue);border-color:var(--white)}
+  .row .day{background:rgba(255,255,255,.92);color:var(--blue);border-color:var(--white)}
+  .seeds button .px{opacity:.7;font-weight:500;margin-left:6px}
+  .hint{font-size:12px;opacity:.6}
+  @media (max-width:640px){header{gap:12px;padding:14px}.hint{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <span class="title">Farm<em>grow &amp; harvest</em></span>
+  <span class="stat">coins <b id="coins">0</b></span>
+  <span class="stat">day <b id="day">1</b></span>
+  <button id="snd">sound</button>
+  <button id="new">new farm</button>
+  <a href="../">playground</a>
+</header>
+<main><canvas id="stage"></canvas></main>
+<div class="panel">
+  <div class="row" id="tools">
+    <button data-tool="till" class="on">till</button>
+    <button data-tool="plant">plant</button>
+    <button data-tool="water">water</button>
+    <button data-tool="harvest">harvest</button>
+    <button class="day" id="nextDay">next day →</button>
+  </div>
+  <div class="row seeds" id="seeds"></div>
+  <p class="hint">pick a tool, then tap a tile · water crops and end the day to grow them · harvest ripe crops for coins</p>
+</div>
+<script>
+(() => {
+"use strict";
+const canvas=document.getElementById("stage"), ctx=canvas.getContext("2d");
+const DPR=Math.min(devicePixelRatio||1,2);
+const N=7, TW=64, TH=32, DZ=12;            // grid size, tile width/height, depth
+let W,H,ox,oy, hover=-1;
+
+const CROPS={
+  carrot:{name:"carrot",cost:4, days:2, sell:9,  c:"#ff8a3d", leaf:"#3fae5a"},
+  wheat: {name:"wheat", cost:8, days:3, sell:20, c:"#f4d35e", leaf:"#9bc34a"},
+  pumpkin:{name:"pumpkin",cost:18,days:5, sell:55, c:"#e8702a", leaf:"#3f9d54"},
+};
+const CKEYS=Object.keys(CROPS);
+
+let grid, coins, day, tool="till", seed="carrot";
+
+function reset(){
+  grid=Array.from({length:N*N},()=>({state:"grass",crop:null}));
+  coins=20; day=1; tool="till"; seed="carrot";
+  save(); syncUI(); refreshTools();
+}
+function load(){
+  try{ const s=JSON.parse(localStorage.getItem("farm-save")); if(s&&s.grid&&s.grid.length===N*N){ grid=s.grid; coins=s.coins; day=s.day; return true; } }catch(e){}
+  return false;
+}
+function save(){ localStorage.setItem("farm-save", JSON.stringify({grid,coins,day})); }
+function syncUI(){ document.getElementById("coins").textContent=coins; document.getElementById("day").textContent=day; }
+
+function resize(){
+  const availW=Math.min(window.innerWidth-16, 720), availH=Math.max(260, window.innerHeight-260);
+  // field bounding box: width N*TW, height N*TH + DZ
+  let scale=Math.min(availW/(N*TW+20), availH/(N*TH+DZ+90));
+  scale=Math.min(1.25,Math.max(0.6,scale));
+  W=Math.ceil((N*TW+20)*scale); H=Math.ceil((N*TH+DZ+90)*scale);
+  canvas.style.width=W+"px"; canvas.style.height=H+"px";
+  canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR*scale,0,0,DPR*scale,0,0);
+  ox=(N*TW+20)/2; oy=46;                  // origin in unscaled coords
+}
+addEventListener("resize",resize);
+
+function iso(r,c){ return [ox+(c-r)*TW/2, oy+(c+r)*TH/2]; }
+function tileAt(mx,my){                    // screen(css) -> grid index
+  mx/= (canvas.width/DPR)/( (N*TW+20) );    // undo scale: css width maps to unscaled field width
+  my/= (canvas.height/DPR)/( (N*TH+DZ+90) );
+  const a=(mx-ox)/(TW/2), b=(my-oy)/(TH/2);
+  const c=Math.round((a+b)/2), r=Math.round((b-a)/2);
+  if(r<0||c<0||r>=N||c>=N) return -1; return r*N+c;
+}
+
+function shade(hex,f){ const r=parseInt(hex.slice(1,3),16)*f,g=parseInt(hex.slice(3,5),16)*f,b=parseInt(hex.slice(5,7),16)*f;
+  return `rgb(${Math.min(255,r)|0},${Math.min(255,g)|0},${Math.min(255,b)|0})`; }
+
+function drawTile(r,c,t){
+  const [x,y]=iso(r,c);
+  const top = t.state==="grass" ? "#7ec850" : (t.crop&&t.crop.watered ? "#6b4a2b" : "#9c6b3f");
+  // side faces (depth)
+  ctx.fillStyle=shade(top,0.7);
+  ctx.beginPath(); ctx.moveTo(x-TW/2,y); ctx.lineTo(x,y+TH/2); ctx.lineTo(x,y+TH/2+DZ); ctx.lineTo(x-TW/2,y+DZ); ctx.closePath(); ctx.fill();
+  ctx.fillStyle=shade(top,0.82);
+  ctx.beginPath(); ctx.moveTo(x+TW/2,y); ctx.lineTo(x,y+TH/2); ctx.lineTo(x,y+TH/2+DZ); ctx.lineTo(x+TW/2,y+DZ); ctx.closePath(); ctx.fill();
+  // top diamond
+  ctx.fillStyle = (r*N+c===hover) ? shade(top,1.12) : top;
+  ctx.beginPath(); ctx.moveTo(x,y-TH/2); ctx.lineTo(x+TW/2,y); ctx.lineTo(x,y+TH/2); ctx.lineTo(x-TW/2,y); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle="rgba(0,0,0,0.12)"; ctx.lineWidth=1; ctx.stroke();
+  if(t.state==="soil" && !t.crop){ // furrow lines
+    ctx.strokeStyle="rgba(0,0,0,0.14)";
+    for(let i=-1;i<=1;i++){ ctx.beginPath(); ctx.moveTo(x-TW/4+i*8,y-2+i*4); ctx.lineTo(x+TW/4+i*8,y+8+i*4); ctx.stroke(); }
+  }
+  if(t.crop) drawCrop(x,y,t.crop);
+}
+function drawCrop(x,y,cr){
+  const C=CROPS[cr.type], ratio=Math.min(1,cr.grown/C.days), ripe=cr.grown>=C.days;
+  const h=8+ratio*22, sway=Math.sin(performance.now()*0.002 + x)*1.5*ratio;
+  ctx.strokeStyle=C.leaf; ctx.lineWidth=3; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(x,y+4); ctx.lineTo(x+sway,y+4-h); ctx.stroke();
+  // leaves
+  ctx.fillStyle=C.leaf;
+  ctx.beginPath(); ctx.ellipse(x-5+sway*.6,y+4-h*0.6,5,3,-0.5,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x+5+sway*.6,y+4-h*0.55,5,3,0.5,0,7); ctx.fill();
+  if(ripe){ // fruit
+    ctx.fillStyle=C.c; ctx.beginPath(); ctx.arc(x+sway,y+4-h, cr.type==="pumpkin"?8:5,0,7); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,0.5)"; ctx.beginPath(); ctx.arc(x+sway-2,y+2-h,1.6,0,7); ctx.fill();
+    // ripe sparkle ring
+    const a=performance.now()*0.004; ctx.strokeStyle="rgba(255,255,255,"+(0.4+0.3*Math.sin(a))+")"; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(x+sway,y+4-h, (cr.type==="pumpkin"?12:9),0,7); ctx.stroke();
+  } else if(ratio>0.4){ // bud
+    ctx.fillStyle=shade(C.c,0.8); ctx.beginPath(); ctx.arc(x+sway,y+4-h,3,0,7); ctx.fill();
+  }
+}
+
+function draw(){
+  ctx.clearRect(0,0,N*TW+20,N*TH+DZ+90);
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++) drawTile(r,c,grid[r*N+c]);
+  requestAnimationFrame(draw);
+}
+
+/* ---- sound ---- */
+let actx=null,master=null,soundOn=localStorage.getItem("farm-sound")!=="off";
+function audio(){ if(actx){if(actx.state==="suspended")actx.resume();return actx;} try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}
+  master=actx.createGain();master.gain.value=0.3;master.connect(actx.destination);return actx;}
+function tone(type,f0,f1,dur,vol){ if(!soundOn)return; const a=audio();if(!a)return;const t=a.currentTime,o=a.createOscillator(),g=a.createGain();
+  o.type=type;o.frequency.setValueAtTime(f0,t);if(f1!=null)o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),t+dur);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.005);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(master);o.start(t);o.stop(t+dur+0.02);}
+const SND={
+  till(){ tone("triangle",240,140,0.1,0.2); },
+  plant(){ tone("sine",420,560,0.08,0.18); },
+  water(){ tone("sine",900,500,0.12,0.16); setTimeout(()=>tone("sine",700,420,0.08,0.1),70); },
+  harvest(){ tone("sine",660,990,0.1,0.22); setTimeout(()=>tone("sine",990,1320,0.12,0.18),80); },
+  coin(){ tone("square",1200,1600,0.06,0.12); },
+  day(){ tone("sine",330,440,0.25,0.18); },
+  no(){ tone("sawtooth",180,120,0.12,0.18); },
+};
+
+/* ---- actions ---- */
+function act(i){
+  if(i<0)return; const t=grid[i];
+  if(tool==="till"){ if(t.state==="grass"){ t.state="soil"; SND.till(); } else SND.no(); }
+  else if(tool==="plant"){
+    if(t.state==="soil" && !t.crop){ const C=CROPS[seed]; if(coins>=C.cost){ coins-=C.cost; t.crop={type:seed,grown:0,watered:false}; SND.plant(); syncUI(); } else SND.no(); }
+    else SND.no();
+  }
+  else if(tool==="water"){ if(t.crop && !t.crop.watered){ t.crop.watered=true; SND.water(); } else SND.no(); }
+  else if(tool==="harvest"){ if(t.crop && t.crop.grown>=CROPS[t.crop.type].days){ coins+=CROPS[t.crop.type].sell; t.crop=null; t.state="soil"; SND.harvest(); SND.coin(); syncUI(); } else SND.no(); }
+  save();
+}
+function nextDay(){
+  let grew=0;
+  for(const t of grid){ if(t.crop && t.crop.watered && t.crop.grown<CROPS[t.crop.type].days){ t.crop.grown++; grew++; } if(t.crop) t.crop.watered=false; }
+  day++; SND.day(); syncUI(); save();
+}
+
+/* ---- input ---- */
+function evtTile(e){ const rb=canvas.getBoundingClientRect(); return tileAt(e.clientX-rb.left, e.clientY-rb.top); }
+canvas.addEventListener("pointerdown",e=>{ audio(); act(evtTile(e)); });
+canvas.addEventListener("pointermove",e=>{ hover=evtTile(e); });
+canvas.addEventListener("pointerleave",()=>hover=-1);
+
+/* ---- tools UI ---- */
+const toolsEl=document.getElementById("tools"), seedsEl=document.getElementById("seeds");
+function refreshTools(){ [...toolsEl.querySelectorAll("button[data-tool]")].forEach(b=>b.classList.toggle("on",b.dataset.tool===tool));
+  seedsEl.style.display = tool==="plant" ? "flex" : "none"; }
+toolsEl.querySelectorAll("button[data-tool]").forEach(b=>b.addEventListener("click",()=>{ tool=b.dataset.tool; refreshTools(); }));
+CKEYS.forEach(k=>{ const C=CROPS[k]; const b=document.createElement("button"); b.innerHTML=`${C.name}<span class="px">${C.cost}c</span>`;
+  if(k===seed)b.classList.add("on"); b.addEventListener("click",()=>{ seed=k; [...seedsEl.children].forEach(x=>x.classList.remove("on")); b.classList.add("on"); }); seedsEl.appendChild(b); });
+document.getElementById("nextDay").addEventListener("click",nextDay);
+document.getElementById("new").addEventListener("click",()=>{ if(confirm("Start a new farm? Your progress will be cleared.")) reset(); });
+const sndBtn=document.getElementById("snd");
+function syncSnd(){ sndBtn.textContent=soundOn?"sound":"muted"; sndBtn.classList.toggle("off",!soundOn); }
+sndBtn.addEventListener("click",()=>{ soundOn=!soundOn; localStorage.setItem("farm-sound",soundOn?"on":"off"); syncSnd(); if(soundOn)audio(); });
+syncSnd();
+
+if(!load()){ reset(); } else { syncUI(); }
+refreshTools(); resize();
+requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>
