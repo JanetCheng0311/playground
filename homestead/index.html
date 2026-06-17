@@ -69,8 +69,23 @@
   .invlabel{font-size:10px;letter-spacing:.13em;text-transform:uppercase;opacity:.5;margin:13px 0 0}
   .invname{min-height:36px;margin-top:10px;padding:7px 12px;border-radius:10px;background:rgba(0,0,0,.25);font-size:13px;font-weight:700;display:flex;align-items:center}
   .invname:empty{visibility:hidden}.invname span{font-weight:400;opacity:.7;margin-left:6px}
-  .craftlist{max-height:46vh;overflow-y:auto}
+  .craftarea{display:flex;align-items:center;gap:12px;margin:4px 0 10px}
+  .cgrid{display:grid;grid-template-columns:repeat(3,46px);grid-template-rows:repeat(3,46px);gap:5px}
+  .cgrid .cslot,.cout .cslot{width:46px;height:46px;border-radius:8px;border:1.5px solid rgba(255,255,255,.25);background:rgba(0,0,0,.24);position:relative;cursor:pointer;display:grid;place-items:center;box-shadow:inset 0 2px 5px rgba(0,0,0,.4)}
+  .cgrid .cslot:hover{border-color:rgba(255,255,255,.55)}
+  .carrow{font-size:22px;opacity:.6}
+  .cout .cslot{width:58px;height:58px;border-color:rgba(255,210,59,.6);background:rgba(255,210,59,.08);cursor:default}
+  .cout .cslot.ready{cursor:pointer;background:rgba(255,210,59,.22);box-shadow:inset 0 2px 5px rgba(0,0,0,.3),0 0 10px rgba(255,210,59,.5)}
+  .cslot .dot{border-radius:5px}
+  .cslot .n{position:absolute;right:3px;bottom:1px;font-size:11px;font-weight:800;text-shadow:0 1px 2px #000,0 0 2px #000}
+  .crafthint{font-size:12px;opacity:.7;min-height:18px;margin-bottom:8px}
+  .recipebook summary{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.6;cursor:pointer;margin-bottom:6px}
+  .craftlist{max-height:30vh;overflow-y:auto}
+  .craftlist .item{cursor:pointer}
   .craftlist .item .dot{width:20px;height:20px;border-radius:5px;flex:0 0 auto;align-self:center}
+  #heldStack{position:fixed;z-index:60;width:40px;height:40px;border-radius:8px;display:none;place-items:center;pointer-events:none;transform:translate(-50%,-50%);background:rgba(10,20,60,.85);border:1.5px solid rgba(255,255,255,.5)}
+  #heldStack.show{display:grid}
+  #heldStack .n{position:absolute;right:2px;bottom:0;font-size:11px;font-weight:800;text-shadow:0 1px 2px #000}
   #helpBody .item{display:block;padding:8px 0;border-top:1px solid rgba(255,255,255,.16)}
   #helpBody b{font-size:14px}#helpBody span{display:block;font-size:12px;opacity:.75;margin-top:2px}
   #helpBody h4{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin:14px 0 4px}
@@ -130,10 +145,17 @@
     </div>
     <div class="invright">
       <h3>🔨 Crafting table</h3>
-      <div id="craftList" class="craftlist"></div>
+      <div class="craftarea">
+        <div id="craftGrid" class="cgrid"></div>
+        <div class="carrow">▶</div>
+        <div id="craftOut" class="cout"></div>
+      </div>
+      <div id="craftHint" class="crafthint">drop items into the grid to craft</div>
+      <details class="recipebook"><summary>recipe book</summary><div id="recipeList" class="craftlist"></div></details>
     </div>
   </div>
   <button class="close" id="bagClose">close</button>
+  <div id="heldStack"></div>
 </div></div>
 <div class="shop" id="help"><div class="card">
   <h2>How to play</h2>
@@ -181,7 +203,8 @@ const ITEMS={
   fish:{kind:"mat",color:"#8fc7e8",name:"fish",sell:7}, sand:{kind:"mat",color:"#e9d8a6",name:"sand",sell:1}, glass:{kind:"mat",color:"#bfe6f0",name:"glass",sell:4},
   rod:{kind:"tool",color:"#b5651d",name:"fishing rod"}, net:{kind:"tool",color:"#dfeae0",name:"fishing net"},
   lantern:{kind:"place",tile:"lantern",color:"#ffcf6e",name:"lantern"}, goldlamp:{kind:"place",tile:"goldlamp",color:"#ffe08a",name:"gold lamp"},
-  mfence:{kind:"place",tile:"mfence",color:"#b9c2cc",name:"metal fence"} };
+  mfence:{kind:"place",tile:"mfence",color:"#b9c2cc",name:"metal fence"},
+  oil:{kind:"mat",color:"#2e2a22",name:"oil",sell:5}, oillamp:{kind:"place",tile:"oillamp",color:"#ffb347",name:"oil lamp"} };
 const FURN=["chair","table","lamp","rug"];
 const DESC={ grass:["Grass","till it with use to make soil for planting"], wild:["Wild grass","out here you'll find trees, rocks & slimes"],
   soil:["Tilled soil","plant a seed, water it, harvest when ripe"], tree:["Tree","press use to chop it for wood"], rock:["Rock","press use to mine it for stone"],
@@ -193,7 +216,7 @@ const DESC={ grass:["Grass","till it with use to make soil for planting"], wild:
   road:["Road","follow it to walk between the homestead and the village"], river:["River","fresh water — fish it with a rod or net"], sea:["Sea","fish it with a rod or net for fish"],
   sand:["Beach sand","press use to scoop up sand"], iron:["Iron rock","mine it with use for iron ore"], gold:["Gold rock","mine it with use for shiny gold"],
   lantern:["Lantern","a bright metal light you built"], goldlamp:["Gold lamp","a fancy golden light"], mfence:["Metal fence","a sturdy wall you built (hold use to remove)"],
-  pfence:["Wooden fence","a wall you built — hold use 1-2s to remove it"], npc:["Pelle the Fisher","press use to buy a rod & net, or sell fish, ore & sand"] };
+  pfence:["Wooden fence","a wall you built — hold use 1-2s to remove it"], oil:["Oil seep","press use to scoop crude oil"], oillamp:["Oil lamp","a warm light fuelled by oil"], npc:["Pelle the Fisher","press use to buy a rod & net, or sell fish, ore, sand & oil"] };
 const USE={ seed:"plant it on tilled soil", crop:"sell it at the cat shop for coins", wood:"craft torches, fences and paths",
   stone:"craft stone paths and a sturdy axe", goo:"craft a healing salve", salve:"select it and press use to heal 2 hearts",
   torch:"select it and place on the ground to light the night", fence:"select & place to build your own wall",
@@ -203,7 +226,8 @@ const USE={ seed:"plant it on tilled soil", crop:"sell it at the cat shop for co
   fish:"sell it to Pelle the fisher in the village", sand:"melt 2 into glass at the crafting table",
   glass:"used to craft lanterns and gold lamps", rod:"select it, face water & press use to fish",
   net:"select it, face water & press use to catch more fish", lantern:"select & place a bright metal light",
-  goldlamp:"select & place a fancy golden light", mfence:"select & place a metal wall (hold use to remove)" };
+  goldlamp:"select & place a fancy golden light", mfence:"select & place a metal wall (hold use to remove)",
+  oil:"sell it to the fisher, or craft a warm oil lamp", oillamp:"select & place a warm oil lamp" };
 function itemColor(k){ const it=ITEMS[k]; if(it.color)return it.color; return it.kind==="seed"?CROPS[it.crop].leaf:CROPS[it.crop].c; }
 function itemName(k){ const it=ITEMS[k]; if(it.name)return it.name; return (it.kind==="seed"?it.crop+" seed":it.crop); }
 
@@ -216,6 +240,7 @@ const RECIPES=[
   {key:"lantern", give:"lantern", cost:{iron:2,glass:1}, desc:"a bright metal lantern to place"},
   {key:"goldlamp", give:"goldlamp", cost:{gold:1,glass:1}, desc:"a fancy golden lamp to place"},
   {key:"mfence", give:"mfence", cost:{iron:1}, desc:"a sturdy metal wall to place"},
+  {key:"oillamp", give:"oillamp", cost:{oil:1,glass:1}, desc:"a warm lamp fuelled by oil"},
   {key:"axe", once:"axe", cost:{wood:6,stone:3}, desc:"gather faster & hit harder (permanent)"},
 ];
 
@@ -224,7 +249,7 @@ let scene="out", area="home", G, GR, GC, GW, GH, gridOut, gridHome, gridVillage,
 let catX=0, catY=0, npcX=0, npcY=0;
 const player={x:0,y:0,dir:"d",fx:0,fy:1,moving:false,hp:5,maxHp:5,inv:0,kx:0,ky:0,swing:0};
 const mobs=[]; const fx=[]; let spawnT=0;
-let coins=25, clock=0, selSlot=0, outX, outY;
+let coins=25, clock=0, selSlot=0, outX, outY, metCat=false, metFisher=false;
 const BAGN=30; const bag=new Array(BAGN).fill(null);
 
 // village layout constants (second map, same dimensions as home)
@@ -235,7 +260,7 @@ const WATER=new Set(["pond","river","sea"]);
 const BREAKABLE=new Set(["pfence","mfence"]);   // player-built walls (NOT the farm "fence")
 const FARMLAND=new Set(["grass","soil","path","ppath"]);
 const PLACEABLE_ON=new Set(["grass","wild","path","ppath","floor","rug","road"]);
-const LIGHTS=new Set(["torch","lamp","lantern","goldlamp"]);
+const LIGHTS=new Set(["torch","lamp","lantern","goldlamp","oillamp"]);
 function inFarm(r,c){ return area==="home"&&r>FR0&&r<farmFR1&&c>FC0&&c<farmFC1; }
 const TREEHITS=()=>hasAxe?2:3, ROCKHITS=()=>hasAxe?3:4, IRONHITS=()=>hasAxe?4:5, GOLDHITS=()=>hasAxe?5:6;
 function setVillageMeta(){ npcX=NPC_C*TILE+TILE/2; npcY=NPC_R*TILE+TILE/2; }
@@ -266,7 +291,7 @@ function buildOut(){ const g=[]; for(let r=0;r<OROWS;r++){ const row=[]; for(let
 function buildVillage(){ const g=[]; for(let r=0;r<OROWS;r++){ const row=[]; for(let c=0;c<OCOLS;c++){ row.push({type:"wild",crop:null}); } g.push(row); }
   for(let r=0;r<OROWS;r++){ g[r][RIVER_C].type="river"; for(let c=SEA_C0;c<OCOLS;c++) g[r][c].type="sea"; g[r][SAND_C].type="sand"; }
   for(let r=1;r<OROWS-1;r++)for(let c=1;c<SAND_C;c++){ if(c===RIVER_C)continue; const x=Math.random();
-    if(x<0.10)g[r][c].type="tree"; else if(x<0.15)g[r][c].type="rock"; else if(x<0.20)g[r][c].type="iron"; else if(x<0.225)g[r][c].type="gold"; }
+    if(x<0.10)g[r][c].type="tree"; else if(x<0.15)g[r][c].type="rock"; else if(x<0.20)g[r][c].type="iron"; else if(x<0.225)g[r][c].type="gold"; else if(x<0.25)g[r][c].type="oil"; }
   for(let c=0;c<=SAND_C;c++) g[ROAD_R][c].type="road";            // road in from the left, bridges the river
   g[ROAD_R][RIVER_C].type="road";                                 // bridge plank over the river
   g[NPC_R][NPC_C].type="wild"; g[NPC_R][NPC_C-1].type="path";      // clear ground by the fisher
@@ -279,7 +304,7 @@ function buildIn(){ const w=9+houseLvl*2, h=7+houseLvl; const g=[];
   return {g,w,h}; }
 function setScene(s){ scene=s; if(s==="out"){G=gridOut;GR=OROWS;GC=OCOLS;} else {const io=buildIn();gridIn=io.g;G=gridIn;GR=io.h;GC=io.w;} GW=GC*TILE; GH=GR*TILE; }
 
-function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; area="home"; gridHome=buildOut(); gridVillage=buildVillage(); setArea("home"); coins=25; clock=0;
+function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false; area="home"; gridHome=buildOut(); gridVillage=buildVillage(); setArea("home"); coins=25; clock=0;
   for(let i=0;i<bag.length;i++)bag[i]=null; bag[0]={key:"seed_carrot",count:6}; bag[1]={key:"seed_wheat",count:2}; selSlot=0;
   setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2+TILE; player.hp=player.maxHp;player.inv=0; mobs.length=0; save(); renderBar(); syncUI(); }
 function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); const home=s&&(s.home||s.gridOut); if(home&&home.length===OROWS){
@@ -287,9 +312,10 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); co
     gridHome=home; gridVillage=(s.village&&s.village.length===OROWS)?s.village:buildVillage(); coins=s.coins; clock=s.clock||0;
     for(let i=0;i<bag.length;i++)bag[i]=s.bag&&s.bag[i]?s.bag[i]:null; selSlot=s.selSlot||0;
     catX=(doorC=FC0+2,(FC0+4)*TILE+TILE/2); catY=(doorR=FR0+3,(FR0+4)*TILE+TILE/2); setVillageMeta();
+    metCat=!!s.metCat; metFisher=!!s.metFisher;
     area=(s.area==="village")?"village":"home"; setArea(area);
     setScene("out"); player.x=s.px;player.y=s.py;player.hp=s.hp??5; return true; } }catch(e){} return false; }
-function save(){ localStorage.setItem("homestead4", JSON.stringify({v:5,area,home:gridHome,village:gridVillage,coins,clock,px:scene==="out"?player.x:outX,py:scene==="out"?player.y:outY,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe})); }
+function save(){ localStorage.setItem("homestead4", JSON.stringify({v:5,area,home:gridHome,village:gridVillage,coins,clock,px:scene==="out"?player.x:outX,py:scene==="out"?player.y:outY,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher})); }
 function syncUI(){ document.getElementById("coins").textContent=coins; }
 
 function resize(){ const rect=document.querySelector("main").getBoundingClientRect();
@@ -330,8 +356,8 @@ function tryAttack(){ const range=TILE*1.6,dmg=hasAxe?2:1; let hit=false;
 function interact(){ player.swing=0.18;
   if(scene==="in"){ const f=facedCell(); if(!f)return; const t=gridIn[f.r][f.c]; if(t.type==="bed")sleep(); else if(t.type==="mat")exitHouse(); return; }
   // exterior
-  if(area==="home"&&Math.hypot(catX-player.x,catY-player.y)<TILE*1.5){ SND.meow(); talkToCat(); return; }
-  if(area==="village"&&Math.hypot(npcX-player.x,npcY-player.y)<TILE*1.6){ SND.meow(); talkToFisher(); return; }
+  if(area==="home"&&Math.hypot(catX-player.x,catY-player.y)<TILE*1.5){ SND.meow(); if(metCat){openShop();} else {metCat=true;save();talkToCat();} return; }
+  if(area==="village"&&Math.hypot(npcX-player.x,npcY-player.y)<TILE*1.6){ SND.meow(); if(metFisher){openMarket();} else {metFisher=true;save();talkToFisher();} return; }
   SND.swing();
   if(tryAttack()){ save(); return; }
   const f=facedCell(); if(!f)return; const t=gridOut[f.r][f.c]; const cx=f.c*TILE+TILE/2,cy=f.r*TILE+TILE/2;
@@ -343,6 +369,8 @@ function interact(){ player.swing=0.18;
   if(sel&&ITEMS[sel.key].kind==="tool"&&WATER.has(t.type)){ fishAt(cx,cy,sel.key); save(); return; }
   // scoop sand from the beach
   if(t.type==="sand"){ SND.mine(); burst(cx,cy,"#e9d8a6",6); gainItem("sand",1,cx,cy); save(); return; }
+  // scoop oil from a seep
+  if(t.type==="oil"){ SND.water(); burst(cx,cy,"#2e2a22",6); gainItem("oil",1,cx,cy); save(); return; }
   // mine ores
   if(t.type==="iron"){ t.hits=(t.hits||IRONHITS())-1; SND.mine(); burst(cx,cy-6,"#c4ccd4",6); if(t.hits<=0){ gainItem("iron",1,cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
   if(t.type==="gold"){ t.hits=(t.hits||GOLDHITS())-1; SND.mine(); burst(cx,cy-6,"#ffd84a",6); if(t.hits<=0){ gainItem("gold",1,cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
@@ -390,8 +418,8 @@ addEventListener("keydown",e=>{ const k=e.key.toLowerCase();
   if(["arrowup","w"].includes(k)){keys.u=1;e.preventDefault();} else if(["arrowdown","s"].includes(k)){keys.d=1;e.preventDefault();}
   else if(["arrowleft","a"].includes(k)){keys.l=1;e.preventDefault();} else if(["arrowright","d"].includes(k)){keys.r=1;e.preventDefault();}
   else if(k==="e"||k===" "){ e.preventDefault(); if(e.repeat)return; audio(); startHold(); interact(); }
-  else if(k==="i"||k==="tab"||k==="b"){ e.preventDefault(); const b=document.getElementById("bagui"); b.classList.contains("open")?b.classList.remove("open"):openBag(); }
-  else if(k==="escape"){ document.querySelectorAll(".shop.open").forEach(s=>s.classList.remove("open")); }
+  else if(k==="i"||k==="tab"||k==="b"){ e.preventDefault(); baguiEl.classList.contains("open")?closeBag():openBag(); }
+  else if(k==="escape"){ if(baguiEl.classList.contains("open"))closeBag(); document.querySelectorAll(".shop.open").forEach(s=>s.classList.remove("open")); }
   else if(/^[0-9]$/.test(k)){ selSlot=(k==="0")?9:(+k-1); renderBar(); } });
 addEventListener("keyup",e=>{ const k=e.key.toLowerCase();
   if(["arrowup","w"].includes(k))keys.u=0; else if(["arrowdown","s"].includes(k))keys.d=0; else if(["arrowleft","a"].includes(k))keys.l=0; else if(["arrowright","d"].includes(k))keys.r=0;
@@ -434,7 +462,7 @@ function update(dt){ if(dialogOpen){ player.moving=false; return; }   // freeze 
 
 /* ---- draw ---- */
 function tileColor(t){ return {wild:"#5a9e4e",grass:"#7ec850",path:"#cdab73",ppath:"#bfa980",soil:"#9c6b3f",fence:"#5e8c3a",house:"#e9e4da",pond:"#5aa0e6",door:"#7a4a22",tree:"#5a9e4e",rock:"#5a9e4e",torch:"#7ec850",pfence:"#5a9e4e",floor:"#caa46a",wall:"#7a5230",bed:"#caa46a",mat:"#caa46a",
-    road:"#c9b27e",river:"#4a8fd6",sea:"#2f6fb0",sand:"#e6d8a8",iron:"#5a9e4e",gold:"#5a9e4e",lantern:"#5a9e4e",goldlamp:"#5a9e4e",mfence:"#5a9e4e"}[t.type]||"#5a9e4e"; }
+    road:"#c9b27e",river:"#4a8fd6",sea:"#2f6fb0",sand:"#e6d8a8",iron:"#5a9e4e",gold:"#5a9e4e",lantern:"#5a9e4e",goldlamp:"#5a9e4e",mfence:"#5a9e4e",oil:"#5a9e4e",oillamp:"#5a9e4e"}[t.type]||"#5a9e4e"; }
 function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE||y<-TILE||x>VW||y>VH)return;
   ctx.fillStyle=tileColor(t); ctx.fillRect(x,y,TILE,TILE);
   if(t.type==="wild"||t.type==="grass"){ ctx.fillStyle="rgba(0,0,0,0.05)";if((r+c)%2)ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle=shade(tileColor(t),1.08);ctx.fillRect(x+7,y+9,3,3);ctx.fillRect(x+24,y+27,3,3); }
@@ -464,6 +492,8 @@ function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE|
   else if(t.type==="gold"){ ctx.fillStyle="#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#9aa3ab";ctx.beginPath();ctx.ellipse(x+TILE/2,y+TILE/2+4,13,10,0,0,7);ctx.fill();ctx.fillStyle="#ffd84a";ctx.beginPath();ctx.ellipse(x+TILE/2-2,y+TILE/2,5,4,0,0,7);ctx.fill();ctx.fillStyle="#fff2b0";ctx.fillRect(x+TILE/2+2,y+TILE/2-3,3,3);ctx.fillRect(x+TILE/2-6,y+TILE/2+2,2,2); }
   else if(t.type==="lantern"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#8d949c";ctx.fillRect(x+TILE/2-2,y+TILE-12,4,10);const gl=0.55+0.3*Math.sin(now()*5+c);ctx.fillStyle="#9aa3ab";ctx.fillRect(x+TILE/2-7,y+6,14,16);ctx.fillStyle="rgba(255,225,150,"+gl+")";ctx.fillRect(x+TILE/2-5,y+8,10,12); }
   else if(t.type==="goldlamp"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#c8a23a";ctx.fillRect(x+TILE/2-2,y+TILE-12,4,10);const gl=0.55+0.35*Math.sin(now()*4+c);ctx.fillStyle="#ffd84a";ctx.beginPath();ctx.arc(x+TILE/2,y+13,9,0,7);ctx.fill();ctx.fillStyle="rgba(255,245,200,"+gl+")";ctx.beginPath();ctx.arc(x+TILE/2,y+13,5,0,7);ctx.fill(); }
+  else if(t.type==="oil"){ ctx.fillStyle="#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#2e2a22";ctx.beginPath();ctx.ellipse(x+TILE/2,y+TILE/2+2,14,10,0,0,7);ctx.fill();ctx.fillStyle="rgba(120,110,150,.5)";ctx.beginPath();ctx.ellipse(x+TILE/2-3,y+TILE/2-1,5,3,0.5,0,7);ctx.fill();ctx.fillStyle="rgba(60,200,160,.25)";ctx.beginPath();ctx.ellipse(x+TILE/2+4,y+TILE/2+3,4,2,0,0,7);ctx.fill(); }
+  else if(t.type==="oillamp"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#5a4632";ctx.fillRect(x+TILE/2-5,y+18,10,TILE-20);const gl=0.5+0.35*Math.sin(now()*6+c);ctx.fillStyle="rgba(255,179,71,"+gl+")";ctx.beginPath();ctx.ellipse(x+TILE/2,y+14,6,9,0,0,7);ctx.fill();ctx.fillStyle="rgba(255,240,200,"+gl+")";ctx.beginPath();ctx.ellipse(x+TILE/2,y+15,2.5,5,0,0,7);ctx.fill(); }
   if(t.crop) drawCrop(x+TILE/2,y+TILE-8,t.crop);
 }
 function drawCrop(x,by,cr){ const C=CROPS[cr.type],ratio=Math.min(1,cr.grow),ripe=cr.grow>=1,h=6+ratio*20+(ripe?2:0),bob=ripe?Math.sin(now()*4+x)*1.5:0;
@@ -522,7 +552,7 @@ function heart(x,y,full){ ctx.fillStyle=full?"#ff5b78":"rgba(255,255,255,.25)";c
 function draw(){ ctx.clearRect(0,0,VW,VH);
   for(let r=0;r<GR;r++)for(let c=0;c<GC;c++) drawTile(r,c);
   const f=facedCell(); if(f){ const tt=G[f.r][f.c].type; const fsel=bag[selSlot]; const farm=scene==="out"&&inFarm(f.r,f.c)&&FARMLAND.has(tt);
-    const gather=scene==="out"&&(tt==="tree"||tt==="rock"||tt==="iron"||tt==="gold"||tt==="sand"||(WATER.has(tt)&&fsel&&ITEMS[fsel.key].kind==="tool")); const inr=scene==="in"&&["bed","mat"].includes(tt);
+    const gather=scene==="out"&&(tt==="tree"||tt==="rock"||tt==="iron"||tt==="gold"||tt==="sand"||tt==="oil"||(WATER.has(tt)&&fsel&&ITEMS[fsel.key].kind==="tool")); const inr=scene==="in"&&["bed","mat"].includes(tt);
     if(farm||gather||inr){ ctx.strokeStyle="rgba(255,255,255,0.7)";ctx.lineWidth=2;ctx.strokeRect(f.c*TILE-camX+2,f.r*TILE-camY+2,TILE-4,TILE-4); } }
   const ents=[...(scene==="out"?mobs.map(m=>({y:m.y,d:()=>drawMob(m)})):[]),{y:player.y,d:drawPlayer}];
   if(scene==="out"&&area==="home") ents.push({y:catY,d:drawCat});
@@ -595,41 +625,72 @@ shopEl.addEventListener("click",e=>{ const d=e.target.dataset||{};
 document.getElementById("shopClose").addEventListener("click",()=>shopEl.classList.remove("open"));
 shopEl.addEventListener("pointerdown",e=>{ if(e.target===shopEl)shopEl.classList.remove("open"); });
 
-/* ---- bag + crafting table ---- */
+/* ---- bag + grid crafting (Minecraft-style: drop items into the grid, take the result) ---- */
 const baguiEl=document.getElementById("bagui"), bagGridEl=document.getElementById("bagGrid"), bagHotEl=document.getElementById("bagHot"), invName=document.getElementById("invName");
-function craftIcon(R){ return R.once?"#9aa3ab":itemColor(R.give); }
-function renderCraft(){ document.getElementById("craftList").innerHTML=RECIPES.map(R=>{ const cs=Object.entries(R.cost).map(([m,n])=>`${n} ${itemName(m)}`).join(" + ");
-    const can=Object.entries(R.cost).every(([m,n])=>countItem(m)>=n) && !(R.once==="axe"&&hasAxe);
-    const label=R.once==="axe"?(hasAxe?"owned":"craft"):"craft"; const title=R.once?"Sturdy Axe":itemName(R.give);
-    return `<div class="item"><span class="dot" style="background:${craftIcon(R)}"></span><div><b>${title}</b><span>${R.desc} · ${cs}</span></div><button data-craft="${R.key}" ${can?"":"disabled"}>${label}</button></div>`; }).join(""); }
+const craftGridEl=document.getElementById("craftGrid"), craftOutEl=document.getElementById("craftOut"), craftHintEl=document.getElementById("craftHint"), recipeListEl=document.getElementById("recipeList"), heldEl=document.getElementById("heldStack");
+const craftGrid=new Array(9).fill(null); let held=null;
 function baseKey(k){ return k.startsWith("seed_")?"seed":k.startsWith("crop_")?"crop":k; }
+function craftIcon(R){ return R.once?"#9aa3ab":itemColor(R.give); }
+function iconSpan(key,big){ const it=ITEMS[key],sz=it.kind==="seed"?(big?16:14):it.kind==="crop"?(big?24:22):(big?22:20),rad=it.kind==="mat"?4:50;
+  return `<span class="dot" style="width:${sz}px;height:${sz}px;border-radius:${rad}px;background:${itemColor(key)}"></span>`; }
+function renderHeld(){ if(held){ heldEl.classList.add("show"); heldEl.innerHTML=iconSpan(held.key)+(held.count>1?`<span class="n">${held.count}</span>`:""); } else { heldEl.classList.remove("show"); heldEl.innerHTML=""; } }
+/* bag slots — click picks up / drops the WHOLE stack (also lets you rearrange the hotbar) */
+function bagSlotClick(i){ const s=bag[i];
+  if(!held){ if(s){ held={key:s.key,count:s.count}; bag[i]=null; } }
+  else if(!s){ bag[i]={key:held.key,count:held.count}; held=null; }
+  else if(s.key===held.key){ s.count+=held.count; held=null; }
+  else { bag[i]={key:held.key,count:held.count}; held={key:s.key,count:s.count}; }
+  renderBag(); renderHeld(); }
 function slotEl(i){ const s=bag[i],el=document.createElement("div"); el.className="bslot"+(i===selSlot?" on":"");
-  if(s){ const it=ITEMS[s.key],sz=it.kind==="seed"?14:it.kind==="crop"?22:20,rad=it.kind==="mat"?4:50;
-    el.innerHTML=`<span class="dot" style="width:${sz}px;height:${sz}px;border-radius:${rad}px;background:${itemColor(s.key)}"></span>`+(s.count>1?`<span class="n">${s.count}</span>`:"");
-    const use=USE[baseKey(s.key)]||""; const show=()=>{ invName.innerHTML=`${itemName(s.key)}${use?`<span>${use}</span>`:""}`; };
-    el.addEventListener("pointerenter",show); el.title=itemName(s.key)+(use?" — "+use:""); }
+  if(s){ el.innerHTML=iconSpan(s.key)+(s.count>1?`<span class="n">${s.count}</span>`:""); const use=USE[baseKey(s.key)]||"";
+    el.addEventListener("pointerenter",()=>{ invName.innerHTML=`${itemName(s.key)}${use?`<span>${use}</span>`:""}`; }); el.title=itemName(s.key)+(use?" — "+use:""); }
   el.addEventListener("pointerleave",()=>{ invName.innerHTML=""; });
-  el.addEventListener("click",()=>{ selSlot=i; renderBag(); renderBar(); }); return el; }
+  el.addEventListener("click",()=>bagSlotClick(i)); return el; }
 function renderBag(){ bagGridEl.innerHTML=""; for(let i=10;i<BAGN;i++)bagGridEl.appendChild(slotEl(i));
-  bagHotEl.innerHTML=""; for(let i=0;i<10;i++)bagHotEl.appendChild(slotEl(i)); }
-function openBag(){ document.getElementById("bagCoins").textContent=coins; invName.innerHTML=""; renderBag(); renderCraft(); baguiEl.classList.add("open"); }
-function closeBag(){ baguiEl.classList.remove("open"); }
+  bagHotEl.innerHTML=""; for(let i=0;i<10;i++)bagHotEl.appendChild(slotEl(i)); renderBar(); }
+/* crafting grid — click a cell to drop ONE held item; click a filled cell empty-handed to take it back */
+function cellClick(i){ const c=craftGrid[i];
+  if(held){ if(!c)craftGrid[i]={key:held.key,count:1}; else if(c.key===held.key)c.count++; else return; held.count--; if(held.count<=0)held=null; }
+  else if(c){ held={key:c.key,count:c.count}; craftGrid[i]=null; }
+  renderCraftGrid(); renderHeld(); }
+function gridCounts(){ const m={}; for(const c of craftGrid) if(c) m[c.key]=(m[c.key]||0)+c.count; return m; }
+function sameSet(a,b){ const kb=Object.keys(b); if(Object.keys(a).length!==kb.length)return false; for(const k of kb) if(a[k]!==b[k])return false; return true; }
+function matchRecipe(){ const cnt=gridCounts(); if(!Object.keys(cnt).length)return null; return RECIPES.find(R=>!(R.once==="axe"&&hasAxe)&&sameSet(cnt,R.cost))||null; }
+function renderCraftGrid(){ craftGridEl.innerHTML="";
+  for(let i=0;i<9;i++){ const c=craftGrid[i],el=document.createElement("div"); el.className="cslot";
+    if(c)el.innerHTML=iconSpan(c.key)+(c.count>1?`<span class="n">${c.count}</span>`:""); el.addEventListener("click",()=>cellClick(i)); craftGridEl.appendChild(el); }
+  const R=matchRecipe(); craftOutEl.innerHTML=""; const out=document.createElement("div"); out.className="cslot"+(R?" ready":"");
+  if(R){ out.innerHTML=iconSpan(R.once?"stone":R.give,true); out.addEventListener("click",craftOutputClick); craftHintEl.textContent="✓ "+(R.once?"Sturdy Axe":itemName(R.give))+" — click it to craft"; }
+  else craftHintEl.textContent=Object.keys(gridCounts()).length?"no recipe — see the recipe book below":"drop items into the grid to craft";
+  craftOutEl.appendChild(out); }
+function craftOutputClick(){ const R=matchRecipe(); if(!R)return; craftGrid.fill(null);
+  if(R.once==="axe"){ hasAxe=true; float(player.x,player.y-20,"sturdy axe!","#fff"); } else addItem(R.give,1); SND.craft();
+  renderCraftGrid(); renderBag(); renderHeld(); syncUI(); save(); }
+function returnGridToBag(){ for(let i=0;i<9;i++){ const c=craftGrid[i]; if(c){ addItem(c.key,c.count); craftGrid[i]=null; } } if(held){ addItem(held.key,held.count); held=null; } renderHeld(); }
+/* recipe book — click a row to auto-fill the grid from your bag */
+function renderRecipes(){ recipeListEl.innerHTML=RECIPES.map(R=>{ const cs=Object.entries(R.cost).map(([m,n])=>`${n} ${itemName(m)}`).join(" + ");
+    const title=R.once?"Sturdy Axe":itemName(R.give),owned=R.once==="axe"&&hasAxe;
+    return `<div class="item" data-fill="${R.key}"><span class="dot" style="background:${craftIcon(R)}"></span><div><b>${title}</b><span>needs ${cs}${owned?" · owned":""}</span></div></div>`; }).join(""); }
+function fillFromRecipe(key){ const R=RECIPES.find(x=>x.key===key); if(!R||(R.once==="axe"&&hasAxe))return;
+  if(!Object.entries(R.cost).every(([m,n])=>countItem(m)>=n)){ craftHintEl.textContent="you don't have those materials yet"; return; }
+  returnGridToBag(); let i=0; for(const [m,n] of Object.entries(R.cost)) for(let j=0;j<n&&i<9;j++){ if(removeItem(m,1))craftGrid[i++]={key:m,count:1}; }
+  renderCraftGrid(); renderBag(); }
+function openBag(){ document.getElementById("bagCoins").textContent=coins; invName.innerHTML=""; renderBag(); renderCraftGrid(); renderRecipes(); baguiEl.classList.add("open"); }
+function closeBag(){ returnGridToBag(); renderBag(); baguiEl.classList.remove("open"); }
 document.getElementById("bagBtn").addEventListener("click",()=>{ baguiEl.classList.contains("open")?closeBag():openBag(); });
 document.getElementById("bagClose").addEventListener("click",closeBag);
 baguiEl.addEventListener("pointerdown",e=>{ if(e.target===baguiEl)closeBag(); });
-baguiEl.addEventListener("click",e=>{ const d=e.target.dataset||{}; if(!d.craft)return; const R=RECIPES.find(x=>x.key===d.craft);
-  if(R){ const can=Object.entries(R.cost).every(([m,n])=>countItem(m)>=n)&&!(R.once==="axe"&&hasAxe);
-    if(can){ Object.entries(R.cost).forEach(([m,n])=>removeItem(m,n)); if(R.once==="axe"){hasAxe=true;float(player.x,player.y-20,"sturdy axe!","#fff");} else addItem(R.give,1); SND.craft(); } }
-  renderBag(); renderCraft(); renderBar(); syncUI(); save(); });
+baguiEl.addEventListener("pointermove",e=>{ if(held){ heldEl.style.left=e.clientX+"px"; heldEl.style.top=e.clientY+"px"; } });
+recipeListEl.addEventListener("click",e=>{ const row=e.target.closest&&e.target.closest("[data-fill]"); if(row)fillFromRecipe(row.dataset.fill); });
 
 /* ---- help / tutorial ---- */
 const helpEl=document.getElementById("help");
-function renderHelp(){ const tiles=["grass","soil","tree","rock","iron","gold","pond","river","sea","sand","road","door","torch","lamp","fence","pfence","mfence","cat","npc","slime"];
-  const items=["seed_carrot","crop_carrot","wood","stone","goo","iron","gold","fish","sand","glass","salve","rod","net","torch","fence","mfence","ppath","lantern","goldlamp","chair","table","lamp","rug"];
+function renderHelp(){ const tiles=["grass","soil","tree","rock","iron","gold","oil","pond","river","sea","sand","road","door","torch","lamp","fence","pfence","mfence","cat","npc","slime"];
+  const items=["seed_carrot","crop_carrot","wood","stone","goo","iron","gold","oil","fish","sand","glass","salve","rod","net","torch","fence","mfence","ppath","lantern","goldlamp","oillamp","chair","table","lamp","rug"];
   const tips=["Walk WASD / arrows. Press E or Space (or the round button) to act on the tile you face.",
     "Follow the <b>road</b> off the east edge to reach the <b>village</b> — its sea & river are for fishing, and Pelle the Fisher sells a rod & net.",
     "The <b>farm fence</b> can't be broken — expand your farm at the cat shop. Fences <i>you</i> place (wood or metal) can be removed by <b>holding</b> use on them for 1–2 seconds.",
-    "Mine <b>iron</b> & <b>gold</b> rocks, scoop <b>sand</b> at the beach, then craft glass, lanterns and a gold lamp at the bag's crafting table.",
+    "Mine <b>iron</b> & <b>gold</b>, scoop <b>sand</b> at the beach and <b>oil</b> from village seeps. To craft, open the bag and <b>drop items into the 3×3 grid</b> — when they match a recipe the result lights up, click it to make it. Tap the <b>recipe book</b> to auto-fill the grid.",
     "Use <b>save file</b> to download your progress, and <b>load file</b> to bring it back on any device."];
   const tH=tiles.map(k=>{ const d=DESC[k]; return d?`<div class="item"><b>${d[0]}</b><span>${d[1]}</span></div>`:""; }).join("");
   const iH=items.map(k=>{ const base=k.startsWith("seed_")?"seed":k.startsWith("crop_")?"crop":k; const u=USE[base]||USE[k]||""; return `<div class="item"><b>${itemName(k)}</b><span>${u}</span></div>`; }).join("");
@@ -646,7 +707,7 @@ function renderMarket(){ document.getElementById("mktCoins").textContent=coins;
   const gear=[{k:"rod",d:"catch fish from any water"},{k:"net",d:"catch 2–3 fish at a time"}];
   document.getElementById("gearList").innerHTML=gear.map(g=>{ const owned=countItem(g.k)>0,cost=GEARCOST[g.k];
     return `<div class="item"><div><b>${itemName(g.k)}</b><span>${g.d}</span></div><button data-buyg="${g.k}" ${owned||coins<cost?"disabled":""}>${owned?"owned":cost+"c"}</button></div>`; }).join("");
-  const sellable=["fish","iron","gold","sand","glass"].filter(k=>countItem(k)>0);
+  const sellable=["fish","iron","gold","sand","glass","oil"].filter(k=>countItem(k)>0);
   document.getElementById("mktSell").innerHTML=(sellable.length?sellable:["__none"]).map(k=>{ if(k==="__none")return `<div class="item"><div><span>catch fish, mine ore or scoop sand, then sell it here</span></div></div>`;
     const v=ITEMS[k].sell,n=countItem(k); return `<div class="item"><div><b>${itemName(k)} ×${n}</b><span>${v}c each</span></div><button data-msell="${k}">sell</button></div>`; }).join(""); }
 marketEl.addEventListener("click",e=>{ const d=e.target.dataset||{};
