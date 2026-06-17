@@ -19,6 +19,8 @@ A collection of interactive creative-coding toys, hosted with GitHub Pages. The 
 - **[Swarm](swarm/)**: a living swarm of flocking particles (boids) that follow your touch. Adjust count and calmness, attract/repel, switch colors, tap to scatter.
 - **[Mondrian](mondrian/)**: generate De Stijl compositions — recursive blocks of primary color with bold black grids. Change density, cycle palettes, tap for a new piece, save as PNG.
 - **[Papers](papers/)**: a 3D scene of paper sheets tumbling on the wind (hand-rolled perspective + lighting, no libraries). Adjust count and wind, gust on tap, move to push the air, cycle themes (white paper, autumn leaves, sticky notes, kraft).
+- **[2048](2048/)**: the classic tile-merging puzzle. Arrow keys or swipe to slide tiles; merge matching numbers to reach 2048.
+- **[Blocks](blocks/)**: stack the falling pieces and clear lines. Arrow keys (or on-screen pad) to move and rotate, space to hard-drop; with ghost piece, next preview, levels and scoring.
 
 The Kaleidoscope now renders glossy reflective circle/square gems (no pixel grid), and Voice has a **batch** box: paste one quote per line and download all clips as a single ZIP of MP3s.
 

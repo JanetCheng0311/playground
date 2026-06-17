@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="Stack the falling blocks and clear lines.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%230033ff'/%3E%3Cg fill='%23fff'%3E%3Crect x='14' y='14' width='16' height='16' rx='3'/%3E%3Crect x='34' y='14' width='16' height='16' rx='3'/%3E%3Crect x='34' y='34' width='16' height='16' rx='3'/%3E%3C/g%3E%3C/svg%3E">
+<title>Blocks — Playground</title>
+<style>
+  :root{ --blue:#0033ff; --white:#fff; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{background:var(--blue);color:var(--white);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;min-height:100dvh;display:flex;flex-direction:column}
+  header{display:flex;align-items:baseline;gap:22px;padding:22px clamp(20px,4vw,40px);font-size:14px;font-weight:500;flex:0 0 auto;flex-wrap:wrap}
+  header a,header button{font:inherit;color:var(--white);background:none;border:none;cursor:pointer;text-decoration:none;
+    padding:2px 0;border-bottom:1px solid transparent;transition:border-color .15s}
+  header a:hover,header button:hover{border-bottom-color:var(--white)}
+  header .title{font-weight:600;margin-right:auto}
+  header .title em{font-style:normal;opacity:.6;font-weight:400;margin-left:10px}
+  header .stat{font-variant-numeric:tabular-nums;font-weight:600}
+  header .stat b{font-weight:700}
+  main{flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:clamp(16px,3vw,30px);padding:0 16px 16px}
+  #wrap{position:relative}
+  canvas{display:block;background:rgba(255,255,255,.10);border-radius:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
+  .side{display:flex;flex-direction:column;gap:16px;align-self:flex-start;margin-top:4px}
+  .side .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;font-weight:600}
+  #next{background:rgba(255,255,255,.10);border-radius:10px;display:block}
+  #over{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    background:rgba(0,18,80,.78);border-radius:12px;backdrop-filter:blur(3px)}
+  #over.show{display:flex}
+  #over p{font-size:clamp(22px,4vw,34px);font-weight:800}
+  #over button{font:inherit;font-weight:700;font-size:16px;color:var(--blue);background:var(--white);border:none;border-radius:999px;padding:12px 26px;cursor:pointer}
+  .pad{position:fixed;left:0;right:0;bottom:16px;z-index:10;display:none;justify-content:center;gap:10px}
+  .pad button{width:60px;height:54px;border-radius:14px;border:1.5px solid rgba(255,255,255,.5);background:rgba(255,255,255,.1);
+    color:var(--white);font-size:20px;font-weight:700;cursor:pointer}
+  .pad button:active{background:rgba(255,255,255,.25)}
+  .hint{padding:0 clamp(20px,4vw,40px) 18px;font-size:12px;opacity:.55;flex:0 0 auto}
+  @media (max-width:760px){ .pad{display:flex} .hint{display:none} .side{display:none} main{padding-bottom:90px} }
+</style>
+</head>
+<body>
+<header>
+  <span class="title">Blocks<em>stack &amp; clear lines</em></span>
+  <span class="stat">score <b id="score">0</b></span>
+  <span class="stat">lines <b id="lines">0</b></span>
+  <button id="new">new game</button>
+  <a href="../">playground</a>
+</header>
+<main>
+  <div id="wrap">
+    <canvas id="board"></canvas>
+    <div id="over"><p id="overMsg">Game over</p><button id="retry">play again</button></div>
+  </div>
+  <div class="side">
+    <span class="lbl">next</span>
+    <canvas id="next" width="96" height="96"></canvas>
+  </div>
+</main>
+<div class="pad">
+  <button id="bL">‹</button><button id="bRot">⟳</button><button id="bR">›</button><button id="bDown">↓</button><button id="bDrop">⤓</button>
+</div>
+<p class="hint">← → move · ↑ rotate · ↓ soft drop · space hard drop</p>
+<script>
+(() => {
+"use strict";
+const COLS=10, ROWS=20;
+const board=document.getElementById("board"), ctx=board.getContext("2d");
+const nextC=document.getElementById("next"), nctx=nextC.getContext("2d");
+const DPR=Math.min(devicePixelRatio||1,2);
+let cs;                                   // cell size (css px)
+
+const COLORS=["#62d0ff","#ffd23b","#ff7ec0","#9af2c0","#c2a0ff","#ff9f5c","#ffffff"];
+const SHAPES=[
+  [[1,1,1,1]],                 // I
+  [[1,1],[1,1]],               // O
+  [[0,1,0],[1,1,1]],           // T
+  [[0,1,1],[1,1,0]],           // S
+  [[1,1,0],[0,1,1]],           // Z
+  [[1,0,0],[1,1,1]],           // J
+  [[0,0,1],[1,1,1]],           // L
+];
+
+let grid, cur, nextPiece, score, lines, level, dropMs, acc, last, over, bag;
+
+function layout(){
+  const maxH=Math.min(window.innerHeight-(window.innerWidth<760?200:170), 760);
+  const maxW=window.innerWidth-(window.innerWidth<760?32:170);
+  cs=Math.floor(Math.min(maxW/COLS, maxH/ROWS));
+  cs=Math.max(14,cs);
+  board.style.width=COLS*cs+"px"; board.style.height=ROWS*cs+"px";
+  board.width=COLS*cs*DPR; board.height=ROWS*cs*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+  draw();
+}
+addEventListener("resize",layout);
+
+function newGrid(){ return Array.from({length:ROWS},()=>Array(COLS).fill(0)); }
+function bagNext(){ if(!bag||!bag.length){ bag=[0,1,2,3,4,5,6]; for(let i=bag.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[bag[i],bag[j]]=[bag[j],bag[i]];}} return bag.pop(); }
+function makePiece(type){ return {type,shape:SHAPES[type].map(r=>r.slice()),x:(COLS>>1)-1,y:0}; }
+function spawn(){
+  cur=makePiece(nextPiece); nextPiece=bagNext();
+  cur.x=(COLS - cur.shape[0].length)>>1; cur.y=0;
+  if(collides(cur.shape,cur.x,cur.y)){ over=true; document.getElementById("over").classList.add("show"); }
+  drawNext();
+}
+function collides(sh,x,y){
+  for(let r=0;r<sh.length;r++)for(let c=0;c<sh[r].length;c++){ if(!sh[r][c])continue;
+    const gx=x+c, gy=y+r; if(gx<0||gx>=COLS||gy>=ROWS) return true; if(gy>=0&&grid[gy][gx]) return true; }
+  return false;
+}
+function rotate(sh){ const R=sh.length,C=sh[0].length, out=Array.from({length:C},()=>Array(R).fill(0));
+  for(let r=0;r<R;r++)for(let c=0;c<C;c++) out[c][R-1-r]=sh[r][c]; return out; }
+
+function lockPiece(){
+  for(let r=0;r<cur.shape.length;r++)for(let c=0;c<cur.shape[r].length;c++){ if(cur.shape[r][c]){ const gy=cur.y+r, gx=cur.x+c; if(gy>=0) grid[gy][gx]=cur.type+1; } }
+  // clear lines
+  let cleared=0;
+  for(let r=ROWS-1;r>=0;r--){ if(grid[r].every(v=>v)){ grid.splice(r,1); grid.unshift(Array(COLS).fill(0)); cleared++; r++; } }
+  if(cleared){ lines+=cleared; score+=[0,100,300,500,800][cleared]*level; level=1+Math.floor(lines/10); dropMs=Math.max(90,650-(level-1)*55);
+    document.getElementById("lines").textContent=lines; document.getElementById("score").textContent=score; }
+  spawn();
+}
+function step(dir){ if(over)return; if(!collides(cur.shape,cur.x+dir,cur.y)){ cur.x+=dir; draw(); } }
+function softDrop(){ if(over)return; if(!collides(cur.shape,cur.x,cur.y+1)){ cur.y++; } else { lockPiece(); } draw(); acc=0; }
+function hardDrop(){ if(over)return; while(!collides(cur.shape,cur.x,cur.y+1)){ cur.y++; score+=2; } lockPiece(); document.getElementById("score").textContent=score; draw(); }
+function tryRotate(){ if(over)return; const rot=rotate(cur.shape);
+  for(const k of [0,-1,1,-2,2]){ if(!collides(rot,cur.x+k,cur.y)){ cur.shape=rot; cur.x+=k; draw(); return; } } }
+
+function cellRect(x,y,col){ ctx.fillStyle=col; const p=Math.max(1,cs*0.06);
+  ctx.fillRect(x*cs+p,y*cs+p,cs-2*p,cs-2*p);
+  ctx.fillStyle="rgba(255,255,255,0.22)"; ctx.fillRect(x*cs+p,y*cs+p,cs-2*p,Math.max(1,cs*0.16)); }
+function draw(){
+  ctx.clearRect(0,0,COLS*cs,ROWS*cs);
+  // grid faint lines
+  ctx.strokeStyle="rgba(255,255,255,0.06)"; ctx.lineWidth=1;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ ctx.strokeRect(c*cs,r*cs,cs,cs); }
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ if(grid[r][c]) cellRect(c,r,COLORS[grid[r][c]-1]); }
+  if(cur && !over){
+    // ghost
+    let gy=cur.y; while(!collides(cur.shape,cur.x,gy+1)) gy++;
+    for(let r=0;r<cur.shape.length;r++)for(let c=0;c<cur.shape[r].length;c++){ if(cur.shape[r][c]){ ctx.fillStyle="rgba(255,255,255,0.16)"; const p=Math.max(1,cs*0.06); ctx.fillRect((cur.x+c)*cs+p,(gy+r)*cs+p,cs-2*p,cs-2*p);} }
+    for(let r=0;r<cur.shape.length;r++)for(let c=0;c<cur.shape[r].length;c++){ if(cur.shape[r][c]){ const yy=cur.y+r; if(yy>=0) cellRect(cur.x+c,yy,COLORS[cur.type]); } }
+  }
+}
+function drawNext(){
+  nctx.clearRect(0,0,96,96); const sh=SHAPES[nextPiece], w=sh[0].length, h=sh.length;
+  const u=Math.min(96/(w+1),96/(h+1)), ox=(96-w*u)/2, oy=(96-h*u)/2;
+  for(let r=0;r<h;r++)for(let c=0;c<w;c++){ if(sh[r][c]){ nctx.fillStyle=COLORS[nextPiece]; const p=u*0.08; nctx.fillRect(ox+c*u+p,oy+r*u+p,u-2*p,u-2*p);} }
+}
+
+function loop(t){
+  if(!over){ if(!last)last=t; acc+=t-last; last=t;
+    if(acc>=dropMs){ acc=0; if(!collides(cur.shape,cur.x,cur.y+1)) cur.y++; else lockPiece(); draw(); }
+  } else last=t;
+  requestAnimationFrame(loop);
+}
+
+function reset(){
+  grid=newGrid(); score=0; lines=0; level=1; dropMs=650; acc=0; last=0; over=false; bag=null;
+  nextPiece=bagNext();
+  document.getElementById("score").textContent="0"; document.getElementById("lines").textContent="0";
+  document.getElementById("over").classList.remove("show");
+  spawn(); layout();
+}
+
+addEventListener("keydown",e=>{
+  const k=e.key.toLowerCase();
+  if(k==="arrowleft"||k==="a"){step(-1);e.preventDefault();}
+  else if(k==="arrowright"||k==="d"){step(1);e.preventDefault();}
+  else if(k==="arrowdown"||k==="s"){softDrop();e.preventDefault();}
+  else if(k==="arrowup"||k==="w"){tryRotate();e.preventDefault();}
+  else if(k===" "){hardDrop();e.preventDefault();}
+});
+const press=(id,fn)=>{ const b=document.getElementById(id); b.addEventListener("click",fn); };
+press("bL",()=>step(-1)); press("bR",()=>step(1)); press("bRot",tryRotate); press("bDown",softDrop); press("bDrop",hardDrop);
+document.getElementById("new").addEventListener("click",reset);
+document.getElementById("retry").addEventListener("click",reset);
+
+reset();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

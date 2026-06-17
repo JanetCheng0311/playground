@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="Play 2048 — slide tiles, merge matching numbers, reach 2048.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%230033ff'/%3E%3Crect x='10' y='10' width='20' height='20' rx='4' fill='%23fff'/%3E%3Crect x='34' y='10' width='20' height='20' rx='4' fill='%23ffd23b'/%3E%3Crect x='10' y='34' width='20' height='20' rx='4' fill='%2362d0ff'/%3E%3Crect x='34' y='34' width='20' height='20' rx='4' fill='%23ff7ec0'/%3E%3C/svg%3E">
+<title>2048 — Playground</title>
+<style>
+  :root{ --blue:#0033ff; --white:#fff; --ink:#0b1f4d; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{background:var(--blue);color:var(--white);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    user-select:none;-webkit-user-select:none;touch-action:none;
+    min-height:100dvh;display:flex;flex-direction:column}
+  header{display:flex;align-items:baseline;gap:24px;padding:22px clamp(20px,4vw,40px);font-size:14px;font-weight:500;flex:0 0 auto}
+  header a,header button{font:inherit;color:var(--white);background:none;border:none;cursor:pointer;text-decoration:none;
+    padding:2px 0;border-bottom:1px solid transparent;transition:border-color .15s}
+  header a:hover,header button:hover{border-bottom-color:var(--white)}
+  header .title{font-weight:600;margin-right:auto}
+  header .title em{font-style:normal;opacity:.6;font-weight:400;margin-left:10px}
+  header .score{font-variant-numeric:tabular-nums;font-weight:600}
+  header .score b{font-weight:700}
+  main{flex:1 1 auto;display:flex;align-items:center;justify-content:center;padding:0 16px 24px}
+  #wrap{position:relative}
+  #board{position:relative;background:rgba(255,255,255,.14);border-radius:16px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+  .cell{position:absolute;background:rgba(255,255,255,.08);border-radius:10px}
+  .tile{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:10px;
+    font-weight:700;color:var(--ink);transition:transform .12s ease;will-change:transform;
+    font-variant-numeric:tabular-nums}
+  .tile.pop{animation:pop .16s ease}
+  .tile.born{animation:born .16s ease}
+  @keyframes pop{0%{transform:translate(var(--x),var(--y)) scale(1)}50%{transform:translate(var(--x),var(--y)) scale(1.14)}100%{transform:translate(var(--x),var(--y)) scale(1)}}
+  @keyframes born{0%{transform:translate(var(--x),var(--y)) scale(0)}100%{transform:translate(var(--x),var(--y)) scale(1)}}
+  #over{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    background:rgba(0,18,80,.78);border-radius:16px;backdrop-filter:blur(3px)}
+  #over.show{display:flex}
+  #over p{font-size:clamp(26px,5vw,40px);font-weight:800;letter-spacing:-.02em}
+  #over button{font:inherit;font-weight:700;font-size:16px;color:var(--blue);background:var(--white);border:none;
+    border-radius:999px;padding:12px 26px;cursor:pointer}
+  .hint{padding:0 clamp(20px,4vw,40px) 20px;font-size:12px;opacity:.55;flex:0 0 auto}
+  @media (max-width:640px){header{gap:14px;padding:16px}}
+</style>
+</head>
+<body>
+<header>
+  <span class="title">2048<em>merge to 2048</em></span>
+  <span class="score">score <b id="score">0</b></span>
+  <button id="new">new game</button>
+  <a href="../">playground</a>
+</header>
+<main>
+  <div id="wrap">
+    <div id="board"></div>
+    <div id="over"><p id="overMsg">Game over</p><button id="retry">play again</button></div>
+  </div>
+</main>
+<p class="hint">arrow keys or swipe to move</p>
+<script>
+(() => {
+"use strict";
+const N=4;
+const board=document.getElementById("board"), wrap=document.getElementById("wrap");
+let S, G, cell;                          // board size, gap, cell size
+const COLORS={2:"#ffffff",4:"#eaf2ff",8:"#bfe0ff",16:"#8fd0ff",32:"#62c0ff",64:"#3aa6ff",
+  128:"#ffd96b",256:"#ffc83b",512:"#ffb03b",1024:"#ff8f6b",2048:"#ff6f91",4096:"#d68bff"};
+function colorFor(v){ return COLORS[v]||"#b388ff"; }
+
+let grid, tiles, score=0, busy=false, won=false, idc=1;
+
+function layout(){
+  S=Math.min(window.innerWidth-32, window.innerHeight-220, 460);
+  S=Math.max(240,S);
+  G=Math.round(S*0.028)+4; cell=(S-G*(N+1))/N;
+  board.style.width=board.style.height=S+"px";
+  board.querySelectorAll(".cell").forEach((c,i)=>{ const r=(i/N)|0, col=i%N;
+    c.style.width=c.style.height=cell+"px"; c.style.left=pos(col)+"px"; c.style.top=pos(r)+"px"; });
+  for(const t of tiles) placeTile(t,false);
+}
+const pos=i=>G+i*(cell+G);
+function makeCells(){ for(let i=0;i<N*N;i++){ const c=document.createElement("div"); c.className="cell"; board.appendChild(c);} }
+
+function placeTile(t,anim){
+  const el=t.el; el.style.width=el.style.height=cell+"px";
+  el.style.setProperty("--x",pos(t.c)+"px"); el.style.setProperty("--y",pos(t.r)+"px");
+  el.style.transform=`translate(${pos(t.c)}px,${pos(t.r)}px)`;
+  el.style.background=colorFor(t.v); el.textContent=t.v;
+  el.style.fontSize=(t.v<128?cell*0.42:t.v<1024?cell*0.34:cell*0.27)+"px";
+}
+function addTile(r,c,v){
+  const el=document.createElement("div"); el.className="tile born"; board.appendChild(el);
+  const t={id:idc++,r,c,v,el}; tiles.push(t); placeTile(t,true);
+  el.addEventListener("animationend",()=>el.classList.remove("born","pop"),{once:false});
+  return t;
+}
+function tileAt(r,c){ return tiles.find(t=>t.r===r&&t.c===c); }
+function emptyCells(){ const e=[]; for(let r=0;r<N;r++)for(let c=0;c<N;c++) if(!tileAt(r,c)) e.push([r,c]); return e; }
+function spawn(){ const e=emptyCells(); if(!e.length)return; const [r,c]=e[(Math.random()*e.length)|0]; addTile(r,c,Math.random()<0.9?2:4); }
+
+function reset(){
+  tiles=[]; grid=null; score=0; won=false; busy=false; idc=1;
+  document.getElementById("score").textContent="0";
+  document.getElementById("over").classList.remove("show");
+  [...board.querySelectorAll(".tile")].forEach(e=>e.remove());
+  spawn(); spawn(); layout();
+}
+
+// directions: build line order; move tiles, merge
+function move(dr,dc){
+  if(busy)return;
+  const order=[];
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++) order.push([r,c]);
+  if(dc>0) order.sort((a,b)=>b[1]-a[1]);
+  if(dr>0) order.sort((a,b)=>b[0]-a[0]);
+  let moved=false; const mergedSet=new Set(); const toRemove=[];
+  for(const [r,c] of order){
+    const t=tileAt(r,c); if(!t)continue;
+    let nr=r,nc=c;
+    while(true){
+      const tr=nr+dr, tc=nc+dc;
+      if(tr<0||tr>=N||tc<0||tc>=N) break;
+      const o=tileAt(tr,tc);
+      if(!o){ nr=tr;nc=tc; continue; }
+      if(o.v===t.v && !mergedSet.has(o.id) && !mergedSet.has(t.id)){ nr=tr;nc=tc; }
+      break;
+    }
+    if(nr!==r||nc!==c){
+      const target=tileAt(nr,nc);
+      if(target && target.v===t.v && !mergedSet.has(target.id)){
+        // merge into target
+        t.r=nr;t.c=nc; placeTile(t,true);
+        mergedSet.add(target.id);
+        target.v*=2; score+=target.v; if(target.v===2048)won=true;
+        toRemove.push(t);
+        target._upgrade=true;
+      } else { t.r=nr;t.c=nc; placeTile(t,true); }
+      moved=true;
+    }
+  }
+  if(!moved) return;
+  busy=true;
+  document.getElementById("score").textContent=score;
+  setTimeout(()=>{
+    for(const t of toRemove){ t.el.remove(); tiles=tiles.filter(x=>x!==t); }
+    for(const t of tiles){ if(t._upgrade){ t._upgrade=false; placeTile(t,true); t.el.classList.add("pop"); } }
+    spawn();
+    busy=false;
+    if(won){ endGame("2048! you win"); won=false; }
+    else if(!canMove()) endGame("Game over");
+  },130);
+}
+function canMove(){
+  if(emptyCells().length) return true;
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){ const t=tileAt(r,c);
+    const right=tileAt(r,c+1), down=tileAt(r+1,c);
+    if(right&&right.v===t.v) return true; if(down&&down.v===t.v) return true; }
+  return false;
+}
+function endGame(msg){ document.getElementById("overMsg").textContent=msg; document.getElementById("over").classList.add("show"); }
+
+// input
+addEventListener("keydown",e=>{
+  const k=e.key.toLowerCase();
+  if(k==="arrowup"||k==="w"){ move(-1,0); e.preventDefault(); }
+  else if(k==="arrowdown"||k==="s"){ move(1,0); e.preventDefault(); }
+  else if(k==="arrowleft"||k==="a"){ move(0,-1); e.preventDefault(); }
+  else if(k==="arrowright"||k==="d"){ move(0,1); e.preventDefault(); }
+});
+let tx,ty;
+wrap.addEventListener("pointerdown",e=>{tx=e.clientX;ty=e.clientY;});
+wrap.addEventListener("pointerup",e=>{
+  if(tx==null)return; const dx=e.clientX-tx, dy=e.clientY-ty;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<24){tx=null;return;}
+  if(Math.abs(dx)>Math.abs(dy)) move(0,dx>0?1:-1); else move(dy>0?1:-1,0);
+  tx=null;
+});
+document.getElementById("new").addEventListener("click",reset);
+document.getElementById("retry").addEventListener("click",reset);
+addEventListener("resize",layout);
+
+makeCells();
+reset();
+})();
+</script>
+</body>
+</html>
