@@ -86,6 +86,9 @@
   #heldStack{position:fixed;z-index:60;width:40px;height:40px;border-radius:8px;display:none;place-items:center;pointer-events:none;transform:translate(-50%,-50%);background:rgba(10,20,60,.85);border:1.5px solid rgba(255,255,255,.5)}
   #heldStack.show{display:grid}
   #heldStack .n{position:absolute;right:2px;bottom:0;font-size:11px;font-weight:800;text-shadow:0 1px 2px #000}
+  #barTip{position:fixed;z-index:25;display:none;transform:translate(-50%,-100%);background:rgba(10,14,40,.94);border:1.5px solid rgba(255,255,255,.35);border-radius:9px;padding:6px 11px;pointer-events:none;max-width:220px;text-align:center;box-shadow:0 8px 22px rgba(0,0,0,.4)}
+  #barTip.show{display:block}
+  #barTip b{font-size:13px;font-weight:800}#barTip span{display:block;font-size:11px;opacity:.72;margin-top:2px}
   #helpBody .item{display:block;padding:8px 0;border-top:1px solid rgba(255,255,255,.16)}
   #helpBody b{font-size:14px}#helpBody span{display:block;font-size:12px;opacity:.75;margin-top:2px}
   #helpBody h4{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin:14px 0 4px}
@@ -125,6 +128,7 @@
   <button id="helpBtn">？ Help</button>
 </div>
 <div class="bar" id="bar"></div>
+<div id="barTip"></div>
 <p class="hint">WASD/arrows move · 1–0 pick item · E/Space to act — till & plant, chop/mine, fish, fight slimes, place items · hold use to remove a fence you built · follow the road east to the village & its fisher · open the bag (I) to craft · see help for more</p>
 <div class="shop" id="shop"><div class="card">
   <h2>🐾 Whiskers' Shop <span class="c">coins <b id="shopCoins">0</b></span></h2>
@@ -568,20 +572,8 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
     for(let r=0;r<OROWS;r++)for(let c=0;c<OCOLS;c++){ if(LIGHTS.has(gridOut[r][c].type)){ const x=c*TILE+TILE/2-camX,y=r*TILE+TILE/2-camY; if(x<-80||y<-80||x>VW+80||y>VH+80)continue; const g=ctx.createRadialGradient(x,y,4,x,y,70); g.addColorStop(0,"rgba(255,200,120,.55)");g.addColorStop(1,"rgba(255,200,120,0)"); ctx.fillStyle=g; ctx.beginPath();ctx.arc(x,y,70,0,7);ctx.fill(); } }
     ctx.globalCompositeOperation="source-over"; } }
   for(let i=0;i<player.maxHp;i++) heart(16+i*22,20,i<player.hp);
-  drawTip();
 }
-let hover=null; // {r,c} from pointer, or null
-function tipFor(r,c){ const t=G[r][c]; let type=t.type; if(t.crop&&(type==="soil"))return DESC["__crop"]?DESC["__crop"]:[CROPS[t.crop.type].name,t.crop.grow>=1?"ripe! press use to harvest":"growing — press use to water"];
-  if(scene==="out"&&area==="home"&&Math.abs((c*TILE+TILE/2)-catX)<TILE&&Math.abs((r*TILE+TILE/2)-catY)<TILE) return DESC.cat;
-  if(scene==="out"&&area==="village"&&Math.abs((c*TILE+TILE/2)-npcX)<TILE&&Math.abs((r*TILE+TILE/2)-npcY)<TILE) return DESC.npc;
-  return DESC[type]||null; }
-function drawTip(){ if(!hover)return; const cell=hover; const d=tipFor(cell.r,cell.c); if(!d)return;
-  const name=d[0],use=d[1]||""; ctx.font="700 13px Helvetica,Arial"; const w1=ctx.measureText(name).width; ctx.font="11px Helvetica,Arial"; const w2=use?ctx.measureText(use).width:0;
-  const w=Math.max(w1,w2)+20,h=use?40:24; let x=cell.c*TILE-camX+TILE/2-w/2,y=cell.r*TILE-camY-h-6; x=Math.max(6,Math.min(VW-w-6,x)); if(y<6)y=cell.r*TILE-camY+TILE+6;
-  ctx.fillStyle="rgba(10,14,40,.9)";ctx.beginPath();ctx.roundRect(x,y,w,h,8);ctx.fill();ctx.strokeStyle="rgba(255,255,255,.35)";ctx.stroke();
-  ctx.textAlign="left";ctx.fillStyle="#fff";ctx.font="700 13px Helvetica,Arial";ctx.fillText(name,x+10,y+16); if(use){ctx.fillStyle="rgba(255,255,255,.75)";ctx.font="11px Helvetica,Arial";ctx.fillText(use,x+10,y+32);} }
-canvas.addEventListener("pointermove",e=>{ const rect=canvas.getBoundingClientRect(); const c=Math.floor((e.clientX-rect.left+camX)/TILE),r=Math.floor((e.clientY-rect.top+camY)/TILE); hover=(r>=0&&c>=0&&r<GR&&c<GC)?{r,c}:null; });
-canvas.addEventListener("pointerleave",()=>{ hover=null; });
+let hover=null; // kept for compatibility; map name-tooltips were removed (names show on hover in the hotbar & bag instead)
 let lastT=0;
 function frame(ts){ const nw=ts/1000,dt=lastT?Math.min(0.05,nw-lastT):0;lastT=nw; update(dt); draw();
   const ph=(clock%DAYLEN)/DAYLEN,day=1+Math.floor(clock/DAYLEN),part=ph<0.25?"morning":ph<0.5?"noon":ph<0.72?"evening":"night";
@@ -589,12 +581,17 @@ function frame(ts){ const nw=ts/1000,dt=lastT?Math.min(0.05,nw-lastT):0;lastT=nw
 
 /* ---- hotbar ---- */
 const barEl=document.getElementById("bar");
-function renderBar(){ barEl.innerHTML="";
+const barTip=document.getElementById("barTip");
+function showBarTip(el,key){ const base=key.startsWith("seed_")?"seed":key.startsWith("crop_")?"crop":key; const use=USE[base]||"";
+  barTip.innerHTML=`<b>${itemName(key)}</b>${use?`<span>${use}</span>`:""}`; const r=el.getBoundingClientRect();
+  barTip.style.left=(r.left+r.width/2)+"px"; barTip.style.top=(r.top-8)+"px"; barTip.classList.add("show"); }
+function hideBarTip(){ barTip.classList.remove("show"); }
+function renderBar(){ barEl.innerHTML=""; hideBarTip();
   for(let i=0;i<10;i++){ const s=bag[i]; const el=document.createElement("div"); el.className="slot"+(i===selSlot?" on":"");
     let inner=`<span class="k">${(i+1)%10}</span>`;
     if(s){ const it=ITEMS[s.key],sz=it.kind==="seed"?12:it.kind==="crop"?20:18,rad=it.kind==="mat"?3:50;
       inner+=`<span class="dot" style="width:${sz}px;height:${sz}px;border-radius:${rad}px;background:${itemColor(s.key)}"></span><span class="n">${s.count}</span>`;
-      const base=s.key.startsWith("seed_")?"seed":s.key.startsWith("crop_")?"crop":s.key; el.title=itemName(s.key)+(USE[base]?" — "+USE[base]:""); }
+      el.addEventListener("pointerenter",()=>showBarTip(el,s.key)); el.addEventListener("pointerleave",hideBarTip); }
     el.innerHTML=inner; el.addEventListener("click",()=>{selSlot=i;renderBar();}); barEl.appendChild(el); } }
 
 /* ---- shop / craft ---- */
