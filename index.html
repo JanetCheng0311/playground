@@ -77,11 +77,12 @@
     opacity:.6;
   }
 
+  nav a .meta{display:flex;flex-direction:column;gap:8px;align-self:center}
   nav a .game{
-    display:inline-flex;align-items:center;gap:6px;
+    display:inline-flex;align-items:center;gap:6px;align-self:flex-start;
     font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
     border:1.5px solid rgba(255,255,255,.6);border-radius:999px;
-    padding:3px 9px;margin-left:14px;vertical-align:middle;opacity:.9;
+    padding:3px 9px;opacity:.9;
   }
   nav a .game svg{width:13px;height:13px}
   @media (prefers-reduced-motion: reduce){
@@ -163,14 +164,18 @@
       </a>
       <a href="2048/">
         <b>2048</b>
-        <span class="game"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2" y="7" width="20" height="11" rx="5" stroke="white" stroke-width="2"/><path d="M7 11v3M5.5 12.5h3" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="16.5" cy="11.5" r="1.2" fill="white"/><circle cx="18.5" cy="14" r="1.2" fill="white"/></svg>game</span>
-        <span>merge tiles to 2048</span>
+        <span class="meta">
+          <span class="game"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2" y="7" width="20" height="11" rx="5" stroke="white" stroke-width="2"/><path d="M7 11v3M5.5 12.5h3" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="16.5" cy="11.5" r="1.2" fill="white"/><circle cx="18.5" cy="14" r="1.2" fill="white"/></svg>game</span>
+          <span>merge tiles to 2048</span>
+        </span>
         <span class="arrow" aria-hidden="true">&#8594;</span>
       </a>
       <a href="blocks/">
         <b>Blocks</b>
-        <span class="game"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2" y="7" width="20" height="11" rx="5" stroke="white" stroke-width="2"/><path d="M7 11v3M5.5 12.5h3" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="16.5" cy="11.5" r="1.2" fill="white"/><circle cx="18.5" cy="14" r="1.2" fill="white"/></svg>game</span>
-        <span>stack the falling pieces</span>
+        <span class="meta">
+          <span class="game"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2" y="7" width="20" height="11" rx="5" stroke="white" stroke-width="2"/><path d="M7 11v3M5.5 12.5h3" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="16.5" cy="11.5" r="1.2" fill="white"/><circle cx="18.5" cy="14" r="1.2" fill="white"/></svg>game</span>
+          <span>stack the falling pieces</span>
+        </span>
         <span class="arrow" aria-hidden="true">&#8594;</span>
       </a>
     </nav>
