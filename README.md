@@ -21,7 +21,8 @@ A collection of interactive creative-coding toys, hosted with GitHub Pages. The 
 - **[Papers](papers/)**: a 3D scene of paper sheets tumbling on the wind (hand-rolled perspective + lighting, no libraries). Adjust count and wind, gust on tap, move to push the air, cycle themes (white paper, autumn leaves, sticky notes, kraft).
 - **[2048](2048/)**: the classic tile-merging puzzle. Arrow keys or swipe to slide tiles; merge matching numbers to reach 2048.
 - **[Blocks](blocks/)**: stack the falling pieces and clear lines. Arrow keys (or on-screen pad) to move and rotate, space to hard-drop; ghost piece, hold + next previews, levels, scoring, best-score memory and sound.
-- **[Farm](farm/)**: a little isometric farm. Till soil, buy & plant seeds (carrot, wheat, pumpkin), water them and end the day to grow, then harvest ripe crops for coins. Progress saves to your browser, with sound.
+- **[Farm](farm/)**: a little isometric farm. Till soil, buy & plant seeds (carrot, wheat, pumpkin), water them and end the day to grow, then harvest ripe crops for coins. Coin shop for skills (fertilizer, rich soil, sprinkler) and field skins. Progress saves to your browser, with sound.
+- **[Homestead](homestead/)**: a top-down farm-life game. Walk around with WASD/arrows (or the on-screen D-pad), and press E / Space / the use button to till, plant, water and harvest the tile you face. Crops grow in real time, a day cycle ticks by, coins and progress save to your browser, with sound.
 
 The Kaleidoscope now renders glossy reflective circle/square gems (no pixel grid), and Voice has a **batch** box: paste one quote per line and download all clips as a single ZIP of MP3s.
 
