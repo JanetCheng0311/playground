@@ -48,12 +48,29 @@
   .shop .item button{font:inherit;font-size:12px;font-weight:700;color:#0a2acc;background:#fff;border:none;border-radius:999px;padding:7px 13px;cursor:pointer;min-width:54px}
   .shop .item button[disabled]{opacity:.4;cursor:default}
   .shop .close{margin-top:16px;width:100%;font:inherit;font-weight:700;color:#fff;background:none;border:1.5px solid rgba(255,255,255,.5);border-radius:999px;padding:11px;cursor:pointer}
-  .baggrid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin:4px 0}
-  .baggrid .bslot{aspect-ratio:1;border-radius:9px;border:1.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);position:relative;cursor:pointer;display:grid;place-items:center}
-  .baggrid .bslot.hot{border-color:rgba(255,255,255,.65)}
-  .baggrid .bslot.on{border-color:#fff;background:rgba(255,255,255,.3)}
-  .baggrid .bslot .dot{border-radius:4px}
-  .baggrid .bslot .n{position:absolute;right:2px;bottom:0;font-size:10px;font-weight:700;text-shadow:0 1px 2px #000}
+  .toolbar{flex:0 0 auto;display:flex;gap:10px;justify-content:center;padding:10px 16px 0}
+  .toolbar button{font:inherit;font-weight:700;font-size:14px;color:#fff;background:rgba(255,255,255,.16);border:1.5px solid rgba(255,255,255,.45);border-radius:999px;padding:9px 20px;cursor:pointer;transition:background .15s}
+  .toolbar button em{font-style:normal;opacity:.6;font-weight:400;font-size:12px}
+  .toolbar button:hover,.toolbar button:active{background:rgba(255,255,255,.28)}
+  /* inventory (bag) */
+  .invcard{width:min(720px,100%)}
+  .invtop{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+  .invtop h2{font-size:18px}.invtop .c{margin-left:auto;font-size:14px}
+  .invcols{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
+  .invleft{flex:1 1 300px;min-width:0}
+  .invright{flex:1 1 220px;min-width:200px}
+  .invgrid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
+  .invgrid.hot{margin-top:6px}
+  .invgrid .bslot{aspect-ratio:1;border-radius:8px;border:1.5px solid rgba(255,255,255,.22);background:rgba(0,0,0,.24);position:relative;cursor:pointer;display:grid;place-items:center;box-shadow:inset 0 2px 5px rgba(0,0,0,.4)}
+  .invgrid.hot .bslot{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.08)}
+  .invgrid .bslot.on{border-color:#ffd23b;background:rgba(255,210,59,.2);box-shadow:inset 0 2px 5px rgba(0,0,0,.3),0 0 0 1px #ffd23b}
+  .invgrid .bslot .dot{border-radius:4px}
+  .invgrid .bslot .n{position:absolute;right:3px;bottom:1px;font-size:11px;font-weight:800;text-shadow:0 1px 2px #000,0 0 2px #000}
+  .invlabel{font-size:10px;letter-spacing:.13em;text-transform:uppercase;opacity:.5;margin:13px 0 0}
+  .invname{min-height:36px;margin-top:10px;padding:7px 12px;border-radius:10px;background:rgba(0,0,0,.25);font-size:13px;font-weight:700;display:flex;align-items:center}
+  .invname:empty{visibility:hidden}.invname span{font-weight:400;opacity:.7;margin-left:6px}
+  .craftlist{max-height:46vh;overflow-y:auto}
+  .craftlist .item .dot{width:20px;height:20px;border-radius:5px;flex:0 0 auto;align-self:center}
   #helpBody .item{display:block;padding:8px 0;border-top:1px solid rgba(255,255,255,.16)}
   #helpBody b{font-size:14px}#helpBody span{display:block;font-size:12px;opacity:.75;margin-top:2px}
   #helpBody h4{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin:14px 0 4px}
@@ -80,8 +97,6 @@
   <span class="title">Homestead<em>farm · gather · craft</em></span>
   <span class="stat">coins <b id="coins">0</b></span>
   <span class="stat" id="clock">day 1 · morning</span>
-  <button id="bagBtn">bag</button>
-  <button id="helpBtn">help</button>
   <button id="expBtn">save file</button>
   <button id="impBtn">load file</button>
   <button id="snd">sound</button>
@@ -90,6 +105,10 @@
   <input type="file" id="impFile" accept="application/json,.json" style="display:none">
 </header>
 <main><canvas id="stage"></canvas></main>
+<div class="toolbar">
+  <button id="bagBtn">🎒 Bag <em>(I)</em></button>
+  <button id="helpBtn">？ Help</button>
+</div>
 <div class="bar" id="bar"></div>
 <p class="hint">WASD/arrows move · 1–0 pick item · E/Space to act — till & plant, chop/mine, fish, fight slimes, place items · hold use to remove a fence you built · follow the road east to the village & its fisher · open the bag (I) to craft · see help for more</p>
 <div class="shop" id="shop"><div class="card">
@@ -100,10 +119,20 @@
   <h3>upgrades</h3><div id="upList"></div>
   <button class="close" id="shopClose">close</button>
 </div></div>
-<div class="shop" id="bagui"><div class="card">
-  <h2>Bag <span class="c">coins <b id="bagCoins">0</b></span></h2>
-  <div id="bagGrid" class="baggrid"></div>
-  <h3>crafting table</h3><div id="craftList"></div>
+<div class="shop" id="bagui"><div class="card invcard">
+  <div class="invtop"><h2>Backpack</h2><span class="c">coins <b id="bagCoins">0</b></span></div>
+  <div class="invcols">
+    <div class="invleft">
+      <div id="bagGrid" class="invgrid"></div>
+      <div class="invlabel">hotbar · keys 1–0</div>
+      <div id="bagHot" class="invgrid hot"></div>
+      <div id="invName" class="invname"></div>
+    </div>
+    <div class="invright">
+      <h3>🔨 Crafting table</h3>
+      <div id="craftList" class="craftlist"></div>
+    </div>
+  </div>
   <button class="close" id="bagClose">close</button>
 </div></div>
 <div class="shop" id="help"><div class="card">
@@ -516,7 +545,7 @@ function tipFor(r,c){ const t=G[r][c]; let type=t.type; if(t.crop&&(type==="soil
   if(scene==="out"&&area==="home"&&Math.abs((c*TILE+TILE/2)-catX)<TILE&&Math.abs((r*TILE+TILE/2)-catY)<TILE) return DESC.cat;
   if(scene==="out"&&area==="village"&&Math.abs((c*TILE+TILE/2)-npcX)<TILE&&Math.abs((r*TILE+TILE/2)-npcY)<TILE) return DESC.npc;
   return DESC[type]||null; }
-function drawTip(){ let cell=hover; if(!cell){ const f=facedCell(); if(f)cell=f; } if(!cell)return; const d=tipFor(cell.r,cell.c); if(!d)return;
+function drawTip(){ if(!hover)return; const cell=hover; const d=tipFor(cell.r,cell.c); if(!d)return;
   const name=d[0],use=d[1]||""; ctx.font="700 13px Helvetica,Arial"; const w1=ctx.measureText(name).width; ctx.font="11px Helvetica,Arial"; const w2=use?ctx.measureText(use).width:0;
   const w=Math.max(w1,w2)+20,h=use?40:24; let x=cell.c*TILE-camX+TILE/2-w/2,y=cell.r*TILE-camY-h-6; x=Math.max(6,Math.min(VW-w-6,x)); if(y<6)y=cell.r*TILE-camY+TILE+6;
   ctx.fillStyle="rgba(10,14,40,.9)";ctx.beginPath();ctx.roundRect(x,y,w,h,8);ctx.fill();ctx.strokeStyle="rgba(255,255,255,.35)";ctx.stroke();
@@ -567,18 +596,23 @@ document.getElementById("shopClose").addEventListener("click",()=>shopEl.classLi
 shopEl.addEventListener("pointerdown",e=>{ if(e.target===shopEl)shopEl.classList.remove("open"); });
 
 /* ---- bag + crafting table ---- */
-const baguiEl=document.getElementById("bagui"), bagGridEl=document.getElementById("bagGrid");
+const baguiEl=document.getElementById("bagui"), bagGridEl=document.getElementById("bagGrid"), bagHotEl=document.getElementById("bagHot"), invName=document.getElementById("invName");
+function craftIcon(R){ return R.once?"#9aa3ab":itemColor(R.give); }
 function renderCraft(){ document.getElementById("craftList").innerHTML=RECIPES.map(R=>{ const cs=Object.entries(R.cost).map(([m,n])=>`${n} ${itemName(m)}`).join(" + ");
     const can=Object.entries(R.cost).every(([m,n])=>countItem(m)>=n) && !(R.once==="axe"&&hasAxe);
     const label=R.once==="axe"?(hasAxe?"owned":"craft"):"craft"; const title=R.once?"Sturdy Axe":itemName(R.give);
-    return `<div class="item"><div><b>${title}</b><span>${R.desc} · ${cs}</span></div><button data-craft="${R.key}" ${can?"":"disabled"}>${label}</button></div>`; }).join(""); }
-function renderBag(){ bagGridEl.innerHTML="";
-  for(let i=0;i<BAGN;i++){ const s=bag[i],el=document.createElement("div"); el.className="bslot"+(i<10?" hot":"")+(i===selSlot?" on":"");
-    if(s){ const it=ITEMS[s.key],sz=it.kind==="seed"?12:it.kind==="crop"?18:16,rad=it.kind==="mat"?3:50;
-      el.innerHTML=`<span class="dot" style="width:${sz}px;height:${sz}px;border-radius:${rad}px;background:${itemColor(s.key)}"></span><span class="n">${s.count}</span>`;
-      const base=s.key.startsWith("seed_")?"seed":s.key.startsWith("crop_")?"crop":s.key; el.title=itemName(s.key)+(USE[base]?" — "+USE[base]:""); }
-    el.addEventListener("click",()=>{ selSlot=i; renderBag(); renderBar(); }); bagGridEl.appendChild(el); } }
-function openBag(){ document.getElementById("bagCoins").textContent=coins; renderBag(); renderCraft(); baguiEl.classList.add("open"); }
+    return `<div class="item"><span class="dot" style="background:${craftIcon(R)}"></span><div><b>${title}</b><span>${R.desc} · ${cs}</span></div><button data-craft="${R.key}" ${can?"":"disabled"}>${label}</button></div>`; }).join(""); }
+function baseKey(k){ return k.startsWith("seed_")?"seed":k.startsWith("crop_")?"crop":k; }
+function slotEl(i){ const s=bag[i],el=document.createElement("div"); el.className="bslot"+(i===selSlot?" on":"");
+  if(s){ const it=ITEMS[s.key],sz=it.kind==="seed"?14:it.kind==="crop"?22:20,rad=it.kind==="mat"?4:50;
+    el.innerHTML=`<span class="dot" style="width:${sz}px;height:${sz}px;border-radius:${rad}px;background:${itemColor(s.key)}"></span>`+(s.count>1?`<span class="n">${s.count}</span>`:"");
+    const use=USE[baseKey(s.key)]||""; const show=()=>{ invName.innerHTML=`${itemName(s.key)}${use?`<span>${use}</span>`:""}`; };
+    el.addEventListener("pointerenter",show); el.title=itemName(s.key)+(use?" — "+use:""); }
+  el.addEventListener("pointerleave",()=>{ invName.innerHTML=""; });
+  el.addEventListener("click",()=>{ selSlot=i; renderBag(); renderBar(); }); return el; }
+function renderBag(){ bagGridEl.innerHTML=""; for(let i=10;i<BAGN;i++)bagGridEl.appendChild(slotEl(i));
+  bagHotEl.innerHTML=""; for(let i=0;i<10;i++)bagHotEl.appendChild(slotEl(i)); }
+function openBag(){ document.getElementById("bagCoins").textContent=coins; invName.innerHTML=""; renderBag(); renderCraft(); baguiEl.classList.add("open"); }
 function closeBag(){ baguiEl.classList.remove("open"); }
 document.getElementById("bagBtn").addEventListener("click",()=>{ baguiEl.classList.contains("open")?closeBag():openBag(); });
 document.getElementById("bagClose").addEventListener("click",closeBag);
