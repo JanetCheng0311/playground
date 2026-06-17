@@ -93,6 +93,8 @@
   #barTip{position:fixed;z-index:25;display:none;transform:translate(-50%,-100%);background:rgba(10,14,40,.94);border:1.5px solid rgba(255,255,255,.35);border-radius:9px;padding:6px 11px;pointer-events:none;max-width:220px;text-align:center;box-shadow:0 8px 22px rgba(0,0,0,.4)}
   #barTip.show{display:block}
   #barTip b{font-size:13px;font-weight:800}#barTip span{display:block;font-size:11px;opacity:.72;margin-top:2px}
+  #cheat{position:fixed;right:6px;bottom:5px;z-index:50;width:26px;height:20px;opacity:.25;font:inherit;font-size:11px;text-align:center;color:#fff;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.25);border-radius:6px;outline:none;transition:width .15s,opacity .15s}
+  #cheat:focus{width:90px;opacity:.95;background:rgba(0,0,0,.7)}
   #helpBody .item{display:block;padding:8px 0;border-top:1px solid rgba(255,255,255,.16)}
   #helpBody b{font-size:14px}#helpBody span{display:block;font-size:12px;opacity:.75;margin-top:2px}
   #helpBody h4{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin:14px 0 4px}
@@ -187,6 +189,7 @@
   <div class="dpad"><button class="u" data-dir="u">↑</button><button class="l" data-dir="l">←</button><button class="r" data-dir="r">→</button><button class="d" data-dir="d">↓</button></div>
   <div class="actcol"><button class="act2" id="talkBtn2">💬</button><button class="act" id="actBtn">use</button></div>
 </div>
+<input id="cheat" maxlength="6" placeholder="·" autocomplete="off" spellcheck="false">
 <script>
 (() => {
 "use strict";
@@ -215,7 +218,8 @@ const ITEMS={
   rod:{kind:"tool",color:"#b5651d",name:"fishing rod"}, net:{kind:"tool",color:"#dfeae0",name:"fishing net"},
   lantern:{kind:"place",tile:"lantern",color:"#ffcf6e",name:"lantern"}, goldlamp:{kind:"place",tile:"goldlamp",color:"#ffe08a",name:"gold lamp"},
   mfence:{kind:"place",tile:"mfence",color:"#b9c2cc",name:"metal fence"},
-  oil:{kind:"mat",color:"#2e2a22",name:"oil",sell:5}, oillamp:{kind:"place",tile:"oillamp",color:"#ffb347",name:"oil lamp"} };
+  oil:{kind:"mat",color:"#2e2a22",name:"oil",sell:5}, oillamp:{kind:"place",tile:"oillamp",color:"#ffb347",name:"oil lamp"},
+  metal_sword:{kind:"gear",color:"#cfd6dd",name:"metal sword"}, metal_armor:{kind:"gear",color:"#9fb0c2",name:"metal armour"} };
 const FURN=["chair","table","lamp","rug"];
 const DESC={ grass:["Grass","till it with use to make soil for planting"], wild:["Wild grass","out here you'll find trees, rocks & slimes"],
   soil:["Tilled soil","plant a seed, water it, harvest when ripe"], tree:["Tree","press use to chop it for wood"], rock:["Rock","press use to mine it for stone"],
@@ -254,6 +258,8 @@ const RECIPES=[
   {key:"goldlamp", give:"goldlamp", cost:{gold:1,glass:1}, desc:"a fancy golden lamp to place"},
   {key:"mfence", give:"mfence", cost:{iron:1}, desc:"a sturdy metal wall to place"},
   {key:"oil", give:"oil", cost:{crop_corn:2}, desc:"press corn into oil"},
+  {key:"metal_sword", give:"metal_sword", cost:{iron:3,wood:1}, desc:"a blade to fight the road boss"},
+  {key:"metal_armor", give:"metal_armor", cost:{iron:4,gold:1}, desc:"armour to survive the road boss"},
   {key:"oillamp", give:"oillamp", cost:{oil:1,glass:1}, desc:"a warm lamp fuelled by oil"},
   {key:"axe", once:"axe", cost:{wood:6,stone:3}, desc:"gather faster & hit harder (permanent)"},
 ];
@@ -263,7 +269,8 @@ let scene="out", area="home", G, GR, GC, GW, GH, gridOut, gridHome, gridVillage,
 let catX=0, catY=0, npcX=0, npcY=0;
 const player={x:0,y:0,dir:"d",fx:0,fy:1,moving:false,hp:5,maxHp:5,inv:0,kx:0,ky:0,swing:0};
 const mobs=[]; const fx=[]; let spawnT=0;
-let coins=25, clock=0, selSlot=0, outX, outY, metCat=false, metFisher=false, mapOpen=false;
+let coins=25, clock=0, selSlot=0, outX, outY, metCat=false, metFisher=false, mapOpen=false, bossDefeated=false;
+const hasSword=()=>countItem("metal_sword")>0, hasArmor=()=>countItem("metal_armor")>0;
 const BAGN=30; const bag=new Array(BAGN).fill(null);
 
 // home road row
@@ -348,7 +355,7 @@ function buildIn(){ const w=9+houseLvl*2, h=7+houseLvl; const g=[];
   return {g,w,h}; }
 function setScene(s){ scene=s; if(s==="out"){G=gridOut;GR=gridOut.length;GC=gridOut[0].length;} else {const io=buildIn();gridIn=io.g;G=gridIn;GR=io.h;GC=io.w;} GW=GC*TILE; GH=GR*TILE; }
 
-function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false; area="home"; gridHome=buildOut(); gridVillage=buildVillage(); setArea("home"); coins=25; clock=0;
+function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false;bossDefeated=false; area="home"; gridHome=buildOut(); gridVillage=buildVillage(); setArea("home"); coins=25; clock=0;
   for(let i=0;i<bag.length;i++)bag[i]=null; bag[0]={key:"seed_carrot",count:6}; bag[1]={key:"seed_wheat",count:2}; selSlot=0;
   setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2+TILE; player.hp=player.maxHp;player.inv=0; mobs.length=0; save(); renderBar(); syncUI(); }
 function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); const home=s&&(s.home||s.gridOut); if(home&&home.length===OROWS){
@@ -356,10 +363,10 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); co
     gridHome=home; gridVillage=(s.village&&s.village.length===VROWS&&s.village[0].length===VCOLS)?s.village:buildVillage(); coins=s.coins; clock=s.clock||0;
     for(let i=0;i<bag.length;i++)bag[i]=s.bag&&s.bag[i]?s.bag[i]:null; selSlot=s.selSlot||0;
     catX=(doorC=FC0+2,(FC0+4)*TILE+TILE/2); catY=(doorR=FR0+3,(FR0+4)*TILE+TILE/2); setVillageMeta();
-    metCat=!!s.metCat; metFisher=!!s.metFisher;
+    metCat=!!s.metCat; metFisher=!!s.metFisher; bossDefeated=!!s.bossDefeated;
     area=(s.area==="village")?"village":"home"; setArea(area);
     setScene("out"); player.x=s.px;player.y=s.py;player.hp=s.hp??5; return true; } }catch(e){} return false; }
-function save(){ localStorage.setItem("homestead4", JSON.stringify({v:5,area,home:gridHome,village:gridVillage,coins,clock,px:scene==="out"?player.x:outX,py:scene==="out"?player.y:outY,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher})); }
+function save(){ localStorage.setItem("homestead4", JSON.stringify({v:5,area,home:gridHome,village:gridVillage,coins,clock,px:scene==="out"?player.x:outX,py:scene==="out"?player.y:outY,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated})); }
 function syncUI(){ document.getElementById("coins").textContent=coins; }
 
 function resize(){ const rect=document.querySelector("main").getBoundingClientRect();
@@ -402,7 +409,7 @@ function talkInteract(){ if(scene!=="out"){ return; }
   if(area==="village"){ if(Math.hypot(npcX-player.x,npcY-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); if(metFisher)openMarket(); else {metFisher=true;save();talkToFisher();} return; }
     for(const v of villagers){ if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); startDialog(v.lines.map(t=>({who:"vill",name:v.name,face:v.face,col:v.col,text:t})),null); return; } } }
   float(player.x,player.y-22,"no one to talk to here","#cfe0ff"); }
-function interact(){ player.swing=0.18;
+function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.18;
   if(scene==="in"){ const f=facedCell(); if(!f)return; const t=gridIn[f.r][f.c]; if(t.type==="bed")sleep(); else if(t.type==="mat")exitHouse(); return; }
   // exterior — use is for working the land/fighting; talking is on its own button
   SND.swing();
@@ -453,6 +460,57 @@ function gotoArea(a){ setArea(a); setScene("out"); SND.door(); transCD=0.6; mobs
   if(a==="village"){ player.x=1*TILE+TILE/2; player.y=VROAD_R*TILE+TILE/2; player.dir="r";player.fx=1;player.fy=0; }
   else { player.x=(OCOLS-2)*TILE+TILE/2; player.y=ROAD_R*TILE+TILE/2; player.dir="l";player.fx=-1;player.fy=0; }
   float(player.x,player.y-26,a==="village"?"the village":"home sweet home","#fff"); save(); }
+
+/* ---- road boss: side-view mini-fight (needs metal sword + armour) ---- */
+const boss={};
+function tryBoss(){ if(!hasSword()||!hasArmor()){ SND.no(); float(player.x,player.y-26,"need a metal sword AND armour!","#ff8f8f"); player.x-=TILE*1.3; transCD=0.9; return; }
+  scene="boss"; SND.door(); bossInit(); }
+function bossInit(){ const GY=VH-50;
+  boss.gy=GY; boss.px=70; boss.py=GY; boss.pvy=0; boss.pg=true; boss.pdir=1; boss.atk=0; boss.pinv=0; boss.php=6; boss.pmax=6; boss.flash=0;
+  boss.bx=VW-120; boss.by=GY; boss.bhp=12; boss.bmax=12; boss.t=0; boss.cd=1.6; boss.st="idle"; boss.tele=0; boss.cv=0; boss.ct=0; boss.proj=[]; boss.end=0; boss.win=false; boss.bflash=0; }
+function bossJump(){ if(scene==="boss"&&boss.pg){ boss.pvy=-440; boss.pg=false; SND.swing(); } }
+function bossAttack(){ if(scene!=="boss"||boss.atk>0||boss.end)return; boss.atk=0.22; SND.hit();
+  if(Math.abs(boss.bx-boss.px)<70&&Math.sign(boss.bx-boss.px||1)===boss.pdir&&Math.abs(boss.by-boss.py)<70){ boss.bhp--; boss.bflash=0.16; } }
+function bhitPlayer(d,p){ if(boss.pinv>0||boss.end)return; boss.php-=d; boss.pinv=1.0; boss.flash=0.14; boss.pvy=-220; boss.pg=false; SND.hurt(); if(p)p.t=0; }
+function updateBoss(dt){ const GY=boss.gy;
+  let mv=0; if(keys.l)mv-=1; if(keys.r)mv+=1; if(mv){ boss.px+=mv*250*dt; boss.pdir=mv<0?-1:1; } boss.px=Math.max(20,Math.min(VW-20,boss.px));
+  if(keys.u&&boss.pg)bossJump();
+  boss.pvy+=1500*dt; boss.py+=boss.pvy*dt; if(boss.py>=GY){boss.py=GY;boss.pvy=0;boss.pg=true;}
+  if(boss.atk>0)boss.atk-=dt; if(boss.pinv>0)boss.pinv-=dt; if(boss.flash>0)boss.flash-=dt; if(boss.bflash>0)boss.bflash-=dt; boss.t+=dt;
+  if(boss.end){ boss.end-=dt; if(boss.end<=0)finishBoss(boss.win); return; }
+  boss.cd-=dt;
+  if(boss.st==="idle"&&boss.cd<=0){ boss.st=Math.random()<0.5?"tele":"shoot"; boss.tele=boss.st==="tele"?0.7:0.5; }
+  else if(boss.st==="tele"){ boss.tele-=dt; if(boss.tele<=0){ boss.st="charge"; boss.cv=(boss.px<boss.bx?-1:1)*430; boss.ct=0.9; } }
+  else if(boss.st==="charge"){ boss.bx+=boss.cv*dt; boss.ct-=dt; if(boss.bx<60||boss.bx>VW-60||boss.ct<=0){ boss.st="idle"; boss.cd=1.3; } }
+  else if(boss.st==="shoot"){ boss.tele-=dt; if(boss.tele<=0){ const a=Math.atan2((boss.py-24)-(boss.by-30),boss.px-boss.bx); for(let i=-1;i<=1;i++){const an=a+i*0.22;boss.proj.push({x:boss.bx,y:boss.by-30,vx:Math.cos(an)*270,vy:Math.sin(an)*270,t:3});} boss.st="idle"; boss.cd=1.5; } }
+  for(const p of boss.proj){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.t-=dt; if(Math.abs(p.x-boss.px)<16&&Math.abs(p.y-(boss.py-22))<24)bhitPlayer(1,p); }
+  boss.proj=boss.proj.filter(p=>p.t>0&&p.x>-30&&p.x<VW+30);
+  if(Math.abs(boss.bx-boss.px)<42&&Math.abs(boss.by-boss.py)<48)bhitPlayer(1,null);
+  if(boss.bhp<=0&&!boss.end){ boss.end=1.4; boss.win=true; }
+  if(boss.php<=0&&!boss.end){ boss.end=1.2; boss.win=false; } }
+function finishBoss(win){ if(win){ bossDefeated=true; save(); gotoArea("village"); float(player.x,player.y-26,"the road is clear!","#bfe6c2"); }
+  else { setArea("home"); setScene("out"); player.x=(OCOLS-3)*TILE+TILE/2; player.y=ROAD_R*TILE+TILE/2; player.dir="l";player.fx=-1;player.fy=0; player.hp=player.maxHp; transCD=0.9; float(player.x,player.y-26,"defeated… craft better gear & retry","#ff9a9a"); save(); } }
+function drawBoss(){ ctx.fillStyle="#1a1030"; ctx.fillRect(0,0,VW,VH);
+  ctx.fillStyle="#2a1c3a"; ctx.fillRect(0,boss.gy+12,VW,VH-boss.gy); ctx.strokeStyle="rgba(255,255,255,.15)";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,boss.gy+12);ctx.lineTo(VW,boss.gy+12);ctx.stroke();
+  if(boss.st==="tele"){ ctx.fillStyle=`rgba(255,70,70,${0.25+0.3*Math.abs(Math.sin(now()*18))})`; ctx.fillRect(0,boss.gy-46,VW,58); }
+  for(const p of boss.proj){ ctx.fillStyle="rgba(255,200,120,.5)";ctx.beginPath();ctx.arc(p.x,p.y,11,0,7);ctx.fill();ctx.fillStyle="#ff7a3a";ctx.beginPath();ctx.arc(p.x,p.y,6,0,7);ctx.fill(); }
+  const bw=66,bh=72; ctx.fillStyle=boss.bflash>0?"#fff":"#6a3a8a"; ctx.beginPath();ctx.roundRect(boss.bx-bw/2,boss.by-bh,bw,bh,14);ctx.fill();
+  ctx.fillStyle="#ffd23b"; ctx.beginPath();ctx.arc(boss.bx-12,boss.by-bh+26,6,0,7);ctx.fill();ctx.beginPath();ctx.arc(boss.bx+12,boss.by-bh+26,6,0,7);ctx.fill(); ctx.fillStyle="#1a1030";ctx.beginPath();ctx.arc(boss.bx-12,boss.by-bh+26,2.5,0,7);ctx.fill();ctx.beginPath();ctx.arc(boss.bx+12,boss.by-bh+26,2.5,0,7);ctx.fill();
+  const pa=boss.pinv>0&&Math.floor(now()*16)%2===0?0.5:1; ctx.globalAlpha=pa;
+  ctx.fillStyle="#2f6dd0"; ctx.beginPath();ctx.roundRect(boss.px-9,boss.py-30,18,24,5);ctx.fill(); ctx.fillStyle="#ffd9a8";ctx.beginPath();ctx.arc(boss.px,boss.py-36,8,0,7);ctx.fill();
+  if(boss.atk>0){ ctx.strokeStyle="#fff";ctx.lineWidth=4;ctx.lineCap="round";ctx.beginPath();ctx.arc(boss.px+boss.pdir*12,boss.py-22,22,-1.1,1.1);ctx.stroke();
+    ctx.strokeStyle="#cfd6dd";ctx.beginPath();ctx.moveTo(boss.px,boss.py-22);ctx.lineTo(boss.px+boss.pdir*26,boss.py-26);ctx.stroke(); }
+  ctx.globalAlpha=1;
+  for(let i=0;i<boss.pmax;i++){ ctx.fillStyle=i<boss.php?"#ff5b78":"rgba(255,255,255,.2)"; ctx.fillRect(16+i*20,16,15,15); }
+  ctx.fillStyle="rgba(0,0,0,.45)";ctx.fillRect(VW/2-110,18,220,12); ctx.fillStyle="#c46aff";ctx.fillRect(VW/2-110,18,220*Math.max(0,boss.bhp)/boss.bmax,12);
+  ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="800 12px Helvetica";ctx.fillText("ROAD GUARDIAN",VW/2,44);
+  ctx.fillStyle="rgba(255,255,255,.6)";ctx.font="11px Helvetica";ctx.fillText("←/→ move · ↑/Space jump · E or ⟳use to slash · dodge the red charge & shots",VW/2,VH-16);
+  if(boss.end){ ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillRect(0,0,VW,VH); ctx.fillStyle=boss.win?"#bfe6c2":"#ff9a9a";ctx.font="800 28px Helvetica";ctx.fillText(boss.win?"VICTORY!":"DEFEATED",VW/2,VH/2); } }
+function drawGuardian(){ const x=(OCOLS-1)*TILE+TILE/2-camX,y=ROAD_R*TILE+TILE/2-camY,bob=Math.sin(now()*2)*1.5;
+  ctx.fillStyle="rgba(0,0,0,.25)";ctx.beginPath();ctx.ellipse(x,y+12,13,5,0,0,7);ctx.fill();
+  ctx.fillStyle="#6a3a8a";ctx.beginPath();ctx.roundRect(x-12,y-16+bob,24,28,8);ctx.fill();
+  ctx.fillStyle="#ffd23b";ctx.beginPath();ctx.arc(x-5,y-6+bob,3,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+5,y-6+bob,3,0,7);ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText("BOSS ▸ approach",x,y-24+bob); }
 function enterHouse(){ outX=player.x;outY=player.y; SND.door(); setScene("in"); const mc=Math.floor(GC/2); player.x=mc*TILE+TILE/2; player.y=(GR-2)*TILE+TILE/2; player.dir="u";player.fx=0;player.fy=-1; transCD=0.5; }
 function exitHouse(){ SND.door(); setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2; player.dir="d";player.fx=0;player.fy=1; transCD=0.5; save(); }
 function sleep(){ const ph=(clock%DAYLEN)/DAYLEN; clock+=(1-ph)*DAYLEN; player.hp=player.maxHp; SND.heal(); float(player.x,player.y-26,"slept · new day","#fff"); save(); }
@@ -465,6 +523,8 @@ const keys={}; let running=false,lastTapDir="",lastTapT=-1;
 function dirTap(d){ const t=now(); if(d===lastTapDir&&t-lastTapT<0.30)running=true; lastTapDir=d; lastTapT=t; }   // double-tap a direction to run
 function anyMove(){ return keys.u||keys.d||keys.l||keys.r; }
 addEventListener("keydown",e=>{ const k=e.key.toLowerCase();
+  if(document.activeElement&&document.activeElement.id==="cheat")return;
+  if(scene==="boss"){ if(["arrowup","w"," "].includes(k))bossJump(); else if(["arrowleft","a"].includes(k))keys.l=1; else if(["arrowright","d"].includes(k))keys.r=1; else if(k==="e")bossAttack(); e.preventDefault(); return; }
   if(dialogOpen){ if(k==="e"||k===" "||k==="enter")advanceDialog(); else if(k==="escape")endDialog(); e.preventDefault(); return; }
   if(["arrowup","w"].includes(k)){if(!e.repeat)dirTap("u");keys.u=1;e.preventDefault();} else if(["arrowdown","s"].includes(k)){if(!e.repeat)dirTap("d");keys.d=1;e.preventDefault();}
   else if(["arrowleft","a"].includes(k)){if(!e.repeat)dirTap("l");keys.l=1;e.preventDefault();} else if(["arrowright","d"].includes(k)){if(!e.repeat)dirTap("r");keys.r=1;e.preventDefault();}
@@ -486,12 +546,15 @@ actBtn.addEventListener("pointerleave",()=>endHold()); actBtn.addEventListener("
 document.getElementById("talkBtn").addEventListener("click",()=>{audio();talkInteract();});
 document.getElementById("talkBtn2").addEventListener("pointerdown",e=>{e.preventDefault();audio();if(dialogOpen){advanceDialog();return;}talkInteract();});
 document.getElementById("mapBtn").addEventListener("click",()=>{mapOpen=!mapOpen;});
+const cheatEl=document.getElementById("cheat");
+cheatEl.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ if(cheatEl.value.trim()==="111"){ bossDefeated=true; save(); if(scene==="boss")finishBoss(true); else float(player.x,player.y-26,"cheat: road unlocked","#ffe27a"); } cheatEl.value=""; cheatEl.blur(); } });
 
 /* ---- physics ---- */
 function isObst(px,py){ const c=Math.floor(px/TILE),r=Math.floor(py/TILE); if(r<0||c<0||r>=GR||c>=GC)return true; return OBST.has(G[r][c].type); }
 function blocked(px,py,h){ return isObst(px-h,py-h)||isObst(px+h,py-h)||isObst(px-h,py+h)||isObst(px+h,py+h); }
 function moveEnt(o,vx,vy,h){ if(!isFinite(vx)||!isFinite(vy))return; const nx=o.x+vx; if(!blocked(nx,o.y,h))o.x=nx; const ny=o.y+vy; if(!blocked(o.x,ny,h))o.y=ny; }
-function update(dt){ if(dialogOpen){ player.moving=false; return; }   // freeze the world while chatting
+function update(dt){ if(scene==="boss"){ updateBoss(dt); return; }
+  if(dialogOpen){ player.moving=false; return; }   // freeze the world while chatting
   if(transCD>0)transCD-=dt;
   let vx=0,vy=0; if(keys.l)vx-=1;if(keys.r)vx+=1;if(keys.u)vy-=1;if(keys.d)vy+=1; player.moving=!!(vx||vy);
   if(!player.moving)running=false; const sp=(running?224:132)*dt;
@@ -503,7 +566,7 @@ function update(dt){ if(dialogOpen){ player.moving=false; return; }   // freeze 
   updateHold();
   const pr=Math.floor(player.y/TILE),pc=Math.floor(player.x/TILE); const here=(pr>=0&&pc>=0&&pr<GR&&pc<GC)?G[pr][pc].type:"";
   if(transCD<=0){ if(scene==="out"&&here==="door")enterHouse(); else if(scene==="in"&&here==="mat")exitHouse();
-    else if(scene==="out"&&here==="road"){ if(area==="home"&&pc>=OCOLS-1)gotoArea("village"); else if(area==="village"&&pc<=0)gotoArea("home"); } }
+    else if(scene==="out"&&here==="road"){ if(area==="home"&&pc>=OCOLS-1){ if(bossDefeated)gotoArea("village"); else tryBoss(); } else if(area==="village"&&pc<=0)gotoArea("home"); } }
   if(scene==="out"){ for(let r=0;r<gridOut.length;r++)for(let c=0;c<gridOut[0].length;c++){ const cr=gridOut[r][c].crop; if(cr&&cr.grow<1){ const C=CROPS[cr.type];const s=(now()<cr.boost?2.4:1); cr.grow=Math.min(1,cr.grow+dt/C.dur*s); } }
     const outside=!inFarm(pr,pc); const target=isNight()?12:(outside?8:4);
     spawnT-=dt; if(spawnT<=0&&mobs.length<target){spawnMob();spawnT=isNight()?1.4:2.2;}
@@ -618,12 +681,13 @@ function drawPlayer(){ const x=player.x-camX,y=player.y-camY,bob=player.moving?M
   ctx.globalAlpha=1; }
 function heart(x,y,full){ ctx.fillStyle=full?"#ff5b78":"rgba(255,255,255,.25)";ctx.beginPath();ctx.moveTo(x,y+9);ctx.bezierCurveTo(x-10,y+1,x-6,y-7,x,y-2);ctx.bezierCurveTo(x+6,y-7,x+10,y+1,x,y+9);ctx.fill(); }
 function draw(){ ctx.clearRect(0,0,VW,VH);
+  if(scene==="boss"){ drawBoss(); return; }
   for(let r=0;r<GR;r++)for(let c=0;c<GC;c++) drawTile(r,c);
   const f=facedCell(); if(f){ const tt=G[f.r][f.c].type; const fsel=bag[selSlot]; const farm=scene==="out"&&inFarm(f.r,f.c)&&FARMLAND.has(tt);
     const gather=scene==="out"&&(tt==="tree"||tt==="rock"||tt==="iron"||tt==="gold"||tt==="sand"||tt==="oil"||(WATER.has(tt)&&fsel&&ITEMS[fsel.key].kind==="tool")); const inr=scene==="in"&&["bed","mat"].includes(tt);
     if(farm||gather||inr){ ctx.strokeStyle="rgba(255,255,255,0.7)";ctx.lineWidth=2;ctx.strokeRect(f.c*TILE-camX+2,f.r*TILE-camY+2,TILE-4,TILE-4); } }
   const ents=[...(scene==="out"?mobs.map(m=>({y:m.y,d:()=>drawMob(m)})):[]),{y:player.y,d:drawPlayer}];
-  if(scene==="out"&&area==="home") ents.push({y:catY,d:drawCat});
+  if(scene==="out"&&area==="home"){ ents.push({y:catY,d:drawCat}); if(!bossDefeated)ents.push({y:ROAD_R*TILE+TILE/2,d:drawGuardian}); }
   if(scene==="out"&&area==="village"){ ents.push({y:npcY,d:drawNpc}); villagers.forEach(v=>ents.push({y:v.y,d:()=>drawVillager(v)})); }
   ents.sort((a,b)=>a.y-b.y); ents.forEach(e=>e.d());
   if(holdUse&&scene==="out"){ const hf=facedCell(); if(hf&&BREAKABLE.has(G[hf.r][hf.c].type)){ const prog=Math.min(1,(now()-holdStart)/1.2),hx=hf.c*TILE-camX+TILE/2,hy=hf.r*TILE-camY+TILE/2;
