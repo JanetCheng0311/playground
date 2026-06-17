@@ -20,6 +20,7 @@
   header .title em{font-style:normal;opacity:.6;font-weight:400;margin-left:10px}
   header .stat{font-variant-numeric:tabular-nums;font-weight:600}
   header .stat b{font-weight:700}
+  header button.off{opacity:.5}
   main{flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:clamp(16px,3vw,30px);padding:0 16px 16px}
   #wrap{position:relative}
   canvas{display:block;background:rgba(255,255,255,.10);border-radius:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
@@ -50,7 +51,9 @@
 <header>
   <span class="title">Blocks<em>stack &amp; clear lines</em></span>
   <span class="stat">score <b id="score">0</b></span>
+  <span class="stat">best <b id="best">0</b></span>
   <span class="stat">lines <b id="lines">0</b></span>
+  <button id="snd">sound</button>
   <button id="new">new game</button>
   <a href="../">playground</a>
 </header>
@@ -92,6 +95,34 @@ const SHAPES=[
 ];
 
 let grid, cur, nextPiece, score, lines, level, dropMs, acc, last, over, bag, hold, holdUsed;
+let best=+(localStorage.getItem("blocks-best")||0);
+document.getElementById("best").textContent=best;
+function setScore(){ document.getElementById("score").textContent=score;
+  if(score>best){ best=score; localStorage.setItem("blocks-best",best); document.getElementById("best").textContent=best; } }
+
+// ---- sound ----
+let actx=null, master=null, soundOn=localStorage.getItem("blocks-sound")!=="off";
+function audio(){ if(actx){ if(actx.state==="suspended")actx.resume(); return actx; }
+  try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
+  master=actx.createGain(); master.gain.value=0.3; master.connect(actx.destination); return actx; }
+function blip(type,f0,f1,dur,vol){ if(!soundOn)return; const a=audio(); if(!a)return; const t=a.currentTime,o=a.createOscillator(),g=a.createGain();
+  o.type=type; o.frequency.setValueAtTime(f0,t); if(f1!=null)o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),t+dur);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+0.005); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(master); o.start(t); o.stop(t+dur+0.02); }
+function noiseHit(dur,vol,lp){ if(!soundOn)return; const a=audio(); if(!a)return; const t=a.currentTime;
+  if(!a._nb){ const len=a.sampleRate*0.3|0,b=a.createBuffer(1,len,a.sampleRate),d=b.getChannelData(0); for(let i=0;i<len;i++)d[i]=Math.random()*2-1; a._nb=b; }
+  const s=a.createBufferSource(); s.buffer=a._nb; const f=a.createBiquadFilter(); f.type="lowpass"; f.frequency.value=lp||1400;
+  const g=a.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); s.connect(f).connect(g).connect(master); s.start(t); s.stop(t+dur+0.02); }
+const SND={
+  rotate(){ blip("square",520,660,0.05,0.16); },
+  lock(){ blip("sine",175,90,0.12,0.3); noiseHit(0.05,0.14,1500); },
+  next(){ blip("triangle",880,null,0.04,0.07); },
+  drop(){ noiseHit(0.11,0.2,2400); },
+  clear(n){ if(!soundOn)return; const a=audio(); if(!a)return; const notes=[523,659,784,988,1319];
+    for(let i=0;i<Math.min(n+1,5);i++){ const t=a.currentTime+i*0.06,o=a.createOscillator(),g=a.createGain();
+      o.type="sine"; o.frequency.value=notes[i]; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.22,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+0.26);
+      o.connect(g).connect(master); o.start(t); o.stop(t+0.28); } },
+};
 
 function layout(){
   const maxH=Math.min(window.innerHeight-(window.innerWidth<760?200:170), 760);
@@ -111,6 +142,7 @@ function spawn(){
   cur=makePiece(nextPiece); nextPiece=bagNext();
   cur.x=(COLS - cur.shape[0].length)>>1; cur.y=0;
   if(collides(cur.shape,cur.x,cur.y)){ over=true; document.getElementById("over").classList.add("show"); }
+  else SND.next();
   drawNext();
 }
 function collides(sh,x,y){
@@ -134,15 +166,16 @@ function lockPiece(){
   // clear lines
   let cleared=0;
   for(let r=ROWS-1;r>=0;r--){ if(grid[r].every(v=>v)){ grid.splice(r,1); grid.unshift(Array(COLS).fill(0)); cleared++; r++; } }
+  SND.lock();
   if(cleared){ lines+=cleared; score+=[0,100,300,500,800][cleared]*level; level=1+Math.floor(lines/10); dropMs=Math.max(90,650-(level-1)*55);
-    document.getElementById("lines").textContent=lines; document.getElementById("score").textContent=score; }
+    document.getElementById("lines").textContent=lines; setScore(); SND.clear(cleared); }
   spawn();
 }
 function step(dir){ if(over)return; if(!collides(cur.shape,cur.x+dir,cur.y)){ cur.x+=dir; draw(); } }
 function softDrop(){ if(over)return; if(!collides(cur.shape,cur.x,cur.y+1)){ cur.y++; } else { lockPiece(); } draw(); acc=0; }
-function hardDrop(){ if(over)return; while(!collides(cur.shape,cur.x,cur.y+1)){ cur.y++; score+=2; } lockPiece(); document.getElementById("score").textContent=score; draw(); }
+function hardDrop(){ if(over)return; SND.drop(); while(!collides(cur.shape,cur.x,cur.y+1)){ cur.y++; score+=2; } lockPiece(); setScore(); draw(); }
 function tryRotate(){ if(over)return; const rot=rotate(cur.shape);
-  for(const k of [0,-1,1,-2,2]){ if(!collides(rot,cur.x+k,cur.y)){ cur.shape=rot; cur.x+=k; draw(); return; } } }
+  for(const k of [0,-1,1,-2,2]){ if(!collides(rot,cur.x+k,cur.y)){ cur.shape=rot; cur.x+=k; SND.rotate(); draw(); return; } } }
 
 function cellRect(x,y,col){ ctx.fillStyle=col; const p=Math.max(1,cs*0.06);
   ctx.fillRect(x*cs+p,y*cs+p,cs-2*p,cs-2*p);
@@ -195,6 +228,10 @@ addEventListener("keydown",e=>{
 });
 const press=(id,fn)=>{ const b=document.getElementById(id); b.addEventListener("click",fn); };
 press("bL",()=>step(-1)); press("bR",()=>step(1)); press("bRot",tryRotate); press("bDown",softDrop); press("bDrop",hardDrop); press("bHold",holdPiece);
+const sndBtn=document.getElementById("snd");
+function syncSnd(){ sndBtn.textContent=soundOn?"sound":"muted"; sndBtn.classList.toggle("off",!soundOn); }
+sndBtn.addEventListener("click",()=>{ soundOn=!soundOn; localStorage.setItem("blocks-sound",soundOn?"on":"off"); syncSnd(); if(soundOn)audio(); });
+syncSnd();
 document.getElementById("new").addEventListener("click",reset);
 document.getElementById("retry").addEventListener("click",reset);
 
