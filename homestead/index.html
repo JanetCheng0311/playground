@@ -197,13 +197,14 @@ let VW,VH,camX=0,camY=0;
 
 const CROPS={ carrot:{name:"carrot",cost:4,sell:9,dur:7,c:"#ff8a3d",leaf:"#3fae5a"},
   wheat:{name:"wheat",cost:8,sell:20,dur:13,c:"#f4d35e",leaf:"#9bc34a"},
+  corn:{name:"corn",cost:10,sell:14,dur:16,c:"#f7d83a",leaf:"#4f9e3f"},
   pumpkin:{name:"pumpkin",cost:18,sell:55,dur:22,c:"#e8702a",leaf:"#3f9d54"} };
 const CKEYS=Object.keys(CROPS);
 
 // item types: seeds, crops, materials (mat), placeables (place), usables (use)
 const ITEMS={
-  seed_carrot:{kind:"seed",crop:"carrot"},seed_wheat:{kind:"seed",crop:"wheat"},seed_pumpkin:{kind:"seed",crop:"pumpkin"},
-  crop_carrot:{kind:"crop",crop:"carrot"},crop_wheat:{kind:"crop",crop:"wheat"},crop_pumpkin:{kind:"crop",crop:"pumpkin"},
+  seed_carrot:{kind:"seed",crop:"carrot"},seed_wheat:{kind:"seed",crop:"wheat"},seed_corn:{kind:"seed",crop:"corn"},seed_pumpkin:{kind:"seed",crop:"pumpkin"},
+  crop_carrot:{kind:"crop",crop:"carrot"},crop_wheat:{kind:"crop",crop:"wheat"},crop_corn:{kind:"crop",crop:"corn"},crop_pumpkin:{kind:"crop",crop:"pumpkin"},
   wood:{kind:"mat",color:"#9c6b3f",name:"wood",sell:2}, stone:{kind:"mat",color:"#9aa3ab",name:"stone",sell:2}, goo:{kind:"mat",color:"#67d98a",name:"goo",sell:1},
   salve:{kind:"use",color:"#ff8fae",name:"salve"}, torch:{kind:"place",tile:"torch",color:"#ffb24a",name:"torch"},
   fence:{kind:"place",tile:"pfence",color:"#7a5a32",name:"fence"}, ppath:{kind:"place",tile:"ppath",color:"#cdab73",name:"stone path"},
@@ -239,7 +240,7 @@ const USE={ seed:"plant it on tilled soil", crop:"sell it at the cat shop for co
   glass:"used to craft lanterns and gold lamps", rod:"select it, face water & press use to fish",
   net:"select it, face water & press use to catch more fish", lantern:"select & place a bright metal light",
   goldlamp:"select & place a fancy golden light", mfence:"select & place a metal wall (hold use to remove)",
-  oil:"sell it to the fisher, or craft a warm oil lamp", oillamp:"select & place a warm oil lamp" };
+  oil:"press from corn, or drops from slimes — craft an oil lamp or sell it", oillamp:"select & place a warm oil lamp" };
 function itemColor(k){ const it=ITEMS[k]; if(it.color)return it.color; return it.kind==="seed"?CROPS[it.crop].leaf:CROPS[it.crop].c; }
 function itemName(k){ const it=ITEMS[k]; if(it.name)return it.name; return (it.kind==="seed"?it.crop+" seed":it.crop); }
 
@@ -252,6 +253,7 @@ const RECIPES=[
   {key:"lantern", give:"lantern", cost:{iron:2,glass:1}, desc:"a bright metal lantern to place"},
   {key:"goldlamp", give:"goldlamp", cost:{gold:1,glass:1}, desc:"a fancy golden lamp to place"},
   {key:"mfence", give:"mfence", cost:{iron:1}, desc:"a sturdy metal wall to place"},
+  {key:"oil", give:"oil", cost:{crop_corn:2}, desc:"press corn into oil"},
   {key:"oillamp", give:"oillamp", cost:{oil:1,glass:1}, desc:"a warm lamp fuelled by oil"},
   {key:"axe", once:"axe", cost:{wood:6,stone:3}, desc:"gather faster & hit harder (permanent)"},
 ];
@@ -318,7 +320,7 @@ function buildVillage(){ const g=[]; for(let r=0;r<VROWS;r++){ const row=[]; for
   for(let r=0;r<VROWS;r++){ set(r,RIVER_C,"river"); for(let c=SEA_C0;c<VCOLS;c++) set(r,c,"sea"); set(r,SAND_C,"sand"); }
   // nature in the upper half (above the town): trees, rocks, ore, oil
   for(let r=1;r<17;r++)for(let c=1;c<SAND_C;c++){ if(c===RIVER_C)continue; const x=Math.random();
-    if(x<0.09)set(r,c,"tree"); else if(x<0.14)set(r,c,"rock"); else if(x<0.18)set(r,c,"iron"); else if(x<0.20)set(r,c,"gold"); else if(x<0.225)set(r,c,"oil"); }
+    if(x<0.09)set(r,c,"tree"); else if(x<0.14)set(r,c,"rock"); else if(x<0.18)set(r,c,"iron"); else if(x<0.20)set(r,c,"gold"); }
   // ---- TOWN in the lower half ----
   block(18,19,4,4,"church"); set(18,20,"churchtop"); set(21,20,"hdoor");          // church (north-west of the square, off the street)
   block(18,8,3,3,"house"); set(20,9,"hdoor");                                     // villager houses (west of street)
@@ -393,7 +395,7 @@ function facedCell(){ const c=Math.floor((player.x+player.fx*TILE)/TILE), r=Math
 function tryAttack(){ const range=TILE*1.6,dmg=hasAxe?2:1; let hit=false;
   for(const m of mobs){ const dx=m.x-player.x,dy=m.y-player.y,fwd=dx*player.fx+dy*player.fy,lat=Math.abs(dx*player.fy-dy*player.fx),dd=Math.hypot(dx,dy);
     if(dd<range&&(fwd>-10||dd<TILE*0.9)&&lat<TILE*1.1){ m.hp-=dmg;m.flash=0.18;const d=dd||1;m.kx=dx/d*7;m.ky=dy/d*7;hit=true;SND.hit();
-      if(m.hp<=0){ const drop=3+(Math.random()*5|0); coins+=drop; gainItem("goo",1,m.x,m.y); float(m.x,m.y-30,"+"+drop+"c","#ffe27a"); burst(m.x,m.y,"#7be0a0",12); syncUI(); } } }
+      if(m.hp<=0){ const drop=3+(Math.random()*5|0); coins+=drop; gainItem("goo",1,m.x,m.y); if(Math.random()<0.18)gainItem("oil",1,m.x,m.y); float(m.x,m.y-30,"+"+drop+"c","#ffe27a"); burst(m.x,m.y,"#7be0a0",12); syncUI(); } } }
   mobs.splice(0,mobs.length,...mobs.filter(m=>m.hp>0)); return hit; }
 function talkInteract(){ if(scene!=="out"){ return; }
   if(area==="home"&&Math.hypot(catX-player.x,catY-player.y)<TILE*1.7){ if(nearThreat())return blockTalk(); SND.meow(); if(metCat)openShop(); else {metCat=true;save();talkToCat();} return; }
@@ -737,7 +739,8 @@ function craftOutputClick(){ const R=matchRecipe(); if(!R)return; craftGrid.fill
 function returnGridToBag(){ for(let i=0;i<9;i++){ const c=craftGrid[i]; if(c){ addItem(c.key,c.count); craftGrid[i]=null; } } if(held){ addItem(held.key,held.count); held=null; } renderHeld(); }
 /* where each material comes from — shown as a clue when you're short */
 const HOWTO={ wood:"chop trees", stone:"mine rocks", goo:"defeat slimes", iron:"mine iron rocks", gold:"mine gold rocks",
-  sand:"scoop sand on the village beach", glass:"craft from 2 sand", oil:"scoop oil seeps in the village", fish:"fish water with a rod or net" };
+  sand:"scoop sand on the village beach", glass:"craft from 2 sand", oil:"press 2 corn, kill slimes, or buy from the fisher",
+  fish:"fish water with a rod or net", crop_corn:"plant & harvest corn seeds (cat shop)" };
 function missingFor(R){ return Object.entries(R.cost).filter(([m,n])=>countItem(m)<n).map(([m,n])=>({m,short:n-countItem(m)})); }
 function clueText(miss){ return miss.map(x=>`${x.short} more ${itemName(x.m)} — ${HOWTO[x.m]||"craft it"}`).join("; "); }
 /* recipe book — click a row to auto-fill the grid from your bag */
@@ -760,17 +763,31 @@ recipeListEl.addEventListener("click",e=>{ const row=e.target.closest&&e.target.
 
 /* ---- help / tutorial ---- */
 const helpEl=document.getElementById("help");
-function renderHelp(){ const tiles=["grass","soil","tree","rock","iron","gold","oil","pond","river","sea","sand","road","church","shop","door","torch","lamp","fence","pfence","mfence","cat","npc","villager","slime"];
-  const items=["seed_carrot","crop_carrot","wood","stone","goo","iron","gold","oil","fish","sand","glass","salve","rod","net","torch","fence","mfence","ppath","lantern","goldlamp","oillamp","chair","table","lamp","rug"];
-  const tips=["Walk WASD / arrows — <b>double-tap</b> a direction to <b>run</b>. Press E or Space (or the round button) to act on the tile you face.",
-    "Press <b>T</b> (or the 💬 button) to <b>talk</b> to the cat, fisher or villagers — separate from the use button, so you can farm and gather right next to them. You can't talk while a monster is attacking you.",
-    "Press <b>M</b> for the <b>map</b>. Follow the <b>road</b> off the east edge to reach the <b>village</b> — its sea & river are for fishing, and Pelle the Fisher sells a rod & net.",
-    "<b>Anything you place</b> — fences, chairs, tables, lamps, rugs, torches, paths — can be picked back up into your bag by <b>holding</b> use on it for ~1.5s (a yellow ring fills). The <b>farm fence</b> can't be broken — expand your farm at the cat shop.",
-    "Mine <b>iron</b> & <b>gold</b>, scoop <b>sand</b> at the beach and <b>oil</b> from village seeps. To craft, open the bag and <b>drop items into the 3×3 grid</b> — when they match a recipe the result lights up, click it to make it. Tap the <b>recipe book</b> to auto-fill the grid.",
-    "Use <b>save file</b> to download your progress, and <b>load file</b> to bring it back on any device."];
+function renderHelp(){ const tiles=["grass","soil","tree","rock","iron","gold","pond","river","sea","sand","road","church","shop","door","torch","lamp","fence","pfence","mfence","cat","npc","villager","slime"];
+  const items=["seed_carrot","crop_carrot","wood","stone","goo","iron","gold","crop_corn","oil","fish","sand","glass","salve","rod","net","torch","fence","mfence","ppath","lantern","goldlamp","oillamp","chair","table","lamp","rug"];
+  // [action, keyboard, touch]
+  const controls=[
+    ["Move","W A S D / Arrow keys","D-pad (bottom-left)"],
+    ["Run","double-tap a direction","double-tap a D-pad arrow"],
+    ["Use / act (till, plant, water, harvest, chop, mine, fish, fight, place)","E or Space","round “use” button"],
+    ["Remove something you placed","hold use ~1.5s","hold the “use” button"],
+    ["Talk to cat / fisher / villager","T","💬 button"],
+    ["Pick hotbar item","number keys 1–0","tap a hotbar slot"],
+    ["Bag & crafting","I (or B / Tab)","🎒 Bag button"],
+    ["Map","M","🗺 Map button"],
+    ["Advance dialogue","Space / E / Enter","tap the dialogue box"],
+    ["Close a menu","Esc","✕ / tap outside"],
+    ["Sound · New game · Save/Load file","top buttons","top buttons"]];
+  const tips=["Walk to act on the tile you face. <b>Double-tap</b> a direction to <b>run</b>.",
+    "Talking is on its <b>own</b> button (T / 💬) so use/E can farm & gather right next to NPCs. You can't talk while a monster is attacking you.",
+    "<b>Anything you place</b> — fences, chairs, tables, lamps, rugs, torches, paths — returns to your bag if you <b>hold</b> use on it ~1.5s. The <b>farm fence</b> can't be broken (expand it at the cat shop).",
+    "<b>Oil</b> now comes from <b>corn</b>: buy corn seeds at the cat, grow & harvest corn, then press <b>2 corn → oil</b> at the crafting grid. Slimes also drop oil, and the fisher sells it.",
+    "Craft by opening the bag and <b>dropping items into the 3×3 grid</b> — a match lights up the result; click it. The <b>recipe book</b> shows what you're missing and where to find it, and auto-fills the grid.",
+    "Use <b>save file</b> to download your progress and <b>load file</b> to bring it back on any device."];
+  const cH=controls.map(c=>`<div class="item"><b>${c[0]}</b><span>⌨️ ${c[1]} &nbsp;·&nbsp; 📱 ${c[2]}</span></div>`).join("");
   const tH=tiles.map(k=>{ const d=DESC[k]; return d?`<div class="item"><b>${d[0]}</b><span>${d[1]}</span></div>`:""; }).join("");
   const iH=items.map(k=>{ const base=k.startsWith("seed_")?"seed":k.startsWith("crop_")?"crop":k; const u=USE[base]||USE[k]||""; return `<div class="item"><b>${itemName(k)}</b><span>${u}</span></div>`; }).join("");
-  document.getElementById("helpBody").innerHTML=`<h4>tips</h4>${tips.map(t=>`<div class="item"><span>${t}</span></div>`).join("")}<h4>around the world</h4>${tH}<h4>items in your bag</h4>${iH}`; }
+  document.getElementById("helpBody").innerHTML=`<h4>controls</h4>${cH}<h4>tips</h4>${tips.map(t=>`<div class="item"><span>${t}</span></div>`).join("")}<h4>around the world</h4>${tH}<h4>items in your bag</h4>${iH}`; }
 document.getElementById("helpBtn").addEventListener("click",()=>{ renderHelp(); helpEl.classList.add("open"); });
 document.getElementById("helpClose").addEventListener("click",()=>helpEl.classList.remove("open"));
 helpEl.addEventListener("pointerdown",e=>{ if(e.target===helpEl)helpEl.classList.remove("open"); });
@@ -782,12 +799,14 @@ function openMarket(){ renderMarket(); marketEl.classList.add("open"); }
 function renderMarket(){ document.getElementById("mktCoins").textContent=coins;
   const gear=[{k:"rod",d:"catch fish from any water"},{k:"net",d:"catch 2–3 fish at a time"}];
   document.getElementById("gearList").innerHTML=gear.map(g=>{ const owned=countItem(g.k)>0,cost=GEARCOST[g.k];
-    return `<div class="item"><div><b>${itemName(g.k)}</b><span>${g.d}</span></div><button data-buyg="${g.k}" ${owned||coins<cost?"disabled":""}>${owned?"owned":cost+"c"}</button></div>`; }).join("");
+    return `<div class="item"><div><b>${itemName(g.k)}</b><span>${g.d}</span></div><button data-buyg="${g.k}" ${owned||coins<cost?"disabled":""}>${owned?"owned":cost+"c"}</button></div>`; }).join("")
+    +`<div class="item"><div><b>oil</b><span>grow corn & press it, or buy a barrel here</span></div><button data-buyoil="1" ${coins<8?"disabled":""}>8c</button></div>`;
   const sellable=["fish","iron","gold","sand","glass","oil"].filter(k=>countItem(k)>0);
   document.getElementById("mktSell").innerHTML=(sellable.length?sellable:["__none"]).map(k=>{ if(k==="__none")return `<div class="item"><div><span>catch fish, mine ore or scoop sand, then sell it here</span></div></div>`;
     const v=ITEMS[k].sell,n=countItem(k); return `<div class="item"><div><b>${itemName(k)} ×${n}</b><span>${v}c each</span></div><button data-msell="${k}">sell</button></div>`; }).join(""); }
 marketEl.addEventListener("click",e=>{ const d=e.target.dataset||{};
   if(d.buyg){ const cost=GEARCOST[d.buyg]; if(countItem(d.buyg)===0&&coins>=cost&&addItem(d.buyg,1)){coins-=cost;SND.coin();} }
+  else if(d.buyoil){ if(coins>=8&&addItem("oil",1)){coins-=8;SND.coin();} }
   else if(d.msell){ const k=d.msell; if(countItem(k)>0){ coins+=ITEMS[k].sell; removeItem(k,1); SND.coin(); } }
   syncUI(); save(); renderMarket(); });
 document.getElementById("mktClose").addEventListener("click",()=>marketEl.classList.remove("open"));
