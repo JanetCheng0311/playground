@@ -855,9 +855,10 @@ function update(dt){ if(scene==="boss"){ updateBoss(dt); return; }
     clock+=dt;
   } else mobs.length=0;
   for(let i=fx.length-1;i>=0;i--){const p=fx[i];p.life-=dt*(p.kind==="text"?1.1:p.kind==="flash"?2.2:1.7);if(p.kind==="text")p.y-=dt*24;else if(p.kind==="p"){p.x+=p.vx;p.y+=p.vy;p.vy+=0.18;}if(p.life<=0)fx.splice(i,1);}
-  camX=Math.max(0,Math.min(GW-VW,player.x-VW/2));camY=Math.max(0,Math.min(GH-VH,player.y-VH/2));
-  if(GW<VW)camX=(GW-VW)/2;if(GH<VH)camY=(GH-VH)/2;
+  updateCamera();
 }
+function updateCamera(){ camX=Math.max(0,Math.min(GW-VW,player.x-VW/2)); camY=Math.max(0,Math.min(GH-VH,player.y-VH/2));
+  if(GW<VW)camX=(GW-VW)/2; if(GH<VH)camY=(GH-VH)/2; }
 
 /* ---- draw ---- */
 function tileColor(t){ return {wild:"#5a9e4e",grass:"#7ec850",path:"#cdab73",ppath:"#bfa980",soil:"#9c6b3f",fence:"#5e8c3a",house:"#e9e4da",pond:"#5aa0e6",door:"#7a4a22",tree:"#5a9e4e",rock:"#5a9e4e",torch:"#7ec850",pfence:"#5a9e4e",floor:"#caa46a",wall:"#7a5230",bed:"#caa46a",mat:"#caa46a",
@@ -992,6 +993,7 @@ function foodIcon(x,y,r,fill){ drumShape(x+1.5,y+2,r,"rgba(0,0,0,.45)",false);  
   if(fill>0){ ctx.save();ctx.beginPath();ctx.rect(x-r*1.4,y-r*1.4,2.8*r*fill,2.8*r);ctx.clip(); drumShape(x,y,r,"#cf9540",true); ctx.lineWidth=1.5;ctx.strokeStyle="rgba(90,55,20,.6)";ctx.beginPath();ctx.arc(x+r*0.28,y-r*0.28,r*0.62,0,7);ctx.stroke(); ctx.restore(); } }
 function draw(){ ctx.clearRect(0,0,VW,VH);
   if(scene==="boss"){ drawBoss(); return; }
+  updateCamera();   // keep the view centred on the player every frame, even while a dialogue/intro freezes update()
   for(let r=0;r<GR;r++)for(let c=0;c<GC;c++) drawTile(r,c);
   const f=facedCell(); if(f){ const tt=G[f.r][f.c].type; const fsel=bag[selSlot]; const farm=scene==="out"&&inFarm(f.r,f.c)&&FARMLAND.has(tt);
     const gather=scene==="out"&&(tt==="tree"||tt==="rock"||tt==="iron"||tt==="gold"||tt==="sand"||tt==="oil"||(WATER.has(tt)&&fsel&&ITEMS[fsel.key].kind==="tool")); const inr=scene==="in"&&["bed","mat","stove"].includes(tt);
