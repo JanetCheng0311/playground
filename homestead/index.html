@@ -102,6 +102,7 @@
   #barTip{position:fixed;z-index:25;display:none;transform:translate(-50%,-100%);background:rgba(10,14,40,.94);border:1.5px solid rgba(255,255,255,.35);border-radius:9px;padding:6px 11px;pointer-events:none;max-width:220px;text-align:center;box-shadow:0 8px 22px rgba(0,0,0,.4)}
   #barTip.show{display:block}
   #barTip b{font-size:13px;font-weight:800}#barTip span{display:block;font-size:11px;opacity:.72;margin-top:2px}
+  #nameInput{width:100%;margin:6px 0 4px;font:inherit;font-size:16px;text-align:center;color:#fff;background:rgba(0,0,0,.35);border:1.5px solid rgba(255,255,255,.4);border-radius:10px;padding:11px;outline:none}
   #cheat{position:fixed;right:6px;bottom:5px;z-index:50;width:26px;height:20px;opacity:.25;font:inherit;font-size:11px;text-align:center;color:#fff;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.25);border-radius:6px;outline:none;transition:width .15s,opacity .15s}
   #cheat:focus{width:90px;opacity:.95;background:rgba(0,0,0,.7)}
   #help .card{width:min(820px,100%)}
@@ -207,6 +208,11 @@
   <h2>🐹 Hamu's Trades <span class="c">coins <b id="merchCoins">0</b></span></h2>
   <h3>sell (Hamu pays +25%)</h3><div id="merchSell"></div>
   <button class="close" id="merchClose">close</button>
+</div></div>
+<div class="shop" id="nameModal"><div class="card" style="width:min(360px,100%);text-align:center">
+  <h2 id="nameTitle">What's your name?</h2>
+  <input id="nameInput" maxlength="16" placeholder="your name" autocomplete="off" spellcheck="false">
+  <button class="close" id="nameOk">OK</button>
 </div></div>
 <div class="shop" id="market"><div class="card">
   <h2>🎣 Pelle the Fisher <span class="c">coins <b id="mktCoins">0</b></span></h2>
@@ -377,6 +383,7 @@ const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金�
   "←/→ move · ↑/Space jump · E or ⟳use to slash · dodge the red charge & shots":"←/→ 移動 · ↑/空白鍵 跳躍 · E 或 使用鈕 揮擊 · 閃避紅色衝刺與射擊",
   "fight off the monsters first!":"先擊退怪物！","need a metal sword AND armour!":"需要金屬劍和盔甲！","the road is clear!":"道路暢通了！","defeated… craft better gear & retry":"戰敗了…製作更好的裝備再挑戰","cheat: road unlocked":"密技：道路已解鎖","cheat: sword & armour equipped":"密技：已裝備劍與盔甲",
   "name":"名字","📋 Quests":"📋 任務","📋 Missions":"📋 任務","claim":"領取","claimed":"已領取","reward":"獎勵","more quests coming from the village NPCs soon":"村莊的 NPC 很快會帶來更多任務","Enter your name:":"輸入你的名字：","name set":"名字已設定","Chop 5 trees":"砍 5 棵樹","Harvest 5 crops":"採收 5 個作物","Catch 8 fish":"釣 8 條魚",
+  "What's your name?":"你叫什麼名字？","dungeon":"地城","floor":"樓層","BOSS":"頭目","defeat the floor boss!":"先擊敗本層頭目！","the bottom… nothing deeper":"已到最底層…沒有更深了","checkpoint saved!":"存檔點已記錄！","boss down!":"頭目倒下！",
   "🐹 Hamu's Trades":"🐹 哈姆商行","sell (Hamu pays +25%)":"販售（哈姆多付 25%）",
   "Open the road: beat the Road Guardian":"打通道路：擊敗道路守衛","craft a metal sword + metal armour, then fight the boss on the east road":"製作金屬劍與金屬盔甲，再到東邊道路挑戰頭目",
   "Squeak! Hamu's the name — trading's my game. I'll pay top coin for your goods.":"吱！我叫哈姆 — 做買賣是我的本行。你的貨我出好價。",
@@ -486,9 +493,9 @@ const BAGN=30; const bag=new Array(BAGN).fill(null);
 const ROAD_R=OROWS-4;
 // village is its own, larger map
 const VCOLS=46, VROWS=34;
-const VROAD_R=9, RIVER_C=14, SEA_C0=39, SAND_C=38, NPC_R=6, NPC_C=36;
+const VROAD_R=9, RIVER_C=14, SEA_C0=39, SAND_C=38, NPC_R=6, NPC_C=36, CAVE_R=4, CAVE_C=6;
 
-const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor","chest","stove"]);
+const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor","chest","stove","dwall","cave","gem"]);
 const CHESTN=18;
 const WATER=new Set(["pond","river","sea"]);
 // player-placed tiles that can be removed (hold use) — maps the tile back to the item you get
@@ -559,8 +566,34 @@ function buildVillage(){ const g=[]; for(let r=0;r<VROWS;r++){ const row=[]; for
   [[23,18],[23,30],[29,18],[29,30]].forEach(([r,c])=>{ if(g[r][c].type==="path")set(r,c,"lamp"); });  // street lamps
   // clear ground by the fisher on the beach
   set(NPC_R,NPC_C,"wild"); set(NPC_R,NPC_C-1,"path");
+  // dungeon entrance (a cave) in the north-west, with clear ground around it
+  for(let r=CAVE_R-1;r<=CAVE_R+1;r++)for(let c=CAVE_C-1;c<=CAVE_C+1;c++) set(r,c,"wild");
+  set(CAVE_R,CAVE_C,"cave"); set(CAVE_R+1,CAVE_C,"path");
   setVillageMeta(); return g; }
-function setArea(a){ area=a; gridOut=(a==="home")?gridHome:gridVillage; }
+function setArea(a){ area=a; gridOut=(a==="home")?gridHome:(a==="village")?gridVillage:gridDung; }
+/* ---- 1000-floor dungeon (entered from the village cave) ---- */
+let dungFloor=0, dungMax=1, dungBoss=false, gridDung=null;
+const DR=22, DC=30;
+function buildDungeon(fl){ const g=[]; for(let r=0;r<DR;r++){ const row=[]; for(let c=0;c<DC;c++) row.push({type:(r===0||c===0||r===DR-1||c===DC-1)?"dwall":"dfloor",crop:null}); g.push(row); }
+  const free=(r,c)=>g[r]&&g[r][c]&&g[r][c].type==="dfloor"&&!(r<4&&c<4);
+  for(let i=0;i<14+Math.min(20,fl);i++){ const r=2+(Math.random()*(DR-4)|0),c=2+(Math.random()*(DC-4)|0); if(free(r,c)&&!(r>DR-5&&c>DC-5))g[r][c].type="dwall"; }   // wall clusters
+  const res=5+Math.min(14,Math.floor(fl/2)), gemChance=Math.min(0.5,0.05+fl*0.01);   // limited, scaling resources
+  for(let i=0;i<res;i++){ let r,c,tries=0; do{ r=1+(Math.random()*(DR-2)|0); c=1+(Math.random()*(DC-2)|0);}while(!free(r,c)&&tries++<30); if(!free(r,c))continue;
+    const x=Math.random(); g[r][c].type = x<gemChance?"gem" : x<gemChance+0.35?"iron" : x<gemChance+0.45?"gold" : "rock"; }
+  g[DR-3][DC-3].type="stairs";                       // stairs down
+  g[2][2].type="dfloor"; g[3][2].type="exitup";      // way out (back to village) by the spawn
+  if(fl%50===0) g[2][3].type="elevator";             // elevator checkpoint every 50
+  dungBoss = (fl%10===0);                             // boss floor every 10
+  return g; }
+function gotoDungeon(){ gridDung=buildDungeon(dungFloor); setArea("dungeon"); setScene("out"); mobs.length=0; spawnT=0; hover=null;
+  player.x=2.5*TILE; player.y=2.5*TILE; player.dir="d";player.fx=0;player.fy=1; transCD=0.4; if(dungBoss)spawnBoss(); save(); }
+function enterDungeon(){ dungFloor=(dungMax>=50)?Math.floor(dungMax/50)*50:1; dungBoss=false; gotoDungeon();
+  float(player.x,player.y-26,t("dungeon")+" · "+t("floor")+" "+dungFloor,"#cdb0ff"); }
+function descend(){ if(dungBoss&&mobs.some(m=>m.boss)){ SND.no(); float(player.x,player.y-22,t("defeat the floor boss!"),"#ff8f8f"); return; }
+  if(dungFloor>=1000){ float(player.x,player.y-22,t("the bottom… nothing deeper"),"#cdb0ff"); return; }
+  dungFloor++; if(dungFloor>dungMax)dungMax=dungFloor; gotoDungeon(); SND.door();
+  float(player.x,player.y-26,t("floor")+" "+dungFloor,"#cdb0ff"); }
+function leaveDungeon(){ dungFloor=0; setArea("village"); setScene("out"); player.x=(CAVE_C+1)*TILE+TILE/2; player.y=CAVE_R*TILE+TILE/2; player.dir="d";player.fx=0;player.fy=1; transCD=0.6; mobs.length=0; save(); }
 function buildIn(){ const w=9+houseLvl*2, h=7+houseLvl; const g=[];
   for(let r=0;r<h;r++){ const row=[]; for(let c=0;c<w;c++){ row.push({type:(r===0||c===0||r===w-1||c===w-1||r===h-1)?"wall":"floor",crop:null}); } g.push(row); }
   const mc=Math.floor(w/2); for(let c=Math.max(1,mc-1);c<=Math.min(w-2,mc+1);c++) g[h-1][c].type="mat";
@@ -571,7 +604,7 @@ function setScene(s){ scene=s; if(s==="out"){G=gridOut;GR=gridOut.length;GC=grid
 
 function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false;bossDefeated=false; area="home"; gridHome=buildOut(); gridVillage=buildVillage(); setArea("home"); coins=25; clock=0;
   for(let i=0;i<bag.length;i++)bag[i]=null; bag[0]={key:"seed_carrot",count:6}; bag[1]={key:"seed_wheat",count:2}; selSlot=0;
-  for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; catIntroPending=false; playerName="You"; louieQuest=0; metHamu=false; stats.trees=0;stats.crops=0;stats.fish=0; for(const k in claimed)delete claimed[k]; recalcMax();
+  for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; catIntroPending=false; playerName="You"; louieQuest=0; metHamu=false; dungFloor=0; dungMax=1; stats.trees=0;stats.crops=0;stats.fish=0; for(const k in claimed)delete claimed[k]; recalcMax();
   setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2+TILE; player.hp=player.maxHp;player.inv=0; mobs.length=0; save(); renderBar(); syncUI(); }
 function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); const home=s&&(s.home||s.gridOut); if(home&&home.length===OROWS){
     farmFR1=s.farmFR1||15;farmFC1=s.farmFC1||18;houseLvl=s.houseLvl||0;farmLvl=s.farmLvl||0;hasAxe=!!s.hasAxe;
@@ -579,12 +612,13 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); co
     for(let i=0;i<bag.length;i++)bag[i]=s.bag&&s.bag[i]?s.bag[i]:null; selSlot=s.selSlot||0;
     catX=(doorC=FC0+2,(FC0+4)*TILE+TILE/2); catY=(doorR=FR0+3,(FR0+4)*TILE+TILE/2); setVillageMeta();
     metCat=!!s.metCat; metFisher=!!s.metFisher; bossDefeated=!!s.bossDefeated; seenIntro=!!s.seenIntro; catIntroPending=!!s.catIntroPending;
-    playerName=s.playerName||"You"; louieQuest=s.louieQuest||0; metHamu=!!s.metHamu; if(s.stats)Object.assign(stats,s.stats); if(s.claimed)Object.assign(claimed,s.claimed);
+    playerName=s.playerName||"You"; louieQuest=s.louieQuest||0; metHamu=!!s.metHamu; dungMax=s.dungMax||1; dungFloor=0; if(s.stats)Object.assign(stats,s.stats); if(s.claimed)Object.assign(claimed,s.claimed);
     for(const sn in equip)equip[sn]=(s.equip&&s.equip[sn]&&ITEMS[s.equip[sn]])?s.equip[sn]:null; recalcMax();
     player.hunger=(typeof s.hunger==="number")?s.hunger:player.maxHunger; player.regenT=0;player.starveT=0;
     area=(s.area==="village")?"village":"home"; setArea(area);
     setScene("out"); player.x=s.px;player.y=s.py;player.hp=s.hp??player.maxHp; return true; } }catch(e){} return false; }
-function save(){ localStorage.setItem("homestead4", JSON.stringify({v:5,area,home:gridHome,village:gridVillage,coins,clock,px:scene==="out"?player.x:outX,py:scene==="out"?player.y:outY,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger,playerName,louieQuest,metHamu,stats,claimed})); }
+function save(){ const inD=area==="dungeon"; const sArea=inD?"village":area, sx=inD?(CAVE_C+1)*TILE+TILE/2:(scene==="out"?player.x:outX), sy=inD?CAVE_R*TILE+TILE/2:(scene==="out"?player.y:outY);
+  localStorage.setItem("homestead4", JSON.stringify({v:5,area:sArea,home:gridHome,village:gridVillage,coins,clock,px:sx,py:sy,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger,playerName,louieQuest,metHamu,dungMax,stats,claimed})); }
 function syncUI(){ document.getElementById("coins").textContent=coins; }
 
 function resize(){ const rect=document.querySelector("main").getBoundingClientRect();
@@ -611,9 +645,12 @@ function float(x,y,text,col){ fx.push({kind:"text",x,y,text:t(text),col,life:1})
 function burst(x,y,col,n){ for(let i=0;i<n;i++){const a=Math.random()*7,s=1+Math.random()*2.6;fx.push({kind:"p",x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1.4,col,life:1});} }
 
 /* ---- monsters ---- */
+const DUNG_COLS=["#67d98a","#6aa0ff","#c46aff","#ff7a6a","#ffd24a"];
 function spawnMob(){ const RW=gridOut.length, CW=gridOut[0].length; for(let i=0;i<30;i++){ const c=1+(Math.random()*(CW-2)|0), r=1+(Math.random()*(RW-2)|0);
   if(inFarm(r,c)||OBST.has(gridOut[r][c].type))continue; const x=c*TILE+TILE/2,y=r*TILE+TILE/2,pd=Math.hypot(x-player.x,y-player.y); if(pd<170||pd>520)continue;
-  mobs.push({x,y,hp:3,maxHp:3,r:13,flash:0,kx:0,ky:0,t:Math.random()*9}); return; } }
+  const hp=area==="dungeon"?3+Math.floor(dungFloor/2):3, col=area==="dungeon"?DUNG_COLS[Math.min(4,Math.floor(dungFloor/12))]:"#67d98a";
+  mobs.push({x,y,hp,maxHp:hp,r:13,flash:0,kx:0,ky:0,t:Math.random()*9,col}); return; } }
+function spawnBoss(){ const hp=18+dungFloor*2; mobs.push({x:(DC*TILE)/2,y:(DR*TILE)/2,hp,maxHp:hp,r:24,flash:0,kx:0,ky:0,t:0,boss:true,col:"#d23a7a"}); }
 
 /* ---- interaction ---- */
 function facedCell(){ let c=Math.floor((player.x+player.fx*TILE)/TILE), r=Math.floor((player.y+player.fy*TILE)/TILE);
@@ -622,7 +659,9 @@ function tryAttack(){ const range=TILE*1.6,dmg=(hasAxe?2:1)+totalBonus().atk; le
   if(player.hunger<=0){ if(mobs.some(m=>Math.hypot(m.x-player.x,m.y-player.y)<TILE*1.7)){ tooHungry(); return true; } return false; }
   for(const m of mobs){ const dx=m.x-player.x,dy=m.y-player.y,fwd=dx*player.fx+dy*player.fy,lat=Math.abs(dx*player.fy-dy*player.fx),dd=Math.hypot(dx,dy);
     if(dd<range&&(fwd>-10||dd<TILE*0.9)&&lat<TILE*1.1){ m.hp-=dmg;m.flash=0.18;const d=dd||1;m.kx=dx/d*7;m.ky=dy/d*7;hit=true;SND.hit();
-      if(m.hp<=0){ const drop=3+(Math.random()*5|0); coins+=drop; gainItem("goo",1,m.x,m.y); if(Math.random()<0.3)gainItem("meat",1,m.x,m.y); if(Math.random()<0.18)gainItem("oil",1,m.x,m.y); float(m.x,m.y-30,"+"+drop+"c","#ffe27a"); burst(m.x,m.y,"#7be0a0",12); syncUI(); } } }
+      if(m.hp<=0){ let drop=3+(Math.random()*5|0); gainItem("goo",1,m.x,m.y); if(Math.random()<0.3)gainItem("meat",1,m.x,m.y); if(Math.random()<0.18)gainItem("oil",1,m.x,m.y);
+        if(area==="dungeon"){ drop+=Math.floor(dungFloor/2); if(m.boss){ drop+=50+dungFloor*3; gainItem("diamond",1,m.x,m.y); float(m.x,m.y-44,t("boss down!"),"#ffd24a"); } else if(Math.random()<0.12+dungFloor*0.004)gainItem(Math.random()<0.5?"silver":"fossil",1,m.x,m.y); }
+        coins+=drop; float(m.x,m.y-30,"+"+drop+"c","#ffe27a"); burst(m.x,m.y,m.boss?"#ff9ad0":"#7be0a0",m.boss?22:12); syncUI(); } } }
   if(hit)spendHunger(1.5);
   mobs.splice(0,mobs.length,...mobs.filter(m=>m.hp>0)); return hit; }
 function talkInteract(){ if(scene!=="out"){ return; }
@@ -642,6 +681,12 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.
   if(t.type==="door"){ enterHouse(); return; }
   if(t.type==="chest"){ openChest(f.r,f.c); return; }
   if(t.type==="stove"){ openStove(); return; }
+  if(t.type==="cave"){ enterDungeon(); return; }
+  if(t.type==="stairs"){ descend(); return; }
+  if(t.type==="exitup"){ leaveDungeon(); return; }
+  if(t.type==="elevator"){ float(cx,cy-12,t("checkpoint saved!"),"#9ad8ff"); leaveDungeon(); return; }
+  if(t.type==="gem"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||4)-1; SND.mine(); burst(cx,cy-6,"#9fe6ff",6); if(t.hits<=0){ const dep=dungFloor; const r=Math.random();
+      gainItem(r<0.18?"diamond":r<0.45?(Math.random()<0.5?"red_jewel":"green_jewel"):r<0.7?"fossil":"silver",1,cx,cy); if(dep>=20&&Math.random()<0.2)gainItem("diamond",1,cx,cy); t.type="dfloor"; t.hits=0; } save(); return; }
   // place crafted item
   if(sel&&ITEMS[sel.key].kind==="place"&&PLACEABLE_ON.has(t.type)&&!t.crop&&!inFarmHouseConflict(f)){ t.type=ITEMS[sel.key].tile; if(t.type==="chest")t.store=new Array(CHESTN).fill(null); removeItem(sel.key,1); SND.place(); burst(cx,cy,itemColor(sel.key),5); save(); return; }
   // fishing with a rod or net
@@ -780,7 +825,7 @@ const keys={}; let running=false,lastTapDir="",lastTapT=-1;
 function dirTap(d){ const t=now(); if(d===lastTapDir&&t-lastTapT<0.30)running=true; lastTapDir=d; lastTapT=t; }   // double-tap a direction to run
 function anyMove(){ return keys.u||keys.d||keys.l||keys.r; }
 addEventListener("keydown",e=>{ const k=e.key.toLowerCase();
-  if(document.activeElement&&document.activeElement.id==="cheat")return;
+  if(document.activeElement&&(document.activeElement.id==="cheat"||document.activeElement.id==="nameInput"))return;
   if(scene==="boss"){ if(["arrowup","w"," "].includes(k))bossJump(); else if(["arrowleft","a"].includes(k))keys.l=1; else if(["arrowright","d"].includes(k))keys.r=1; else if(k==="e")bossAttack(); e.preventDefault(); return; }
   if(dialogOpen){ if(k==="e"||k===" "||k==="enter")advanceDialog(); else if(k==="delete"||k==="escape")skipDialog(); e.preventDefault(); return; }
   if(["arrowup","w"].includes(k)){if(!e.repeat)dirTap("u");keys.u=1;e.preventDefault();} else if(["arrowdown","s"].includes(k)){if(!e.repeat)dirTap("d");keys.d=1;e.preventDefault();}
@@ -841,13 +886,14 @@ function update(dt){ if(scene==="boss"){ updateBoss(dt); return; }
   if(transCD<=0){ if(scene==="out"&&here==="door")enterHouse(); else if(scene==="in"&&here==="mat")exitHouse();
     else if(scene==="out"&&here==="road"){ if(area==="home"&&pc>=OCOLS-1){ if(bossDefeated)gotoArea("village"); else tryBoss(); } else if(area==="village"&&pc<=0)gotoArea("home"); } }
   if(scene==="out"){ for(let r=0;r<gridOut.length;r++)for(let c=0;c<gridOut[0].length;c++){ const cr=gridOut[r][c].crop; if(cr&&cr.grow<1){ const C=CROPS[cr.type];const s=(now()<cr.boost?2.4:1); cr.grow=Math.min(1,cr.grow+dt/C.dur*s); } }
-    const outside=!inFarm(pr,pc); const target=isNight()?12:(outside?8:4);
-    spawnT-=dt; if(spawnT<=0&&mobs.length<target){spawnMob();spawnT=isNight()?1.4:2.2;}
+    const outside=!inFarm(pr,pc); const target=area==="dungeon"?Math.min(3+Math.floor(dungFloor/5),12):(isNight()?12:(outside?8:4));
+    spawnT-=dt; if(spawnT<=0&&mobs.filter(m=>!m.boss).length<target){spawnMob();spawnT=area==="dungeon"?1.6:(isNight()?1.4:2.2);}
     for(const mb of mobs){ mb.t+=dt;mb.flash=Math.max(0,mb.flash-dt);const dx=player.x-mb.x,dy=player.y-mb.y,d=Math.hypot(dx,dy)||1;
       let mx=0,my=0; if(d<180){mx=dx/d;my=dy/d;}else{mx=Math.cos(mb.t*0.7);my=Math.sin(mb.t*0.9);}
       const ms=(d<180?52:26)*dt; moveMob(mb,mx*ms+mb.kx,my*ms+mb.ky,11); mb.kx*=0.8;mb.ky*=0.8; if(d<mb.r+11)hurt(1,mb.x,mb.y); }
+    if(area!=="dungeon"){
     treeT-=dt; if(treeT<=0){ treeT=26+Math.random()*20; if(countTiles("tree")<60)respawnRes("tree"); }
-    rockT-=dt; if(rockT<=0){ rockT=65+Math.random()*35; if(countTiles("rock")<40)respawnRes("rock"); }
+    rockT-=dt; if(rockT<=0){ rockT=65+Math.random()*35; if(countTiles("rock")<40)respawnRes("rock"); } }
     // hunger, regen & starvation
     if(activeBuff&&now()>=activeBuff.until){ activeBuff=null; recalcMax(); }
     player.hunger=Math.max(0,player.hunger-dt*0.45); const gb=totalBonus();
@@ -864,7 +910,8 @@ function updateCamera(){ camX=Math.max(0,Math.min(GW-VW,player.x-VW/2)); camY=Ma
 /* ---- draw ---- */
 function tileColor(t){ return {wild:"#5a9e4e",grass:"#7ec850",path:"#cdab73",ppath:"#bfa980",soil:"#9c6b3f",fence:"#5e8c3a",house:"#e9e4da",pond:"#5aa0e6",door:"#7a4a22",tree:"#5a9e4e",rock:"#5a9e4e",torch:"#7ec850",pfence:"#5a9e4e",floor:"#caa46a",wall:"#7a5230",bed:"#caa46a",mat:"#caa46a",
     road:"#c9b27e",river:"#4a8fd6",sea:"#2f6fb0",sand:"#e6d8a8",iron:"#5a9e4e",gold:"#5a9e4e",lantern:"#5a9e4e",goldlamp:"#5a9e4e",mfence:"#5a9e4e",oil:"#5a9e4e",oillamp:"#5a9e4e",
-    church:"#e3ddd2",churchtop:"#e3ddd2",shop:"#c98b5a",hdoor:"#cdbf9c",chest:"#5a9e4e",stove:"#5a9e4e"}[t.type]||"#5a9e4e"; }
+    church:"#e3ddd2",churchtop:"#e3ddd2",shop:"#c98b5a",hdoor:"#cdbf9c",chest:"#5a9e4e",stove:"#5a9e4e",
+    dwall:"#241f2e",dfloor:"#3a3444",stairs:"#3a3444",exitup:"#3a3444",elevator:"#3a3444",gem:"#3a3444",cave:"#5a9e4e"}[t.type]||"#5a9e4e"; }
 function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE||y<-TILE||x>VW||y>VH)return;
   ctx.fillStyle=tileColor(t); ctx.fillRect(x,y,TILE,TILE);
   if(t.type==="wild"||t.type==="grass"){ ctx.fillStyle="rgba(0,0,0,0.05)";if((r+c)%2)ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle=shade(tileColor(t),1.08);ctx.fillRect(x+7,y+9,3,3);ctx.fillRect(x+24,y+27,3,3); }
@@ -910,6 +957,15 @@ function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE|
     // smoke puffs so it stands out
     ctx.fillStyle="rgba(255,255,255,.25)";ctx.beginPath();ctx.arc(x+TILE/2+(Math.sin(now()*2+c)*4),y-2-((now()*8+c*7)%14),3,0,7);ctx.fill();
     if(scene==="in"||Math.hypot(player.x-(c*TILE+TILE/2),player.y-(r*TILE+TILE/2))<TILE*2.2){ ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 10px Helvetica";ctx.textAlign="center";ctx.fillText((lang==="zh"?"烹調":"cook")+" ▸ use",x+TILE/2,y-6); } }
+  else if(t.type==="cave"){ ctx.fillStyle="#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#5b5360";ctx.beginPath();ctx.ellipse(x+TILE/2,y+TILE-12,16,13,0,0,7);ctx.fill();ctx.fillStyle="#100c18";ctx.beginPath();ctx.ellipse(x+TILE/2,y+TILE-10,11,9,0,0,7);ctx.fill();
+    if(Math.hypot(player.x-(c*TILE+TILE/2),player.y-(r*TILE+TILE/2))<TILE*2){ ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText((lang==="zh"?"地城":"dungeon")+" ▸ use",x+TILE/2,y-6); } }
+  else if(t.type==="dwall"){ ctx.fillStyle="#241f2e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#322a3e";ctx.fillRect(x+2,y+2,TILE-4,TILE-6);ctx.fillStyle="rgba(0,0,0,.3)";ctx.fillRect(x,y+TILE-5,TILE,5); }
+  else if(t.type==="dfloor"){ ctx.fillStyle="#3a3444";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="rgba(0,0,0,.12)";if((r+c)%2)ctx.fillRect(x,y,TILE,TILE); }
+  else if(t.type==="stairs"){ ctx.fillStyle="#3a3444";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#1a1622";for(let k=0;k<4;k++)ctx.fillRect(x+5+k*4,y+8+k*7,TILE-10-k*8,6);
+    ctx.fillStyle="rgba(255,255,255,.85)";ctx.font="700 9px Helvetica";ctx.textAlign="center";ctx.fillText("▼",x+TILE/2,y+TILE-3); }
+  else if(t.type==="exitup"){ ctx.fillStyle="#3a3444";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#8fd0ff";for(let k=0;k<3;k++)ctx.fillRect(x+10+k*4,y+TILE-10-k*7,TILE-20-k*8,5);ctx.fillStyle="#8fd0ff";ctx.font="700 9px Helvetica";ctx.textAlign="center";ctx.fillText("▲",x+TILE/2,y+10); }
+  else if(t.type==="elevator"){ ctx.fillStyle="#3a3444";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#9aa3ab";ctx.fillRect(x+6,y+5,TILE-12,TILE-10);ctx.fillStyle="#2b3036";ctx.fillRect(x+TILE/2-1,y+5,2,TILE-10);ctx.fillStyle="#ffd23b";ctx.font="700 9px Helvetica";ctx.textAlign="center";ctx.fillText("⇕",x+TILE/2,y+TILE/2+3); }
+  else if(t.type==="gem"){ ctx.fillStyle="#3a3444";ctx.fillRect(x,y,TILE,TILE);const gc=["#9fe6ff","#e8344e","#3fae5a","#ffd84a"][(r+c)%4];ctx.fillStyle=gc;ctx.beginPath();ctx.moveTo(x+TILE/2,y+8);ctx.lineTo(x+TILE-10,y+TILE/2);ctx.lineTo(x+TILE/2,y+TILE-8);ctx.lineTo(x+10,y+TILE/2);ctx.closePath();ctx.fill();ctx.fillStyle="rgba(255,255,255,.5)";ctx.fillRect(x+TILE/2-2,y+12,4,6); }
   if(t.crop) drawCrop(x+TILE/2,y+TILE-8,t.crop);
 }
 function drawCrop(x,by,cr){ const C=CROPS[cr.type],ratio=Math.min(1,cr.grow),ripe=cr.grow>=1,h=6+ratio*20+(ripe?2:0),bob=ripe?Math.sin(now()*4+x)*1.5:0;
@@ -919,7 +975,7 @@ function drawCrop(x,by,cr){ const C=CROPS[cr.type],ratio=Math.min(1,cr.grow),rip
   else if(ratio>0.45){ctx.fillStyle=shade(C.c,0.8);ctx.beginPath();ctx.arc(x,by-h,3,0,7);ctx.fill();} }
 function drawMob(mb){ const x=mb.x-camX,y=mb.y-camY,bob=Math.abs(Math.sin(mb.t*5))*3;
   ctx.fillStyle="rgba(0,0,0,0.2)";ctx.beginPath();ctx.ellipse(x,y+10,12,5,0,0,7);ctx.fill();
-  ctx.fillStyle=mb.flash>0?"#fff":"#67d98a";ctx.beginPath();ctx.ellipse(x,y+2-bob*0.4,mb.r,mb.r-bob*0.3,0,0,7);ctx.fill();
+  ctx.fillStyle=mb.flash>0?"#fff":(mb.col||"#67d98a");ctx.beginPath();ctx.ellipse(x,y+2-bob*0.4,mb.r,mb.r-bob*0.3,0,0,7);ctx.fill();
   ctx.fillStyle="rgba(255,255,255,.4)";ctx.beginPath();ctx.ellipse(x-4,y-3-bob*0.4,3,2,0,0,7);ctx.fill();
   ctx.fillStyle="#22303f";ctx.beginPath();ctx.arc(x-4,y+1-bob*0.4,1.6,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+4,y+1-bob*0.4,1.6,0,7);ctx.fill();
   if(mb.hp<mb.maxHp){ctx.fillStyle="rgba(0,0,0,.4)";ctx.fillRect(x-12,y-mb.r-6,24,3);ctx.fillStyle="#ff6a6a";ctx.fillRect(x-12,y-mb.r-6,24*mb.hp/mb.maxHp,3);} }
@@ -1013,6 +1069,10 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
     ctx.globalCompositeOperation="lighter";
     for(let r=0;r<gridOut.length;r++)for(let c=0;c<gridOut[0].length;c++){ if(LIGHTS.has(gridOut[r][c].type)){ const x=c*TILE+TILE/2-camX,y=r*TILE+TILE/2-camY; if(x<-80||y<-80||x>VW+80||y>VH+80)continue; const g=ctx.createRadialGradient(x,y,4,x,y,70); g.addColorStop(0,"rgba(255,200,120,.55)");g.addColorStop(1,"rgba(255,200,120,0)"); ctx.fillStyle=g; ctx.beginPath();ctx.arc(x,y,70,0,7);ctx.fill(); } }
     ctx.globalCompositeOperation="source-over"; } }
+  // dungeon: dark, lit by a glow around the player
+  if(area==="dungeon"){ ctx.fillStyle="rgba(6,4,16,.62)";ctx.fillRect(0,0,VW,VH); ctx.globalCompositeOperation="lighter";
+    const px=player.x-camX,py=player.y-camY,g=ctx.createRadialGradient(px,py,10,px,py,150); g.addColorStop(0,"rgba(120,90,160,.55)");g.addColorStop(1,"rgba(120,90,160,0)"); ctx.fillStyle=g;ctx.beginPath();ctx.arc(px,py,150,0,7);ctx.fill(); ctx.globalCompositeOperation="source-over";
+    ctx.fillStyle="#cdb0ff";ctx.font="800 14px Helvetica,Arial";ctx.textAlign="right";ctx.fillText("⛏ "+t("floor")+" "+dungFloor+(dungBoss?" "+t("BOSS"):""),VW-12,VH-12); }
   // ---- icon HUD (Minecraft/Stardew style): a row of hearts + a row of food ----
   const R=11, SP=25, X0=24, YH=26, YF=YH+30, NF=10, step=player.maxHunger/NF;
   for(let i=0;i<player.maxHp;i++) heartIcon(X0+i*SP,YH,R,i<player.hp);
@@ -1274,7 +1334,12 @@ document.getElementById("questClose").addEventListener("click",()=>questsEl.clas
 questsEl.addEventListener("pointerdown",e=>{ if(e.target===questsEl)questsEl.classList.remove("open"); });
 
 /* ---- rename ---- */
-document.getElementById("renameBtn").addEventListener("click",()=>{ const n=prompt(t("Enter your name:"),playerName==="You"?"":playerName); if(n!=null){ playerName=n.trim().slice(0,16)||"You"; save(); float(player.x,player.y-24,t("name set"),"#9ad8ff"); } });
+const nameModalEl=document.getElementById("nameModal"), nameInputEl=document.getElementById("nameInput"); let nameDone=null;
+function openNameModal(onDone){ nameDone=onDone||null; nameInputEl.value=playerName==="You"?"":playerName; nameModalEl.classList.add("open"); setTimeout(()=>nameInputEl.focus(),30); }
+function confirmName(){ playerName=(nameInputEl.value||"").trim().slice(0,16)||"You"; save(); nameModalEl.classList.remove("open"); const d=nameDone; nameDone=null; if(d)d(); }
+document.getElementById("renameBtn").addEventListener("click",()=>openNameModal(null));
+document.getElementById("nameOk").addEventListener("click",confirmName);
+nameInputEl.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter")confirmName(); });
 
 /* ---- village fisher (NPC) ---- */
 const marketEl=document.getElementById("market");
@@ -1397,7 +1462,7 @@ function expandFarm(){ const oFR1=farmFR1,oFC1=farmFC1; farmFR1=Math.min(OROWS-2
 
 const sndBtn=document.getElementById("snd"); function syncSnd(){sndBtn.textContent=soundOn?"sound":"muted";sndBtn.classList.toggle("off",!soundOn);}
 sndBtn.addEventListener("click",()=>{soundOn=!soundOn;localStorage.setItem("hs-sound",soundOn?"on":"off");syncSnd();if(soundOn)audio();}); syncSnd();
-document.getElementById("new").addEventListener("click",()=>{ if(confirm("Start a new homestead? Progress will be cleared.")){ reset(); maybeIntro(); } });
+document.getElementById("new").addEventListener("click",()=>{ if(confirm("Start a new homestead? Progress will be cleared.")){ reset(); openNameModal(maybeIntro); } });
 
 /* ---- save to / load from a file ---- */
 function exportSave(){ save(); const data=localStorage.getItem("homestead4")||"{}";
@@ -1414,9 +1479,9 @@ impFile.addEventListener("change",e=>{ const file=e.target.files[0]; if(!file)re
   rd.readAsText(file); });
 document.getElementById("langBtn").addEventListener("click",()=>{ lang=lang==="zh"?"en":"zh"; applyLang(); });
 setInterval(save,5000);
-if(!load()) reset(); else { renderBar(); syncUI(); }
+const freshStart=!load(); if(freshStart) reset(); else { renderBar(); syncUI(); }
 applyLang();
-resize(); requestAnimationFrame(frame); maybeIntro();
+resize(); requestAnimationFrame(frame); if(freshStart)openNameModal(maybeIntro); else maybeIntro();
 })();
 </script>
 </body>
