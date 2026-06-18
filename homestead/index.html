@@ -340,6 +340,10 @@ const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金�
   "…A cat? Were you here this whole time?":"…一隻貓？你一直都在這裡嗎？",
   "Not quite. I only look like a cat. In truth I'm a fairy, bound to this land long before your family came.":"不完全是。我只是看起來像貓。其實我是精靈，早在你家人來之前就守護著這片土地。",
   "Tend the soil and treat the land kindly, and I'll help you trade, craft and grow. Your new life starts now — welcome home.":"好好耕作、善待土地，我會幫你交易、製作與成長。你的新生活從現在開始 — 歡迎回家。",
+  "…Enough moping. Let's head outside and see what I'm working with.":"…別再唉聲嘆氣了。出去看看這片地有什麼吧。",
+  "Mrrrow!":"喵～！","Oh! A cat — were you out here the whole time?":"咦！一隻貓 — 你一直都在外面嗎？",
+  "Come and see me whenever you like — I'm your shop. I'll buy your harvest and loot, and sell you seeds, furniture and upgrades.":"隨時都可以來找我 — 我就是你的商店。我會收購你的收成與素材，也賣種子、家具和升級。",
+  "Now go on — tend the soil. Your new life starts here.":"去吧 — 好好耕作。你的新生活從這裡開始。",
   "Skip ⏭":"略過 ⏭","starving — eat food!":"飢餓 — 快吃東西！","too hungry — eat first!":"太餓了 — 先吃東西！",
   // boss / world tags / floats
   "ROAD GUARDIAN":"道路守衛","VICTORY!":"勝利！","DEFEATED":"戰敗","shop ▸ use":"商店 ▸ 對話","fisher ▸ use":"漁夫 ▸ 對話","BOSS ▸ approach":"頭目 ▸ 靠近","no one to talk to here":"這裡沒有人可以對話",
@@ -404,7 +408,7 @@ let catX=0, catY=0, npcX=0, npcY=0;
 const player={x:0,y:0,dir:"d",fx:0,fy:1,moving:false,hp:5,maxHp:5,inv:0,kx:0,ky:0,swing:0,hunger:100,maxHunger:100,regenT:0,starveT:0};
 const equip={sword:null,armor:null,hat:null,chest:null,pants:null,shoes:null,acc1:null,acc2:null};
 const mobs=[]; const fx=[]; let spawnT=0;
-let coins=25, clock=0, selSlot=0, outX, outY, metCat=false, metFisher=false, mapOpen=false, bossDefeated=false, seenIntro=false;
+let coins=25, clock=0, selSlot=0, outX, outY, metCat=false, metFisher=false, mapOpen=false, bossDefeated=false, seenIntro=false, catIntroPending=false;
 const hasSword=()=>!!equip.sword, hasArmor=()=>!!equip.armor;
 function gearBonus(){ const b={atk:0,maxhp:0,regen:0,speed:0}; for(const sn in equip){ const k=equip[sn]; if(k&&ITEMS[k].bonus)for(const s in ITEMS[k].bonus)b[s]+=ITEMS[k].bonus[s]; } return b; }
 function recalcMax(){ player.maxHp=5+gearBonus().maxhp; if(player.hp>player.maxHp)player.hp=player.maxHp; }
@@ -505,19 +509,19 @@ function setScene(s){ scene=s; if(s==="out"){G=gridOut;GR=gridOut.length;GC=grid
 
 function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false;bossDefeated=false; area="home"; gridHome=buildOut(); gridVillage=buildVillage(); setArea("home"); coins=25; clock=0;
   for(let i=0;i<bag.length;i++)bag[i]=null; bag[0]={key:"seed_carrot",count:6}; bag[1]={key:"seed_wheat",count:2}; selSlot=0;
-  for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; recalcMax();
+  for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; catIntroPending=false; recalcMax();
   setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2+TILE; player.hp=player.maxHp;player.inv=0; mobs.length=0; save(); renderBar(); syncUI(); }
 function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); const home=s&&(s.home||s.gridOut); if(home&&home.length===OROWS){
     farmFR1=s.farmFR1||15;farmFC1=s.farmFC1||18;houseLvl=s.houseLvl||0;farmLvl=s.farmLvl||0;hasAxe=!!s.hasAxe;
     gridHome=home; gridVillage=(s.village&&s.village.length===VROWS&&s.village[0].length===VCOLS)?s.village:buildVillage(); coins=s.coins; clock=s.clock||0;
     for(let i=0;i<bag.length;i++)bag[i]=s.bag&&s.bag[i]?s.bag[i]:null; selSlot=s.selSlot||0;
     catX=(doorC=FC0+2,(FC0+4)*TILE+TILE/2); catY=(doorR=FR0+3,(FR0+4)*TILE+TILE/2); setVillageMeta();
-    metCat=!!s.metCat; metFisher=!!s.metFisher; bossDefeated=!!s.bossDefeated; seenIntro=!!s.seenIntro;
+    metCat=!!s.metCat; metFisher=!!s.metFisher; bossDefeated=!!s.bossDefeated; seenIntro=!!s.seenIntro; catIntroPending=!!s.catIntroPending;
     for(const sn in equip)equip[sn]=(s.equip&&s.equip[sn]&&ITEMS[s.equip[sn]])?s.equip[sn]:null; recalcMax();
     player.hunger=(typeof s.hunger==="number")?s.hunger:player.maxHunger; player.regenT=0;player.starveT=0;
     area=(s.area==="village")?"village":"home"; setArea(area);
     setScene("out"); player.x=s.px;player.y=s.py;player.hp=s.hp??player.maxHp; return true; } }catch(e){} return false; }
-function save(){ localStorage.setItem("homestead4", JSON.stringify({v:5,area,home:gridHome,village:gridVillage,coins,clock,px:scene==="out"?player.x:outX,py:scene==="out"?player.y:outY,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,equip,hunger:player.hunger})); }
+function save(){ localStorage.setItem("homestead4", JSON.stringify({v:5,area,home:gridHome,village:gridVillage,coins,clock,px:scene==="out"?player.x:outX,py:scene==="out"?player.y:outY,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger})); }
 function syncUI(){ document.getElementById("coins").textContent=coins; }
 
 function resize(){ const rect=document.querySelector("main").getBoundingClientRect();
@@ -697,7 +701,7 @@ function drawGuardian(){ const x=(OCOLS-1)*TILE+TILE/2-camX,y=ROAD_R*TILE+TILE/2
   ctx.fillStyle="#ffd23b";ctx.beginPath();ctx.arc(x-5,y-6+bob,3,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+5,y-6+bob,3,0,7);ctx.fill();
   ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText(t("BOSS ▸ approach"),x,y-24+bob); }
 function enterHouse(){ outX=player.x;outY=player.y; SND.door(); setScene("in"); const mc=Math.floor(GC/2); player.x=mc*TILE+TILE/2; player.y=(GR-2)*TILE+TILE/2; player.dir="u";player.fx=0;player.fy=-1; transCD=0.5; }
-function exitHouse(){ SND.door(); setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2; player.dir="d";player.fx=0;player.fy=1; transCD=0.5; save(); }
+function exitHouse(){ SND.door(); setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2; player.dir="d";player.fx=0;player.fy=1; transCD=0.5; save(); if(catIntroPending)catReveal(); }
 function sleep(){ const ph=(clock%DAYLEN)/DAYLEN, skip=(1-ph)*DAYLEN; clock+=skip;
   for(const row of gridHome)for(const tt of row){ const cr=tt.crop; if(cr&&cr.grow<1)cr.grow=Math.min(1,cr.grow+skip/CROPS[cr.type].dur); }   // crops grow overnight
   player.hp=player.maxHp; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; SND.heal(); float(player.x,player.y-26,"slept · a new day · crops grew","#fff"); save(); }
@@ -1208,13 +1212,17 @@ function startIntro(){ setScene("in"); const mc=Math.floor(GC/2); player.x=mc*TI
     {who:"player",text:"Home at last… the old family cottage, just as I left it."},
     {who:"player",text:"The city chewed me up — months of searching and not one job. So here I am, back where I started."},
     {who:"player",text:"No more rent I can't pay. Maybe I can make a living off this little homestead instead."},
-    {who:"cat",text:"Mrrrow."},
-    {who:"player",text:"…A cat? Were you here this whole time?"},
-    {who:"cat",name:"???",text:"Not quite. I only look like a cat. In truth I'm a fairy, bound to this land long before your family came."},
-    {who:"cat",name:"Whiskers",text:"Tend the soil and treat the land kindly, and I'll help you trade, craft and grow. Your new life starts now — welcome home."}
+    {who:"player",text:"…Enough moping. Let's head outside and see what I'm working with."}
   ], finishIntro); }
 function startInHouse(){ setArea("home"); setScene("in"); const mc=Math.floor(GC/2); player.x=mc*TILE+TILE/2; player.y=(GR-2)*TILE+TILE/2; player.dir="u";player.fx=0;player.fy=-1; transCD=0.6; }
-function finishIntro(){ seenIntro=true; startInHouse(); save(); }
+function finishIntro(){ seenIntro=true; catIntroPending=true; startInHouse(); save(); }
+function catReveal(){ metCat=true; catIntroPending=false; save(); startDialog([
+    {who:"cat",text:"Mrrrow!"},
+    {who:"player",text:"Oh! A cat — were you out here the whole time?"},
+    {who:"cat",name:"???",text:"Not quite. I only look like a cat. In truth I'm a fairy, bound to this land long before your family came."},
+    {who:"cat",name:"Whiskers",text:"Come and see me whenever you like — I'm your shop. I'll buy your harvest and loot, and sell you seeds, furniture and upgrades."},
+    {who:"cat",name:"Whiskers",text:"Now go on — tend the soil. Your new life starts here."}
+  ], null); }
 function maybeIntro(){ if(!seenIntro)startIntro(); else startInHouse(); }
 
 function expandFarm(){ const oFR1=farmFR1,oFC1=farmFC1; farmFR1=Math.min(OROWS-2,farmFR1+2); farmFC1=Math.min(OCOLS-2,farmFC1+2);
