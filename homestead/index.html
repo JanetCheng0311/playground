@@ -553,6 +553,17 @@ cheatEl.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter")
 function isObst(px,py){ const c=Math.floor(px/TILE),r=Math.floor(py/TILE); if(r<0||c<0||r>=GR||c>=GC)return true; return OBST.has(G[r][c].type); }
 function blocked(px,py,h){ return isObst(px-h,py-h)||isObst(px+h,py-h)||isObst(px-h,py+h)||isObst(px+h,py+h); }
 function moveEnt(o,vx,vy,h){ if(!isFinite(vx)||!isFinite(vy))return; const nx=o.x+vx; if(!blocked(nx,o.y,h))o.x=nx; const ny=o.y+vy; if(!blocked(o.x,ny,h))o.y=ny; }
+// monsters are barred from the farm/house area (the fenced home zone)
+function mobForbid(px,py){ if(area!=="home")return false; const c=Math.floor(px/TILE),r=Math.floor(py/TILE); return inFarm(r,c); }
+function blockedMob(px,py,h){ return blocked(px,py,h)||mobForbid(px-h,py-h)||mobForbid(px+h,py-h)||mobForbid(px-h,py+h)||mobForbid(px+h,py+h); }
+function moveMob(o,vx,vy,h){ if(!isFinite(vx)||!isFinite(vy))return; const nx=o.x+vx; if(!blockedMob(nx,o.y,h))o.x=nx; const ny=o.y+vy; if(!blockedMob(o.x,ny,h))o.y=ny; }
+// trees & rocks regrow on empty wild ground over time (rocks slower)
+let treeT=10, rockT=28;
+function countTiles(type){ let n=0; for(const row of gridOut)for(const t of row)if(t.type===type)n++; return n; }
+function respawnRes(type){ const RW=gridOut.length,CW=gridOut[0].length;
+  for(let i=0;i<25;i++){ const r=1+(Math.random()*(RW-2)|0),c=1+(Math.random()*(CW-2)|0),t=gridOut[r][c];
+    if(t.type==="wild"&&!inFarm(r,c)){ const x=c*TILE+TILE/2,y=r*TILE+TILE/2; if(Math.hypot(x-player.x,y-player.y)<TILE*3)continue; t.type=type; t.hits=0; return true; } }
+  return false; }
 function update(dt){ if(scene==="boss"){ updateBoss(dt); return; }
   if(dialogOpen){ player.moving=false; return; }   // freeze the world while chatting
   if(transCD>0)transCD-=dt;
@@ -572,7 +583,9 @@ function update(dt){ if(scene==="boss"){ updateBoss(dt); return; }
     spawnT-=dt; if(spawnT<=0&&mobs.length<target){spawnMob();spawnT=isNight()?1.4:2.2;}
     for(const mb of mobs){ mb.t+=dt;mb.flash=Math.max(0,mb.flash-dt);const dx=player.x-mb.x,dy=player.y-mb.y,d=Math.hypot(dx,dy)||1;
       let mx=0,my=0; if(d<180){mx=dx/d;my=dy/d;}else{mx=Math.cos(mb.t*0.7);my=Math.sin(mb.t*0.9);}
-      const ms=(d<180?52:26)*dt; moveEnt(mb,mx*ms+mb.kx,my*ms+mb.ky,11); mb.kx*=0.8;mb.ky*=0.8; if(d<mb.r+11)hurt(1,mb.x,mb.y); }
+      const ms=(d<180?52:26)*dt; moveMob(mb,mx*ms+mb.kx,my*ms+mb.ky,11); mb.kx*=0.8;mb.ky*=0.8; if(d<mb.r+11)hurt(1,mb.x,mb.y); }
+    treeT-=dt; if(treeT<=0){ treeT=10+Math.random()*8; if(countTiles("tree")<70)respawnRes("tree"); }
+    rockT-=dt; if(rockT<=0){ rockT=28+Math.random()*16; if(countTiles("rock")<45)respawnRes("rock"); }
     clock+=dt;
   } else mobs.length=0;
   for(let i=fx.length-1;i>=0;i--){const p=fx[i];p.life-=dt*(p.kind==="text"?1.1:p.kind==="flash"?2.2:1.7);if(p.kind==="text")p.y-=dt*24;else if(p.kind==="p"){p.x+=p.vx;p.y+=p.vy;p.vy+=0.18;}if(p.life<=0)fx.splice(i,1);}
