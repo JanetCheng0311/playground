@@ -908,7 +908,7 @@ function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE|
     ctx.fillStyle="#3a4047";ctx.beginPath();ctx.arc(x+10,y+11,2.2,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+TILE-10,y+11,2.2,0,7);ctx.fill();   // knobs
     // smoke puffs so it stands out
     ctx.fillStyle="rgba(255,255,255,.25)";ctx.beginPath();ctx.arc(x+TILE/2+(Math.sin(now()*2+c)*4),y-2-((now()*8+c*7)%14),3,0,7);ctx.fill();
-    if(scene==="in"||Math.hypot(player.x-(c*TILE+TILE/2),player.y-(r*TILE+TILE/2))<TILE*2.2){ ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 10px Helvetica";ctx.textAlign="center";ctx.fillText(t("cook")+" ▸ use",x+TILE/2,y-6); } }
+    if(scene==="in"||Math.hypot(player.x-(c*TILE+TILE/2),player.y-(r*TILE+TILE/2))<TILE*2.2){ ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 10px Helvetica";ctx.textAlign="center";ctx.fillText((lang==="zh"?"烹調":"cook")+" ▸ use",x+TILE/2,y-6); } }
   if(t.crop) drawCrop(x+TILE/2,y+TILE-8,t.crop);
 }
 function drawCrop(x,by,cr){ const C=CROPS[cr.type],ratio=Math.min(1,cr.grow),ripe=cr.grow>=1,h=6+ratio*20+(ripe?2:0),bob=ripe?Math.sin(now()*4+x)*1.5:0;
