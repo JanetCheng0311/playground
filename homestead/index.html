@@ -578,7 +578,7 @@ function buildVillage(){ const g=[]; for(let r=0;r<VROWS;r++){ const row=[]; for
   setVillageMeta(); return g; }
 function setArea(a){ area=a; gridOut=(a==="home")?gridHome:(a==="village")?gridVillage:gridDung; }
 /* ---- 1000-floor dungeon (entered from the village cave) ---- */
-let dungFloor=0, dungMax=1, dungBoss=false, gridDung=null;
+let dungFloor=0, dungMax=1, dungBoss=false, gridDung=null, dungStairs=[19,27], dungExit=[3,2];
 const DR=22, DC=30;
 function buildDungeon(fl){ const g=[]; for(let r=0;r<DR;r++){ const row=[]; for(let c=0;c<DC;c++) row.push({type:(r===0||c===0||r===DR-1||c===DC-1)?"dwall":"dfloor",crop:null}); g.push(row); }
   const free=(r,c)=>g[r]&&g[r][c]&&g[r][c].type==="dfloor"&&!(r<4&&c<4);
@@ -586,8 +586,8 @@ function buildDungeon(fl){ const g=[]; for(let r=0;r<DR;r++){ const row=[]; for(
   const res=5+Math.min(14,Math.floor(fl/2)), gemChance=Math.min(0.5,0.05+fl*0.01);   // limited, scaling resources
   for(let i=0;i<res;i++){ let r,c,tries=0; do{ r=1+(Math.random()*(DR-2)|0); c=1+(Math.random()*(DC-2)|0);}while(!free(r,c)&&tries++<30); if(!free(r,c))continue;
     const x=Math.random(); g[r][c].type = x<gemChance?"gem" : x<gemChance+0.35?"iron" : x<gemChance+0.45?"gold" : "rock"; }
-  g[DR-3][DC-3].type="stairs";                       // stairs down
-  g[2][2].type="dfloor"; g[3][2].type="exitup";      // way out (back to village) by the spawn
+  g[DR-3][DC-3].type="stairs"; dungStairs=[DR-3,DC-3];                       // stairs down
+  g[2][2].type="dfloor"; g[3][2].type="exitup"; dungExit=[3,2];             // way out (back to village) by the spawn
   if(fl%50===0) g[2][3].type="elevator";             // elevator checkpoint every 50
   dungBoss = (fl%10===0);                             // boss floor every 10
   return g; }
@@ -600,6 +600,13 @@ function descend(){ if(dungBoss&&mobs.some(m=>m.boss)){ SND.no(); float(player.x
   dungFloor++; if(dungFloor>dungMax)dungMax=dungFloor; gotoDungeon(); SND.door();
   float(player.x,player.y-26,t("floor")+" "+dungFloor,"#cdb0ff"); }
 function leaveDungeon(){ dungFloor=0; setArea("village"); setScene("out"); player.x=(CAVE_C+1)*TILE+TILE/2; player.y=CAVE_R*TILE+TILE/2; player.dir="d";player.fx=0;player.fy=1; transCD=0.6; mobs.length=0; save(); }
+// glowing beacon for the stairs/exit, with an edge-arrow when off-screen (so you can always find them in the dark)
+function dungBeacon(wx,wy,col,glyph){ const sx=wx-camX,sy=wy-camY;
+  if(sx>6&&sx<VW-6&&sy>6&&sy<VH-6){ ctx.globalCompositeOperation="lighter"; const g=ctx.createRadialGradient(sx,sy,3,sx,sy,42); g.addColorStop(0,col);g.addColorStop(1,"rgba(0,0,0,0)"); ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,42,0,7);ctx.fill(); ctx.globalCompositeOperation="source-over";
+    ctx.fillStyle="#fff";ctx.font="800 16px Helvetica,Arial";ctx.textAlign="center";ctx.fillText(glyph,sx,sy-20); }
+  else { const cx2=VW/2,cy2=VH/2,a=Math.atan2(sy-cy2,sx-cx2),R=Math.min(VW,VH)/2-26,ex=cx2+Math.cos(a)*R,ey=cy2+Math.sin(a)*R;
+    ctx.save();ctx.translate(ex,ey);ctx.rotate(a);ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(-9,-9);ctx.lineTo(-9,9);ctx.closePath();ctx.fill();ctx.restore();
+    ctx.fillStyle="#fff";ctx.font="700 13px Helvetica,Arial";ctx.textAlign="center";ctx.fillText(glyph,ex,ey+4); } }
 function buildIn(){ const w=9+houseLvl*2, h=7+houseLvl; const g=[];
   for(let r=0;r<h;r++){ const row=[]; for(let c=0;c<w;c++){ row.push({type:(r===0||c===0||r===w-1||c===w-1||r===h-1)?"wall":"floor",crop:null}); } g.push(row); }
   const mc=Math.floor(w/2); for(let c=Math.max(1,mc-1);c<=Math.min(w-2,mc+1);c++) g[h-1][c].type="mat";
@@ -1079,7 +1086,10 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
   // dungeon: dark, lit by a glow around the player
   if(area==="dungeon"){ ctx.fillStyle="rgba(6,4,16,.62)";ctx.fillRect(0,0,VW,VH); ctx.globalCompositeOperation="lighter";
     const px=player.x-camX,py=player.y-camY,g=ctx.createRadialGradient(px,py,10,px,py,150); g.addColorStop(0,"rgba(120,90,160,.55)");g.addColorStop(1,"rgba(120,90,160,0)"); ctx.fillStyle=g;ctx.beginPath();ctx.arc(px,py,150,0,7);ctx.fill(); ctx.globalCompositeOperation="source-over";
-    ctx.fillStyle="#cdb0ff";ctx.font="800 14px Helvetica,Arial";ctx.textAlign="right";ctx.fillText("⛏ "+t("floor")+" "+dungFloor+(dungBoss?" "+t("BOSS"):""),VW-12,VH-12); }
+    const bossLeft=dungBoss&&mobs.some(m=>m.boss);
+    dungBeacon((dungExit[1]+0.5)*TILE,(dungExit[0]+0.5)*TILE,"rgba(140,210,255,.9)","▲");
+    dungBeacon((dungStairs[1]+0.5)*TILE,(dungStairs[0]+0.5)*TILE,bossLeft?"rgba(255,90,90,.9)":"rgba(255,210,120,.95)","▼");
+    ctx.fillStyle="#cdb0ff";ctx.font="800 14px Helvetica,Arial";ctx.textAlign="right";ctx.fillText("⛏ "+t("floor")+" "+dungFloor+(bossLeft?" — "+t("BOSS"):""),VW-12,VH-12); }
   // ---- icon HUD (Minecraft/Stardew style): a row of hearts + a row of food ----
   const R=11, SP=25, X0=24, YH=26, YF=YH+30, NF=10, step=player.maxHunger/NF;
   for(let i=0;i<player.maxHp;i++) heartIcon(X0+i*SP,YH,R,i<player.hp);
