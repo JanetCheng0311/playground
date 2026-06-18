@@ -233,10 +233,11 @@ const DPR=Math.min(devicePixelRatio||1,2);
 const TILE=44, OCOLS=34, OROWS=24, DAYLEN=360;
 let VW,VH,camX=0,camY=0;
 
-const CROPS={ carrot:{name:"carrot",cost:4,sell:9,dur:16,food:8,c:"#ff8a3d",leaf:"#3fae5a"},
-  wheat:{name:"wheat",cost:8,sell:20,dur:28,food:6,c:"#f4d35e",leaf:"#9bc34a"},
-  corn:{name:"corn",cost:10,sell:14,dur:32,food:10,c:"#f7d83a",leaf:"#4f9e3f"},
-  pumpkin:{name:"pumpkin",cost:18,sell:55,dur:46,food:16,c:"#e8702a",leaf:"#3f9d54"} };
+// dur is in seconds; DAYLEN (360) = one in-game day, so the fastest crop takes ~1 day. Sleeping advances growth.
+const CROPS={ carrot:{name:"carrot",cost:4,sell:9,dur:360,food:8,c:"#ff8a3d",leaf:"#3fae5a"},
+  wheat:{name:"wheat",cost:8,sell:20,dur:540,food:6,c:"#f4d35e",leaf:"#9bc34a"},
+  corn:{name:"corn",cost:10,sell:14,dur:720,food:10,c:"#f7d83a",leaf:"#4f9e3f"},
+  pumpkin:{name:"pumpkin",cost:18,sell:55,dur:1080,food:16,c:"#e8702a",leaf:"#3f9d54"} };
 const CKEYS=Object.keys(CROPS);
 
 // item types: seeds, crops, materials (mat), placeables (place), usables (use)
@@ -696,7 +697,9 @@ function drawGuardian(){ const x=(OCOLS-1)*TILE+TILE/2-camX,y=ROAD_R*TILE+TILE/2
   ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText(t("BOSS ▸ approach"),x,y-24+bob); }
 function enterHouse(){ outX=player.x;outY=player.y; SND.door(); setScene("in"); const mc=Math.floor(GC/2); player.x=mc*TILE+TILE/2; player.y=(GR-2)*TILE+TILE/2; player.dir="u";player.fx=0;player.fy=-1; transCD=0.5; }
 function exitHouse(){ SND.door(); setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2; player.dir="d";player.fx=0;player.fy=1; transCD=0.5; save(); }
-function sleep(){ const ph=(clock%DAYLEN)/DAYLEN; clock+=(1-ph)*DAYLEN; player.hp=player.maxHp; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; SND.heal(); float(player.x,player.y-26,"slept · stats restored","#fff"); save(); }
+function sleep(){ const ph=(clock%DAYLEN)/DAYLEN, skip=(1-ph)*DAYLEN; clock+=skip;
+  for(const row of gridHome)for(const tt of row){ const cr=tt.crop; if(cr&&cr.grow<1)cr.grow=Math.min(1,cr.grow+skip/CROPS[cr.type].dur); }   // crops grow overnight
+  player.hp=player.maxHp; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; SND.heal(); float(player.x,player.y-26,"slept · a new day · crops grew","#fff"); save(); }
 function hurt(dmg,fx0,fy0){ if(player.inv>0||scene!=="out"||dialogOpen)return; player.hp-=dmg; player.inv=1.2; SND.hurt();
   const dx=player.x-fx0,dy=player.y-fy0,d=Math.hypot(dx,dy)||1; player.kx=dx/d*8;player.ky=dy/d*8; fx.push({kind:"flash",life:1});
   if(player.hp<=0){ player.x=doorC*TILE+TILE/2;player.y=(doorR+1)*TILE+TILE/2;player.hp=player.maxHp;player.inv=2;mobs.length=0; float(player.x,player.y-30,"fainted! home safe","#fff"); } save(); }
@@ -989,7 +992,7 @@ const craftGrid=new Array(9).fill(null); let held=null;
 function baseKey(k){ return k.startsWith("seed_")?"seed":k.startsWith("crop_")?"crop":k; }
 function craftIcon(R){ return R.once?"#9aa3ab":itemColor(R.give); }
 function iconSpan(key,big){ const it=ITEMS[key];
-  if(it&&it.kind==="seed"){ const sz=big?26:20,bz=big?14:11; return `<span class="emo seedico" style="font-size:${sz}px">🌱<span class="seedbadge" style="font-size:${bz}px">${CROP_EMOJI[it.crop]||""}</span></span>`; }
+  if(it&&it.kind==="seed"){ const sz=big?26:20,bz=big?14:11; return `<span class="emo seedico" style="font-size:${sz}px">🫘<span class="seedbadge" style="font-size:${bz}px">${CROP_EMOJI[it.crop]||""}</span></span>`; }
   const em=itemEmoji(key); if(em)return `<span class="emo" style="font-size:${big?26:20}px">${em}</span>`;
   const sz=it.kind==="crop"?(big?24:22):(big?22:20),rad=it.kind==="mat"?4:50;
   return `<span class="dot" style="width:${sz}px;height:${sz}px;border-radius:${rad}px;background:${itemColor(key)}"></span>`; }
