@@ -264,7 +264,7 @@ const ITEMS={
   metal_sword:{kind:"gear",slot:"sword",color:"#cfd6dd",name:"metal sword",bonus:{atk:1}}, metal_armor:{kind:"gear",slot:"armor",color:"#9fb0c2",name:"metal armour",bonus:{maxhp:2}},
   chest:{kind:"place",tile:"chest",color:"#9c6b3f",name:"chest"},
   berry:{kind:"food",color:"#c8466b",name:"berry",food:14}, meat:{kind:"food",color:"#c0603a",name:"meat",food:30},
-  bread:{kind:"food",color:"#d8a24a",name:"bread",food:35,buy:20}, pie:{kind:"food",color:"#e0913f",name:"berry pie",food:60,buy:40}, salad:{kind:"food",color:"#5fae4a",name:"garden salad",food:40},
+  bread:{kind:"food",color:"#d8a24a",name:"bread",food:35,buy:20,buff:{bonus:{regen:2},dur:120},eff:"heals faster for 2 min"}, pie:{kind:"food",color:"#e0913f",name:"berry pie",food:60,buy:40,buff:{bonus:{maxhp:1,regen:2},dur:180},eff:"+1 heart & fast heal, 3 min"}, salad:{kind:"food",color:"#5fae4a",name:"garden salad",food:40},
   hearty_stew:{kind:"food",color:"#b5612e",name:"hearty stew",food:60,buff:{bonus:{maxhp:2},dur:120}}, power_roast:{kind:"food",color:"#a23b2a",name:"power roast",food:50,buff:{bonus:{atk:1},dur:120}}, swift_salad:{kind:"food",color:"#5fc06a",name:"swift greens",food:40,buff:{bonus:{speed:30},dur:120}},
   stove:{kind:"place",tile:"stove",color:"#7d8893",name:"stove"},
   cap:{kind:"gear",slot:"hat",color:"#7aa86b",name:"cloth cap",bonus:{maxhp:1}}, vest:{kind:"gear",slot:"chest",color:"#b9883f",name:"leather vest",bonus:{maxhp:2}},
@@ -362,6 +362,7 @@ const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金�
   "fight off the monsters first!":"先擊退怪物！","need a metal sword AND armour!":"需要金屬劍和盔甲！","the road is clear!":"道路暢通了！","defeated… craft better gear & retry":"戰敗了…製作更好的裝備再挑戰","cheat: road unlocked":"密技：道路已解鎖","cheat: sword & armour equipped":"密技：已裝備劍與盔甲",
   "buy food":"購買食物","restores":"恢復","hunger":"飽食","buff!":"增益！","cook":"烹調","cooked":"煮好了","🔥 Kitchen Stove":"🔥 廚房爐灶","cook buff food":"烹調增益食物",
   "+2 hearts for 2 min":"2 分鐘 +2 顆心","+1 attack for 2 min":"2 分鐘 +1 攻擊","faster for 2 min":"2 分鐘 加速",
+  "heals faster for 2 min":"2 分鐘 加速回血","+1 heart & fast heal, 3 min":"3 分鐘 +1 心並加速回血",
   "the village":"村莊","home sweet home":"溫暖的家","slept · new day":"睡了一覺 · 新的一天","farm expanded":"農場已擴建","house upgraded":"房屋已升級","sturdy axe!":"堅固斧頭！","fainted! home safe":"昏倒了！安全回到家",
   "morning":"早晨","noon":"中午","evening":"傍晚","night":"夜晚","day":"第","indoors":"室內" };
 function t(s){ return lang==="zh" && ZH[s]!==undefined ? ZH[s] : s; }
@@ -526,6 +527,7 @@ function buildIn(){ const w=9+houseLvl*2, h=7+houseLvl; const g=[];
   for(let r=0;r<h;r++){ const row=[]; for(let c=0;c<w;c++){ row.push({type:(r===0||c===0||r===w-1||c===w-1||r===h-1)?"wall":"floor",crop:null}); } g.push(row); }
   const mc=Math.floor(w/2); for(let c=Math.max(1,mc-1);c<=Math.min(w-2,mc+1);c++) g[h-1][c].type="mat";
   g[1][1].type="bed"; g[1][2].type="bed";
+  g[1][w-2].type="stove";   // the kitchen — always in your house
   return {g,w,h}; }
 function setScene(s){ scene=s; if(s==="out"){G=gridOut;GR=gridOut.length;GC=gridOut[0].length;} else {const io=buildIn();gridIn=io.g;G=gridIn;GR=io.h;GC=io.w;} GW=GC*TILE; GH=GR*TILE; }
 
@@ -590,7 +592,7 @@ function talkInteract(){ if(scene!=="out"){ return; }
     for(const v of villagers){ if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); startDialog(v.lines.map(s=>({who:"vill",name:v.name,face:v.face,col:v.col,text:s})),null); return; } } }
   float(player.x,player.y-22,"no one to talk to here","#cfe0ff"); }
 function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.18;
-  if(scene==="in"){ const f=facedCell(); if(!f)return; const t=gridIn[f.r][f.c]; if(t.type==="bed")sleep(); else if(t.type==="mat")exitHouse(); return; }
+  if(scene==="in"){ const f=facedCell(); if(!f)return; const t=gridIn[f.r][f.c]; if(t.type==="bed")sleep(); else if(t.type==="mat")exitHouse(); else if(t.type==="stove")openStove(); return; }
   // exterior — use is for working the land/fighting; talking is on its own button
   SND.swing();
   if(tryAttack()){ save(); return; }
@@ -808,7 +810,7 @@ function update(dt){ if(scene==="boss"){ updateBoss(dt); return; }
     // hunger, regen & starvation
     if(activeBuff&&now()>=activeBuff.until){ activeBuff=null; recalcMax(); }
     player.hunger=Math.max(0,player.hunger-dt*0.45); const gb=totalBonus();
-    if(player.hunger>=60){ player.regenT+=dt*(1+gb.regen); if(player.regenT>=10){ player.regenT=0; if(player.hp<player.maxHp)player.hp++; } } else player.regenT=0;
+    if(player.hunger>=50){ player.regenT+=dt*(1+gb.regen); if(player.regenT>=6){ player.regenT=0; if(player.hp<player.maxHp)player.hp++; } } else player.regenT=0;
     if(player.hunger<=0){ player.starveT+=dt; if(player.starveT>=6){ player.starveT=0; if(player.hp>0){ player.hp--; SND.hurt(); if(player.hp<=0)faint(); } } } else player.starveT=0;
     clock+=dt;
   } else mobs.length=0;
@@ -857,7 +859,15 @@ function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE|
   else if(t.type==="shop"){ ctx.fillStyle="#c98b5a";ctx.fillRect(x,y,TILE,TILE);for(let k=0;k<TILE;k+=10){ctx.fillStyle=(k/10)%2?"#e8584f":"#fff";ctx.fillRect(x+k,y,10,8);}ctx.fillStyle="#7a4a22";ctx.fillRect(x+6,y+18,TILE-12,TILE-20);ctx.fillStyle="#3a2a1a";ctx.fillRect(x+TILE/2-5,y+22,10,TILE-24); }
   else if(t.type==="hdoor"){ ctx.fillStyle="#cdbf9c";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#c9bfae";ctx.fillRect(x,y,TILE,7);ctx.fillStyle="#7a4a22";ctx.fillRect(x+TILE/2-8,y+10,16,TILE-10);ctx.fillStyle="#ffd23b";ctx.fillRect(x+TILE/2+3,y+TILE/2,3,3); }
   else if(t.type==="chest"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#9c6b3f";ctx.fillRect(x+6,y+16,TILE-12,TILE-22);ctx.fillStyle="#7a4f29";ctx.fillRect(x+6,y+13,TILE-12,7);ctx.fillStyle="#ffd23b";ctx.fillRect(x+TILE/2-2,y+19,4,4);ctx.fillStyle="rgba(0,0,0,.18)";ctx.fillRect(x+6,y+19,TILE-12,2); }
-  else if(t.type==="stove"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#6c757d";ctx.fillRect(x+6,y+12,TILE-12,TILE-16);ctx.fillStyle="#3a4047";ctx.fillRect(x+9,y+22,TILE-18,TILE-26);const gl=0.5+0.4*Math.sin(now()*8+c);ctx.fillStyle="rgba(255,140,40,"+gl+")";ctx.fillRect(x+12,y+25,TILE-24,TILE-31);ctx.fillStyle="#9aa3ab";ctx.fillRect(x+8,y+12,TILE-16,4); }
+  else if(t.type==="stove"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);
+    ctx.fillStyle="#5b636b";ctx.fillRect(x+3,y+6,TILE-6,TILE-8); ctx.fillStyle="#9aa3ab";ctx.fillRect(x+3,y+6,TILE-6,5);   // body + steel top
+    ctx.fillStyle="#2b3036";ctx.fillRect(x+6,y+16,TILE-12,TILE-20);                                                  // oven cavity
+    const gl=0.55+0.4*Math.sin(now()*8+c);ctx.fillStyle="rgba(255,150,45,"+gl+")";ctx.fillRect(x+9,y+19,TILE-18,TILE-25);  // glowing fire
+    ctx.fillStyle="rgba(255,230,150,"+gl+")";ctx.fillRect(x+TILE/2-4,y+22,8,TILE-30);
+    ctx.fillStyle="#3a4047";ctx.beginPath();ctx.arc(x+10,y+11,2.2,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+TILE-10,y+11,2.2,0,7);ctx.fill();   // knobs
+    // smoke puffs so it stands out
+    ctx.fillStyle="rgba(255,255,255,.25)";ctx.beginPath();ctx.arc(x+TILE/2+(Math.sin(now()*2+c)*4),y-2-((now()*8+c*7)%14),3,0,7);ctx.fill();
+    if(scene==="in"||Math.hypot(player.x-(c*TILE+TILE/2),player.y-(r*TILE+TILE/2))<TILE*2.2){ ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 10px Helvetica";ctx.textAlign="center";ctx.fillText(t("cook")+" ▸ use",x+TILE/2,y-6); } }
   if(t.crop) drawCrop(x+TILE/2,y+TILE-8,t.crop);
 }
 function drawCrop(x,by,cr){ const C=CROPS[cr.type],ratio=Math.min(1,cr.grow),ripe=cr.grow>=1,h=6+ratio*20+(ripe?2:0),bob=ripe?Math.sin(now()*4+x)*1.5:0;
@@ -934,7 +944,7 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
   if(scene==="boss"){ drawBoss(); return; }
   for(let r=0;r<GR;r++)for(let c=0;c<GC;c++) drawTile(r,c);
   const f=facedCell(); if(f){ const tt=G[f.r][f.c].type; const fsel=bag[selSlot]; const farm=scene==="out"&&inFarm(f.r,f.c)&&FARMLAND.has(tt);
-    const gather=scene==="out"&&(tt==="tree"||tt==="rock"||tt==="iron"||tt==="gold"||tt==="sand"||tt==="oil"||(WATER.has(tt)&&fsel&&ITEMS[fsel.key].kind==="tool")); const inr=scene==="in"&&["bed","mat"].includes(tt);
+    const gather=scene==="out"&&(tt==="tree"||tt==="rock"||tt==="iron"||tt==="gold"||tt==="sand"||tt==="oil"||(WATER.has(tt)&&fsel&&ITEMS[fsel.key].kind==="tool")); const inr=scene==="in"&&["bed","mat","stove"].includes(tt);
     if(farm||gather||inr){ ctx.strokeStyle="rgba(255,255,255,0.7)";ctx.lineWidth=2;ctx.strokeRect(f.c*TILE-camX+2,f.r*TILE-camY+2,TILE-4,TILE-4); } }
   const ents=[...(scene==="out"?mobs.map(m=>({y:m.y,d:()=>drawMob(m)})):[]),{y:player.y,d:drawPlayer}];
   if(scene==="out"&&area==="home"){ ents.push({y:catY,d:drawCat}); if(!bossDefeated)ents.push({y:ROAD_R*TILE+TILE/2,d:drawGuardian}); }
@@ -953,10 +963,10 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
   const R=11, SP=25, X0=24, YH=26, YF=YH+30, NF=10, step=player.maxHunger/NF;
   for(let i=0;i<player.maxHp;i++) heartIcon(X0+i*SP,YH,R,i<player.hp);
   for(let i=0;i<NF;i++){ const f=Math.max(0,Math.min(1,(player.hunger-i*step)/step)); foodIcon(X0+i*SP,YF,R,f); }
-  if(activeBuff&&now()<activeBuff.until){ const secs=Math.ceil(activeBuff.until-now()),by=(player.hunger<=0||(player.hunger>=60&&player.hp<player.maxHp))?YF+46:YF+26; ctx.font="700 13px Helvetica,Arial";ctx.textAlign="left";ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillText("⏫ "+itemName(activeBuff.key)+" "+secs+"s",X0-9,by+1);ctx.fillStyle="#9ad8ff";ctx.fillText("⏫ "+itemName(activeBuff.key)+" "+secs+"s",X0-10,by); }
+  if(activeBuff&&now()<activeBuff.until){ const secs=Math.ceil(activeBuff.until-now()),by=(player.hunger<=0||(player.hunger>=50&&player.hp<player.maxHp))?YF+46:YF+26; ctx.font="700 13px Helvetica,Arial";ctx.textAlign="left";ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillText("⏫ "+itemName(activeBuff.key)+" "+secs+"s",X0-9,by+1);ctx.fillStyle="#9ad8ff";ctx.fillText("⏫ "+itemName(activeBuff.key)+" "+secs+"s",X0-10,by); }
   ctx.textAlign="left"; ctx.textBaseline="alphabetic";
   if(player.hunger<=0){ ctx.font="800 14px Helvetica,Arial"; ctx.fillStyle="rgba(0,0,0,.55)";ctx.fillText(t("starving — eat food!"),15,YF+27); ctx.fillStyle="#ff8f8f"; ctx.fillText(t("starving — eat food!"),14,YF+26); }
-  else if(player.hunger>=60&&player.hp<player.maxHp){ ctx.font="700 13px Helvetica,Arial"; ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillText(t("well fed · healing"),15,YF+27); ctx.fillStyle="#8ef0a0"; ctx.fillText(t("well fed · healing"),14,YF+26); }
+  else if(player.hunger>=50&&player.hp<player.maxHp){ ctx.font="700 13px Helvetica,Arial"; ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillText(t("well fed · healing"),15,YF+27); ctx.fillStyle="#8ef0a0"; ctx.fillText(t("well fed · healing"),14,YF+26); }
   if(mapOpen) drawMinimap();
 }
 function drawMinimap(){ const rows=GR,cols=GC,cw=Math.max(1,Math.min(160/cols,160/rows)),W=cw*cols,H=cw*rows,ox=VW-W-12,oy=12;
@@ -996,7 +1006,7 @@ function renderShop(){ document.getElementById("shopCoins").textContent=coins;
   document.getElementById("buyList").innerHTML=CKEYS.map(k=>{ const C=CROPS[k];
     return `<div class="item">${iconSpan("seed_"+k)}<div><b>${itemName("seed_"+k)}</b><span>${t("grows into a")} ${C.sell}c ${t("crop")}</span></div><button data-buy="${k}" ${coins<C.cost?"disabled":""}>${C.cost}c</button></div>`; }).join("");
   document.getElementById("foodList").innerHTML=CATFOOD.map(k=>{ const it=ITEMS[k];
-    return `<div class="item">${iconSpan(k)}<div><b>${itemName(k)}</b><span>${t("restores")} ${it.food} ${t("hunger")}</span></div><button data-buyfd="${k}" ${coins<it.buy?"disabled":""}>${it.buy}c</button></div>`; }).join("");
+    return `<div class="item">${iconSpan(k)}<div><b>${itemName(k)}</b><span>${t("restores")} ${it.food} ${t("hunger")}${it.eff?" · ✨"+t(it.eff):""}</span></div><button data-buyfd="${k}" ${coins<it.buy?"disabled":""}>${it.buy}c</button></div>`; }).join("");
   document.getElementById("furnList").innerHTML=FURN.map(k=>{ const it=ITEMS[k];
     return `<div class="item">${iconSpan(k)}<div><b>${itemName(k)}</b><span>${t("place it to decorate your home or yard")}</span></div><button data-buyf="${k}" ${coins<it.buy?"disabled":""}>${it.buy}c</button></div>`; }).join("");
   const sellables=shopSellables();
