@@ -139,6 +139,7 @@
   <span class="stat" id="clock">day 1 · morning</span>
   <button id="expBtn">save file</button>
   <button id="impBtn">load file</button>
+  <button id="renameBtn">name</button>
   <button id="snd">sound</button>
   <button id="new">new game</button>
   <button id="langBtn">中文</button>
@@ -151,6 +152,7 @@
   <button id="eatBtn">🍖 Eat <em>(F)</em></button>
   <button id="bagBtn">🎒 Bag <em>(I)</em></button>
   <button id="mapBtn">🗺 Map <em>(M)</em></button>
+  <button id="questBtn">📋 Quests</button>
   <button id="helpBtn">？ Help</button>
 </div>
 <div class="bar" id="bar"></div>
@@ -195,6 +197,11 @@
   <h2>How to play</h2>
   <div id="helpBody"></div>
   <button class="close" id="helpClose">close</button>
+</div></div>
+<div class="shop" id="quests"><div class="card">
+  <h2>📋 Missions</h2>
+  <div id="questBody"></div>
+  <button class="close" id="questClose">close</button>
 </div></div>
 <div class="shop" id="market"><div class="card">
   <h2>🎣 Pelle the Fisher <span class="c">coins <b id="mktCoins">0</b></span></h2>
@@ -256,6 +263,9 @@ const ITEMS={
   chair:{kind:"place",tile:"chair",color:"#c08b5a",name:"chair",buy:15}, table:{kind:"place",tile:"table",color:"#a9784a",name:"table",buy:22},
   lamp:{kind:"place",tile:"lamp",color:"#ffd27a",name:"lamp",buy:28}, rug:{kind:"place",tile:"rug",color:"#c25b6b",name:"rug",buy:12},
   iron:{kind:"mat",color:"#c4ccd4",name:"iron ore",sell:6}, gold:{kind:"mat",color:"#ffd84a",name:"gold",sell:20},
+  coal:{kind:"mat",color:"#2e2e33",name:"coal",sell:4}, silver:{kind:"mat",color:"#c7ccd2",name:"silver",sell:9},
+  diamond:{kind:"mat",color:"#9fe6ff",name:"diamond",sell:60}, red_jewel:{kind:"mat",color:"#e8344e",name:"red jewel",sell:45}, green_jewel:{kind:"mat",color:"#3fae5a",name:"green jewel",sell:45},
+  fossil:{kind:"mat",color:"#cdbf9c",name:"fossil",sell:35}, jewelry:{kind:"mat",color:"#ffd84a",name:"fine jewelry",sell:150},
   fish:{kind:"mat",color:"#8fc7e8",name:"fish",sell:7}, sand:{kind:"mat",color:"#e9d8a6",name:"sand",sell:1}, glass:{kind:"mat",color:"#bfe6f0",name:"glass",sell:4},
   rod:{kind:"tool",color:"#b5651d",name:"fishing rod"}, net:{kind:"tool",color:"#dfeae0",name:"fishing net"},
   lantern:{kind:"place",tile:"lantern",color:"#ffcf6e",name:"lantern"}, goldlamp:{kind:"place",tile:"goldlamp",color:"#ffe08a",name:"gold lamp"},
@@ -306,7 +316,8 @@ const NAME_ZH={ wood:"木材", stone:"石頭", goo:"黏液", iron:"鐵礦", gold
   torch:"火把", fence:"木柵欄", ppath:"石板路", chair:"椅子", table:"桌子", lamp:"檯燈", rug:"地毯", lantern:"提燈", goldlamp:"黃金燈", mfence:"金屬柵欄",
   oillamp:"油燈", rod:"釣竿", net:"漁網", metal_sword:"金屬劍", metal_armor:"金屬盔甲", chest:"箱子",
   berry:"莓果", meat:"肉", cap:"布帽", vest:"皮背心", legguards:"護腿", boots:"輕快靴", ring:"治療戒指", charm:"力量護符",
-  bread:"麵包", pie:"莓果派", salad:"花園沙拉", hearty_stew:"豐盛燉湯", power_roast:"力量烤肉", swift_salad:"迅捷青蔬", stove:"爐灶" };
+  bread:"麵包", pie:"莓果派", salad:"花園沙拉", hearty_stew:"豐盛燉湯", power_roast:"力量烤肉", swift_salad:"迅捷青蔬", stove:"爐灶",
+  coal:"煤炭", silver:"銀", diamond:"鑽石", red_jewel:"紅寶石", green_jewel:"綠寶石", fossil:"化石", jewelry:"珠寶" };
 const DESC_ZH={ grass:["草地","用「使用」翻土成可種植的泥土"], wild:["野草","這裡有樹木、岩石和史萊姆"], soil:["泥土","種下種子、澆水，成熟後採收"],
   tree:["樹木","按「使用」砍伐取得木材"], rock:["岩石","按「使用」開採取得石頭"], iron:["鐵礦石","用「使用」開採取得鐵礦"], gold:["金礦石","用「使用」開採取得黃金"],
   pond:["池塘","用釣竿或漁網釣魚"], river:["河流","清水 — 用釣竿或漁網釣魚"], sea:["海洋","用釣竿或漁網釣魚"], sand:["海灘沙","按「使用」鏟取沙子"],
@@ -360,6 +371,7 @@ const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金�
   "ROAD GUARDIAN":"道路守衛","VICTORY!":"勝利！","DEFEATED":"戰敗","shop ▸ use":"商店 ▸ 對話","fisher ▸ use":"漁夫 ▸ 對話","BOSS ▸ approach":"頭目 ▸ 靠近","no one to talk to here":"這裡沒有人可以對話",
   "←/→ move · ↑/Space jump · E or ⟳use to slash · dodge the red charge & shots":"←/→ 移動 · ↑/空白鍵 跳躍 · E 或 使用鈕 揮擊 · 閃避紅色衝刺與射擊",
   "fight off the monsters first!":"先擊退怪物！","need a metal sword AND armour!":"需要金屬劍和盔甲！","the road is clear!":"道路暢通了！","defeated… craft better gear & retry":"戰敗了…製作更好的裝備再挑戰","cheat: road unlocked":"密技：道路已解鎖","cheat: sword & armour equipped":"密技：已裝備劍與盔甲",
+  "name":"名字","📋 Quests":"📋 任務","📋 Missions":"📋 任務","claim":"領取","claimed":"已領取","reward":"獎勵","more quests coming from the village NPCs soon":"村莊的 NPC 很快會帶來更多任務","Enter your name:":"輸入你的名字：","name set":"名字已設定","Chop 5 trees":"砍 5 棵樹","Harvest 5 crops":"採收 5 個作物","Catch 8 fish":"釣 8 條魚",
   "buy food":"購買食物","restores":"恢復","hunger":"飽食","buff!":"增益！","cook":"烹調","cooked":"煮好了","🔥 Kitchen Stove":"🔥 廚房爐灶","cook buff food":"烹調增益食物",
   "+2 hearts for 2 min":"2 分鐘 +2 顆心","+1 attack for 2 min":"2 分鐘 +1 攻擊","faster for 2 min":"2 分鐘 加速",
   "heals faster for 2 min":"2 分鐘 加速回血","+1 heart & fast heal, 3 min":"3 分鐘 +1 心並加速回血",
@@ -377,7 +389,8 @@ const CROP_EMOJI={ carrot:"🥕", wheat:"🌾", corn:"🌽", pumpkin:"🎃" };
 const ICON={ wood:"🪵", stone:"🪨", goo:"🟢", iron:"🔩", gold:"🪙", fish:"🐟", sand:"🏖️", glass:"🔷", oil:"🛢️", salve:"🧪",
   torch:"🔥", fence:"🚧", ppath:"🧱", chair:"🪑", table:"🟫", lamp:"💡", rug:"🟥", lantern:"🏮", goldlamp:"🔆", mfence:"⛓️", oillamp:"🕯️",
   rod:"🎣", net:"🥅", metal_sword:"🗡️", metal_armor:"🛡️", chest:"🧰", berry:"🫐", meat:"🍖", cap:"🧢", vest:"🦺", legguards:"👖", boots:"👢", ring:"💍", charm:"🔮",
-  bread:"🍞", pie:"🥧", salad:"🥗", hearty_stew:"🍲", power_roast:"🍗", swift_salad:"🥬", stove:"🔥" };
+  bread:"🍞", pie:"🥧", salad:"🥗", hearty_stew:"🍲", power_roast:"🍗", swift_salad:"🥬", stove:"🔥",
+  coal:"⚫", silver:"🥈", diamond:"💎", red_jewel:"🔴", green_jewel:"💚", fossil:"🦴", jewelry:"📿" };
 function itemEmoji(k){ const it=ITEMS[k]; if(!it)return ""; if(it.kind==="seed"||it.kind==="crop")return CROP_EMOJI[it.crop]||""; return ICON[k]||""; }
 // translate static DOM text nodes (snapshots the English original so we can toggle back)
 const _orig=new WeakMap();
@@ -392,7 +405,8 @@ function applyLang(){ localStorage.setItem("hs-lang",lang);
   if(document.getElementById("shop").classList.contains("open"))renderShop();
   if(document.getElementById("market").classList.contains("open"))renderMarket();
   if(baguiEl.classList.contains("open")){ renderBag(); renderCraftGrid(); renderRecipes(); }
-  if(document.getElementById("help").classList.contains("open"))renderHelp(); }
+  if(document.getElementById("help").classList.contains("open"))renderHelp();
+  if(document.getElementById("quests").classList.contains("open"))renderQuests(); }
 
 const RECIPES=[
   {key:"salve", give:"salve", cost:{goo:2}, desc:"restores 2 hearts (use it from your bag)"},
@@ -407,6 +421,7 @@ const RECIPES=[
   {key:"stove", give:"stove", cost:{stone:4,iron:1}, desc:"place it, then cook buff food at it"},
   {key:"bread", give:"bread", cost:{crop_wheat:2}, desc:"food — restores hunger"},
   {key:"salad", give:"salad", cost:{crop_carrot:1,crop_corn:1}, desc:"food — restores hunger"},
+  {key:"jewelry", give:"jewelry", cost:{gold:1,red_jewel:1,green_jewel:1}, desc:"fine jewelry — sells for a lot"},
   {key:"cap", give:"cap", cost:{goo:2,wood:1}, desc:"a cloth cap (+1 heart)"},
   {key:"vest", give:"vest", cost:{iron:2,goo:2}, desc:"a leather vest (+2 hearts)"},
   {key:"legguards", give:"legguards", cost:{iron:2}, desc:"leg guards (+1 heart)"},
@@ -426,7 +441,8 @@ let catX=0, catY=0, npcX=0, npcY=0;
 const player={x:0,y:0,dir:"d",fx:0,fy:1,moving:false,hp:5,maxHp:5,inv:0,kx:0,ky:0,swing:0,hunger:100,maxHunger:100,regenT:0,starveT:0};
 const equip={sword:null,armor:null,hat:null,chest:null,pants:null,shoes:null,acc1:null,acc2:null};
 const mobs=[]; const fx=[]; let spawnT=0;
-let coins=25, clock=0, selSlot=0, outX, outY, metCat=false, metFisher=false, mapOpen=false, bossDefeated=false, seenIntro=false, catIntroPending=false;
+let coins=25, clock=0, selSlot=0, outX, outY, metCat=false, metFisher=false, mapOpen=false, bossDefeated=false, seenIntro=false, catIntroPending=false, playerName="You";
+const stats={trees:0,crops:0,fish:0}; const claimed={};   // mission progress + claimed quests
 const hasSword=()=>!!equip.sword, hasArmor=()=>!!equip.armor;
 function gearBonus(){ const b={atk:0,maxhp:0,regen:0,speed:0}; for(const sn in equip){ const k=equip[sn]; if(k&&ITEMS[k].bonus)for(const s in ITEMS[k].bonus)b[s]+=ITEMS[k].bonus[s]; } return b; }
 let activeBuff=null;   // {bonus,until,key} from eating buff food cooked at a stove
@@ -533,7 +549,7 @@ function setScene(s){ scene=s; if(s==="out"){G=gridOut;GR=gridOut.length;GC=grid
 
 function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false;bossDefeated=false; area="home"; gridHome=buildOut(); gridVillage=buildVillage(); setArea("home"); coins=25; clock=0;
   for(let i=0;i<bag.length;i++)bag[i]=null; bag[0]={key:"seed_carrot",count:6}; bag[1]={key:"seed_wheat",count:2}; selSlot=0;
-  for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; catIntroPending=false; recalcMax();
+  for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; catIntroPending=false; playerName="You"; stats.trees=0;stats.crops=0;stats.fish=0; for(const k in claimed)delete claimed[k]; recalcMax();
   setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2+TILE; player.hp=player.maxHp;player.inv=0; mobs.length=0; save(); renderBar(); syncUI(); }
 function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); const home=s&&(s.home||s.gridOut); if(home&&home.length===OROWS){
     farmFR1=s.farmFR1||15;farmFC1=s.farmFC1||18;houseLvl=s.houseLvl||0;farmLvl=s.farmLvl||0;hasAxe=!!s.hasAxe;
@@ -541,11 +557,12 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); co
     for(let i=0;i<bag.length;i++)bag[i]=s.bag&&s.bag[i]?s.bag[i]:null; selSlot=s.selSlot||0;
     catX=(doorC=FC0+2,(FC0+4)*TILE+TILE/2); catY=(doorR=FR0+3,(FR0+4)*TILE+TILE/2); setVillageMeta();
     metCat=!!s.metCat; metFisher=!!s.metFisher; bossDefeated=!!s.bossDefeated; seenIntro=!!s.seenIntro; catIntroPending=!!s.catIntroPending;
+    playerName=s.playerName||"You"; if(s.stats)Object.assign(stats,s.stats); if(s.claimed)Object.assign(claimed,s.claimed);
     for(const sn in equip)equip[sn]=(s.equip&&s.equip[sn]&&ITEMS[s.equip[sn]])?s.equip[sn]:null; recalcMax();
     player.hunger=(typeof s.hunger==="number")?s.hunger:player.maxHunger; player.regenT=0;player.starveT=0;
     area=(s.area==="village")?"village":"home"; setArea(area);
     setScene("out"); player.x=s.px;player.y=s.py;player.hp=s.hp??player.maxHp; return true; } }catch(e){} return false; }
-function save(){ localStorage.setItem("homestead4", JSON.stringify({v:5,area,home:gridHome,village:gridVillage,coins,clock,px:scene==="out"?player.x:outX,py:scene==="out"?player.y:outY,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger})); }
+function save(){ localStorage.setItem("homestead4", JSON.stringify({v:5,area,home:gridHome,village:gridVillage,coins,clock,px:scene==="out"?player.x:outX,py:scene==="out"?player.y:outY,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger,playerName,stats,claimed})); }
 function syncUI(){ document.getElementById("coins").textContent=coins; }
 
 function resize(){ const rect=document.querySelector("main").getBoundingClientRect();
@@ -613,15 +630,15 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.
   if(t.type==="iron"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||IRONHITS())-1; SND.mine(); burst(cx,cy-6,"#c4ccd4",6); if(t.hits<=0){ gainItem("iron",1,cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
   if(t.type==="gold"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||GOLDHITS())-1; SND.mine(); burst(cx,cy-6,"#ffd84a",6); if(t.hits<=0){ gainItem("gold",1,cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
   // gather
-  if(t.type==="tree"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||TREEHITS())-1; SND.chop(); burst(cx,cy-10,"#3a9b50",6); if(t.hits<=0){ gainItem("wood",1+(Math.random()<.5?1:0),cx,cy); if(Math.random()<0.25)gainItem("berry",1,cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
-  if(t.type==="rock"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||ROCKHITS())-1; SND.mine(); burst(cx,cy-6,"#b7c0c8",6); if(t.hits<=0){ gainItem("stone",1+(Math.random()<.5?1:0),cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
+  if(t.type==="tree"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||TREEHITS())-1; SND.chop(); burst(cx,cy-10,"#3a9b50",6); if(t.hits<=0){ gainItem("wood",1+(Math.random()<.5?1:0),cx,cy); if(Math.random()<0.25)gainItem("berry",1,cx,cy); stats.trees++; t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
+  if(t.type==="rock"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||ROCKHITS())-1; SND.mine(); burst(cx,cy-6,"#b7c0c8",6); if(t.hits<=0){ gainItem("stone",1+(Math.random()<.5?1:0),cx,cy); if(Math.random()<0.22)gainItem("coal",1,cx,cy); if(Math.random()<0.08)gainItem("silver",1,cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
   // farm (inside fence)
   if(inFarm(f.r,f.c)&&FARMLAND.has(t.type)){
     if(area==="home"&&f.r===Math.floor(catY/TILE)&&f.c===Math.floor(catX/TILE)){ SND.no(); float(cx,cy-10,"the cat is sitting here","#ffd9a8"); return; }
     if(t.type==="grass"||t.type==="path"||t.type==="ppath"){ if(tooHungry())return; spendHunger(1); t.type="soil"; SND.till(); burst(cx,cy,"#6b4a2b",5); }
     else if(t.type==="soil"){
       if(!t.crop){ if(sel&&ITEMS[sel.key].kind==="seed"){ if(tooHungry())return; spendHunger(1); const crop=ITEMS[sel.key].crop; t.crop={type:crop,grow:0,boost:0}; removeItem(sel.key,1); SND.plant(); burst(cx,cy,CROPS[crop].leaf,4); } else { SND.no(); float(cx,cy-10,"pick a seed (cat shop)","#ffd9a8"); } }
-      else if(t.crop.grow>=1){ const crop=t.crop.type; t.crop=null; SND.harvest(); burst(cx,cy-12,CROPS[crop].c,12); gainItem("crop_"+crop,1,cx,cy); }
+      else if(t.crop.grow>=1){ const crop=t.crop.type; t.crop=null; SND.harvest(); burst(cx,cy-12,CROPS[crop].c,12); gainItem("crop_"+crop,1,cx,cy); stats.crops++; }
       else { t.crop.boost=now()+4; SND.water(); for(let i=0;i<7;i++){const a=-Math.PI/2+(Math.random()-.5)*1.3,s=1+Math.random()*1.8;fx.push({kind:"p",x:cx,y:cy-4,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col:"#8fd0ff",life:1});} }
     } save(); return;
   }
@@ -632,7 +649,7 @@ function inFarmHouseConflict(f){ const t=gridOut[f.r][f.c]; return false; }
 function nearThreat(){ return scene==="out"&&mobs.some(m=>Math.hypot(m.x-player.x,m.y-player.y)<TILE*3); }
 function blockTalk(){ SND.no(); float(player.x,player.y-24,"fight off the monsters first!","#ff8f8f"); }
 function fishAt(x,y,tool){ SND.water(); let got=tool==="net"?2:1; if(tool==="net"&&Math.random()<0.5)got+=1; if(tool==="rod"&&Math.random()<0.35)got=0;
-  if(got>0){ gainItem("fish",got,x,y); burst(x,y-6,"#8fc7e8",7); } else { float(x,y-10,"…no bite","#cfe6ff"); } }
+  if(got>0){ gainItem("fish",got,x,y); stats.fish+=got; burst(x,y-6,"#8fc7e8",7); } else { float(x,y-10,"…no bite","#cfe6ff"); } }
 // long-press to break a player-built fence (NOT the farm fence)
 let holdUse=false, holdStart=0, holdBroke=false;
 function startHold(){ if(holdUse)return; holdUse=true; holdStart=now(); holdBroke=false; }
@@ -999,7 +1016,7 @@ function renderBar(){ barEl.innerHTML=""; hideBarTip();
 
 /* ---- shop / craft ---- */
 const shopEl=document.getElementById("shop");
-function shopSellables(){ return [...CKEYS.map(k=>"crop_"+k),"wood","stone","goo"].filter(k=>countItem(k)>0); }
+function shopSellables(){ return [...CKEYS.map(k=>"crop_"+k),"wood","stone","goo","coal","silver","diamond","red_jewel","green_jewel","fossil","jewelry"].filter(k=>countItem(k)>0); }
 function sellStack(k){ const n=countItem(k); if(n<=0)return; const v=k.startsWith("crop_")?CROPS[k.slice(5)].sell:ITEMS[k].sell; coins+=v*n; removeItem(k,n); SND.coin(); }
 function openShop(){ renderShop(); shopEl.classList.add("open"); }
 function renderShop(){ document.getElementById("shopCoins").textContent=coins;
@@ -1014,7 +1031,7 @@ function renderShop(){ document.getElementById("shopCoins").textContent=coins;
     const v=k.startsWith("crop_")?CROPS[k.slice(5)].sell:ITEMS[k].sell, n=countItem(k);
     return `<div class="item">${iconSpan(k)}<div><b>${itemName(k)} ×${n}</b><span>${v}c ${t("each")}</span></div><button data-sell="${k}">${t("sell")}</button><button data-sellall="${k}">${t("all")}</button></div>`; }).join("")
     +(sellables.length?`<div class="item"><div><b>${t("Sell everything")}</b></div><button data-sellall="__shopall">${t("sell all")}</button></div>`:"");
-  const fcost=80*(farmLvl+1),hcost=100*(houseLvl+1);
+  const fcost=160*(farmLvl+1)*(farmLvl+1),hcost=220*(houseLvl+1)*(houseLvl+1);
   document.getElementById("upList").innerHTML=
     `<div class="item"><div><b>${t("Expand farm")} (lv${farmLvl})</b><span>${t("more land inside the fence")}</span></div><button data-up="farm" ${farmLvl>=4||coins<fcost?"disabled":""}>${farmLvl>=4?t("max"):fcost+"c"}</button></div>`+
     `<div class="item"><div><b>${t("Bigger house")} (lv${houseLvl})</b><span>${t("a roomier home inside")}</span></div><button data-up="house" ${houseLvl>=3||coins<hcost?"disabled":""}>${houseLvl>=3?t("max"):hcost+"c"}</button></div>`;
@@ -1025,8 +1042,8 @@ shopEl.addEventListener("click",e=>{ const d=e.target.dataset||{};
   else if(d.buyfd){ const it=ITEMS[d.buyfd]; if(coins>=it.buy&&addItem(d.buyfd,1)){coins-=it.buy;SND.coin();} }
   else if(d.sell){ const k=d.sell; if(countItem(k)>0){ const v=k.startsWith("crop_")?CROPS[k.slice(5)].sell:ITEMS[k].sell; coins+=v; removeItem(k,1); SND.coin(); } }
   else if(d.sellall){ if(d.sellall==="__shopall")shopSellables().forEach(sellStack); else sellStack(d.sellall); }
-  else if(d.up==="farm"){ const cost=80*(farmLvl+1); if(farmLvl<4&&coins>=cost){coins-=cost;expandFarm();SND.coin();} }
-  else if(d.up==="house"){ const cost=100*(houseLvl+1); if(houseLvl<3&&coins>=cost){coins-=cost;houseLvl++;SND.coin();float(player.x,player.y-20,"house upgraded","#fff");} }
+  else if(d.up==="farm"){ const cost=160*(farmLvl+1)*(farmLvl+1); if(farmLvl<4&&coins>=cost){coins-=cost;expandFarm();SND.coin();} }
+  else if(d.up==="house"){ const cost=220*(houseLvl+1)*(houseLvl+1); if(houseLvl<3&&coins>=cost){coins-=cost;houseLvl++;SND.coin();float(player.x,player.y-20,"house upgraded","#fff");} }
   syncUI(); save(); renderShop();
 });
 document.getElementById("shopClose").addEventListener("click",()=>shopEl.classList.remove("open"));
@@ -1197,6 +1214,27 @@ document.getElementById("helpBtn").addEventListener("click",()=>{ renderHelp(); 
 document.getElementById("helpClose").addEventListener("click",()=>helpEl.classList.remove("open"));
 helpEl.addEventListener("pointerdown",e=>{ if(e.target===helpEl)helpEl.classList.remove("open"); });
 
+/* ---- missions / quests ---- */
+const MISSIONS=[
+  {id:"trees", desc:"Chop 5 trees", goal:5, stat:"trees", reward:30},
+  {id:"crops", desc:"Harvest 5 crops", goal:5, stat:"crops", reward:50},
+  {id:"fish", desc:"Catch 8 fish", goal:8, stat:"fish", reward:70} ];
+const questsEl=document.getElementById("quests");
+function questProg(m){ return Math.min(stats[m.stat]||0,m.goal); }
+function renderQuests(){ document.getElementById("questBody").innerHTML=MISSIONS.map(m=>{ const p=questProg(m),done=p>=m.goal,cl=!!claimed[m.id];
+    const btn=cl?`<button disabled>${t("claimed")}</button>`:done?`<button data-claim="${m.id}">${t("claim")} +${m.reward}c</button>`:`<button disabled>${p}/${m.goal}</button>`;
+    return `<div class="item"><div><b>${t(m.desc)}</b><span>${t("reward")}: ${m.reward}c · ${p}/${m.goal}</span></div>${btn}</div>`; }).join("")
+    +`<div class="item"><div><span>${t("more quests coming from the village NPCs soon")}</span></div></div>`; }
+function openQuests(){ renderQuests(); questsEl.classList.add("open"); }
+questsEl.addEventListener("click",e=>{ const id=e.target.dataset&&e.target.dataset.claim; if(!id)return; const m=MISSIONS.find(x=>x.id===id);
+  if(m&&questProg(m)>=m.goal&&!claimed[m.id]){ claimed[m.id]=true; coins+=m.reward; SND.coin(); float(player.x,player.y-24,"+"+m.reward+"c","#ffe27a"); syncUI(); save(); } renderQuests(); });
+document.getElementById("questBtn").addEventListener("click",openQuests);
+document.getElementById("questClose").addEventListener("click",()=>questsEl.classList.remove("open"));
+questsEl.addEventListener("pointerdown",e=>{ if(e.target===questsEl)questsEl.classList.remove("open"); });
+
+/* ---- rename ---- */
+document.getElementById("renameBtn").addEventListener("click",()=>{ const n=prompt(t("Enter your name:"),playerName==="You"?"":playerName); if(n!=null){ playerName=n.trim().slice(0,16)||"You"; save(); float(player.x,player.y-24,t("name set"),"#9ad8ff"); } });
+
 /* ---- village fisher (NPC) ---- */
 const marketEl=document.getElementById("market");
 const GEARCOST={rod:12,net:30};
@@ -1230,7 +1268,7 @@ const SPEAKERS={ player:{name:"You",face:"🧑",col:"#2f6dd0"}, cat:{name:"Whisk
 const vnEl=document.getElementById("vn"),vnImg=document.getElementById("vnImg"),vnFace=document.getElementById("vnFace"),vnName=document.getElementById("vnName"),vnText=document.getElementById("vnText"),vnChoices=document.getElementById("vnChoices"),vnHint=document.getElementById("vnHint");
 let dialogOpen=false, dlg=null, typeTimer=null, fullText="";
 function setPortrait(line){ const who=line.who, sp=SPEAKERS[who]||{}, img=PORTRAIT[who];
-  const name=line.name||sp.name||"You", face=line.face||sp.face||"🧑", col=line.col||sp.col||"#2f6dd0";
+  const name=line.name||(who==="player"?playerName:sp.name)||"You", face=line.face||sp.face||"🧑", col=line.col||sp.col||"#2f6dd0";
   if(img){ vnImg.src=img.src; vnImg.classList.add("show"); vnFace.style.display="none"; }
   else { vnImg.classList.remove("show"); vnFace.style.display="grid"; vnFace.textContent=face; vnFace.style.background=col; }
   vnName.textContent=t(name); }
