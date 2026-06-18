@@ -1183,8 +1183,9 @@ function startIntro(){ setScene("in"); const mc=Math.floor(GC/2); player.x=mc*TI
     {who:"cat",name:"???",text:"Not quite. I only look like a cat. In truth I'm a fairy, bound to this land long before your family came."},
     {who:"cat",name:"Whiskers",text:"Tend the soil and treat the land kindly, and I'll help you trade, craft and grow. Your new life starts now — welcome home."}
   ], finishIntro); }
-function finishIntro(){ seenIntro=true; setArea("home"); setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2+TILE; player.dir="d";player.fx=0;player.fy=1; transCD=0.6; save(); }
-function maybeIntro(){ if(!seenIntro)startIntro(); }
+function startInHouse(){ setArea("home"); setScene("in"); const mc=Math.floor(GC/2); player.x=mc*TILE+TILE/2; player.y=(GR-2)*TILE+TILE/2; player.dir="u";player.fx=0;player.fy=-1; transCD=0.6; }
+function finishIntro(){ seenIntro=true; startInHouse(); save(); }
+function maybeIntro(){ if(!seenIntro)startIntro(); else startInHouse(); }
 
 function expandFarm(){ const oFR1=farmFR1,oFC1=farmFC1; farmFR1=Math.min(OROWS-2,farmFR1+2); farmFC1=Math.min(OCOLS-2,farmFC1+2);
   for(let c=FC0;c<=oFC1;c++){ if(gridOut[oFR1][c].type==="fence")gridOut[oFR1][c].type="grass"; }
