@@ -90,6 +90,8 @@
   .craftlist .item{cursor:pointer}
   .craftlist .item .dot{width:20px;height:20px;border-radius:5px;flex:0 0 auto;align-self:center}
   .emo{line-height:1;pointer-events:none}
+  .seedico{position:relative;display:inline-grid;place-items:center}
+  .seedbadge{position:absolute;left:-2px;bottom:-2px;line-height:1;text-shadow:0 0 2px #000,0 0 2px #000}
   .shop .item>.emo,.shop .item>.dot{flex:0 0 auto;align-self:center;width:26px;text-align:center;font-size:20px}
   #helpBody .item .ihead{font-size:17px;margin-right:4px}
   .craftlist .item .emo{flex:0 0 auto;align-self:center;width:22px;text-align:center}
@@ -986,8 +988,10 @@ const craftGridEl=document.getElementById("craftGrid"), craftOutEl=document.getE
 const craftGrid=new Array(9).fill(null); let held=null;
 function baseKey(k){ return k.startsWith("seed_")?"seed":k.startsWith("crop_")?"crop":k; }
 function craftIcon(R){ return R.once?"#9aa3ab":itemColor(R.give); }
-function iconSpan(key,big){ const em=itemEmoji(key); if(em)return `<span class="emo" style="font-size:${big?26:20}px">${em}</span>`;
-  const it=ITEMS[key],sz=it.kind==="seed"?(big?16:14):it.kind==="crop"?(big?24:22):(big?22:20),rad=it.kind==="mat"?4:50;
+function iconSpan(key,big){ const it=ITEMS[key];
+  if(it&&it.kind==="seed"){ const sz=big?26:20,bz=big?14:11; return `<span class="emo seedico" style="font-size:${sz}px">🌱<span class="seedbadge" style="font-size:${bz}px">${CROP_EMOJI[it.crop]||""}</span></span>`; }
+  const em=itemEmoji(key); if(em)return `<span class="emo" style="font-size:${big?26:20}px">${em}</span>`;
+  const sz=it.kind==="crop"?(big?24:22):(big?22:20),rad=it.kind==="mat"?4:50;
   return `<span class="dot" style="width:${sz}px;height:${sz}px;border-radius:${rad}px;background:${itemColor(key)}"></span>`; }
 function renderHeld(){ if(held){ heldEl.classList.add("show"); heldEl.innerHTML=iconSpan(held.key)+(held.count>1?`<span class="n">${held.count}</span>`:""); } else { heldEl.classList.remove("show"); heldEl.innerHTML=""; } }
 /* bag slots — click picks up / drops the WHOLE stack (also lets you rearrange the hotbar) */
@@ -1116,7 +1120,7 @@ function renderHelp(){ const tiles=["grass","soil","tree","rock","iron","gold","
   const useC=lang==="zh"?controlsZH:controls, useT=lang==="zh"?tipsZH:tips;
   const cH=useC.map(c=>`<div class="item"><b>${c[0]}</b><span>⌨️ ${c[1]} &nbsp;·&nbsp; 📱 ${c[2]}</span></div>`).join("");
   const tH=tiles.map(k=>{ const d=descOf(k); return d?`<div class="item"><b>${d[0]}</b><span>${d[1]}</span></div>`:""; }).join("");
-  const iH=items.map(k=>{ const base=k.startsWith("seed_")?"seed":k.startsWith("crop_")?"crop":k; const u=useOf(base)||useOf(k); const em=itemEmoji(k); return `<div class="item">${em?`<span class="emo ihead">${em}</span> `:""}<b>${itemName(k)}</b><span>${u}</span></div>`; }).join("");
+  const iH=items.map(k=>{ const base=k.startsWith("seed_")?"seed":k.startsWith("crop_")?"crop":k; const u=useOf(base)||useOf(k); return `<div class="item"><span class="ihead">${iconSpan(k)}</span> <b>${itemName(k)}</b><span>${u}</span></div>`; }).join("");
   const tipsH=useT.map(x=>`<div class="item"><span>${x}</span></div>`).join("");
   document.getElementById("helpBody").innerHTML=
     `<div class="helpcols">`+
