@@ -120,6 +120,9 @@
   #vn .vnhint{font-size:11px;opacity:.55;margin-top:10px;text-align:right}
   #vn .vnchoices{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
   #vn .vnchoices button{font:inherit;font-size:13px;font-weight:700;color:#0a2acc;background:#fff;border:none;border-radius:999px;padding:8px 16px;cursor:pointer}
+  #vnSkip{position:absolute;top:-12px;right:6px;pointer-events:auto;font:inherit;font-size:12px;font-weight:700;color:#fff;background:rgba(8,16,48,.92);border:1.5px solid rgba(255,255,255,.45);border-radius:999px;padding:6px 14px;cursor:pointer}
+  #vnSkip em{font-style:normal;opacity:.6;font-weight:400}
+  #vn .box{position:relative}
   @media (max-width:820px){ .pad{display:flex} .hint{display:none} .bar{padding-bottom:108px} #vn{bottom:96px} }
 </style>
 </head>
@@ -203,6 +206,7 @@
   <div class="vnport"><img id="vnImg" alt=""><div id="vnFace" class="vnface"></div></div>
   <div class="vnbody"><div id="vnName" class="vnname"></div><div id="vnText" class="vntext"></div>
     <div id="vnChoices" class="vnchoices"></div><div class="vnhint" id="vnHint">space / tap ▾</div></div>
+  <button id="vnSkip">Skip ⏭ <em>(Del)</em></button>
 </div></div>
 <div class="pad">
   <div class="dpad"><button class="u" data-dir="u">↑</button><button class="l" data-dir="l">←</button><button class="r" data-dir="r">→</button><button class="d" data-dir="d">↓</button></div>
@@ -212,6 +216,12 @@
 <script>
 (() => {
 "use strict";
+/* EMOJI/ART LICENSING POLICY:
+   In-world object icons are hand-drawn with canvas shapes (original art). Any emoji in the UI
+   (buttons, equipment-slot glyphs, VN portrait placeholders) are PLAIN UNICODE CODEPOINTS only —
+   rendered by the player's own system font. We do NOT embed Apple/Google/Samsung/etc. rendered
+   emoji images, which are copyrighted. If swapping to bundled emoji art, use an open-licensed set
+   (e.g. OpenMoji CC BY-SA, or Twemoji CC-BY 4.0) with attribution — never vendor PNGs. */
 const canvas=document.getElementById("stage"), ctx=canvas.getContext("2d");
 const DPR=Math.min(devicePixelRatio||1,2);
 const TILE=44, OCOLS=34, OROWS=24, DAYLEN=360;
@@ -315,7 +325,15 @@ const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金�
   "Ahoy there! The village waters are full of fish today.":"哈囉！今天村莊的水域滿是魚兒。","Nice to meet you! Got any gear for me?":"很高興認識你！有什麼裝備嗎？","A rod and a net, aye. And I'll pay good coin for fish, ore and sand.":"釣竿和漁網都有。我也會用好價錢收購魚、礦石和沙。","Show me":"給我看看","Just passing":"只是路過",
   // villagers
   "Lovely day in the village, isn't it?":"村莊今天天氣真好，對吧？","Pelle down by the sea sells fishing gear.":"海邊的培利有賣釣魚裝備。","Welcome to our little town!":"歡迎來到我們的小鎮！","The church bell rings at noon, they say.":"聽說教堂的鐘會在正午響起。","As mayor, I'm proud of our growing town!":"身為鎮長，我為日益繁榮的小鎮感到驕傲！","Build, farm, fish — make yourself at home.":"建造、耕作、釣魚 — 把這裡當成自己的家。",
-  "Mara":"瑪拉","Tom":"湯姆","Mayor Pim":"皮姆鎮長","You":"你","Whiskers":"小鬍子","Pelle":"培利",
+  "Mara":"瑪拉","Tom":"湯姆","Mayor Pim":"皮姆鎮長","You":"你","Whiskers":"小鬍子","Pelle":"培利","???":"？？？","Mrrrow.":"喵～",
+  // opening story
+  "Home at last… the old family cottage, just as I left it.":"終於到家了…老家的小屋，跟我離開時一模一樣。",
+  "The city chewed me up — months of searching and not one job. So here I am, back where I started.":"城市把我磨得精疲力盡 — 找了好幾個月，一份工作都沒有。所以我又回到了原點。",
+  "No more rent I can't pay. Maybe I can make a living off this little homestead instead.":"再也不用付付不起的房租了。也許我能靠這片小田地過活。",
+  "…A cat? Were you here this whole time?":"…一隻貓？你一直都在這裡嗎？",
+  "Not quite. I only look like a cat. In truth I'm a fairy, bound to this land long before your family came.":"不完全是。我只是看起來像貓。其實我是精靈，早在你家人來之前就守護著這片土地。",
+  "Tend the soil and treat the land kindly, and I'll help you trade, craft and grow. Your new life starts now — welcome home.":"好好耕作、善待土地，我會幫你交易、製作與成長。你的新生活從現在開始 — 歡迎回家。",
+  "Skip ⏭":"略過 ⏭","starving — eat food!":"飢餓 — 快吃東西！","too hungry — eat first!":"太餓了 — 先吃東西！",
   // boss / world tags / floats
   "ROAD GUARDIAN":"道路守衛","VICTORY!":"勝利！","DEFEATED":"戰敗","shop ▸ use":"商店 ▸ 對話","fisher ▸ use":"漁夫 ▸ 對話","BOSS ▸ approach":"頭目 ▸ 靠近","no one to talk to here":"這裡沒有人可以對話",
   "←/→ move · ↑/Space jump · E or ⟳use to slash · dodge the red charge & shots":"←/→ 移動 · ↑/空白鍵 跳躍 · E 或 使用鈕 揮擊 · 閃避紅色衝刺與射擊",
@@ -373,12 +391,13 @@ let catX=0, catY=0, npcX=0, npcY=0;
 const player={x:0,y:0,dir:"d",fx:0,fy:1,moving:false,hp:5,maxHp:5,inv:0,kx:0,ky:0,swing:0,hunger:100,maxHunger:100,regenT:0,starveT:0};
 const equip={sword:null,armor:null,hat:null,chest:null,pants:null,shoes:null,acc1:null,acc2:null};
 const mobs=[]; const fx=[]; let spawnT=0;
-let coins=25, clock=0, selSlot=0, outX, outY, metCat=false, metFisher=false, mapOpen=false, bossDefeated=false;
+let coins=25, clock=0, selSlot=0, outX, outY, metCat=false, metFisher=false, mapOpen=false, bossDefeated=false, seenIntro=false;
 const hasSword=()=>!!equip.sword, hasArmor=()=>!!equip.armor;
 function gearBonus(){ const b={atk:0,maxhp:0,regen:0,speed:0}; for(const sn in equip){ const k=equip[sn]; if(k&&ITEMS[k].bonus)for(const s in ITEMS[k].bonus)b[s]+=ITEMS[k].bonus[s]; } return b; }
 function recalcMax(){ player.maxHp=5+gearBonus().maxhp; if(player.hp>player.maxHp)player.hp=player.maxHp; }
 function itemFitsSlot(key,sn){ const it=ITEMS[key]; if(!it||it.kind!=="gear")return false; return (sn==="acc1"||sn==="acc2")?it.slot==="acc":it.slot===sn; }
 function spendHunger(n){ player.hunger=Math.max(0,player.hunger-n); }
+function tooHungry(){ if(player.hunger<=0){ SND.no(); float(player.x,player.y-24,"too hungry — eat first!","#ff8f8f"); return true; } return false; }
 function eatFood(){ let i=(bag[selSlot]&&isFood(bag[selSlot].key))?selSlot:bag.findIndex(s=>s&&isFood(s.key));
   if(i<0){ float(player.x,player.y-24,"no food to eat","#cfe0ff"); return; } const s=bag[i],fv=foodVal(s.key);
   if(player.hunger>=player.maxHunger){ float(player.x,player.y-24,"already full","#cfe0ff"); return; }
@@ -473,19 +492,19 @@ function setScene(s){ scene=s; if(s==="out"){G=gridOut;GR=gridOut.length;GC=grid
 
 function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false;bossDefeated=false; area="home"; gridHome=buildOut(); gridVillage=buildVillage(); setArea("home"); coins=25; clock=0;
   for(let i=0;i<bag.length;i++)bag[i]=null; bag[0]={key:"seed_carrot",count:6}; bag[1]={key:"seed_wheat",count:2}; selSlot=0;
-  for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; recalcMax();
+  for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; recalcMax();
   setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2+TILE; player.hp=player.maxHp;player.inv=0; mobs.length=0; save(); renderBar(); syncUI(); }
 function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); const home=s&&(s.home||s.gridOut); if(home&&home.length===OROWS){
     farmFR1=s.farmFR1||15;farmFC1=s.farmFC1||18;houseLvl=s.houseLvl||0;farmLvl=s.farmLvl||0;hasAxe=!!s.hasAxe;
     gridHome=home; gridVillage=(s.village&&s.village.length===VROWS&&s.village[0].length===VCOLS)?s.village:buildVillage(); coins=s.coins; clock=s.clock||0;
     for(let i=0;i<bag.length;i++)bag[i]=s.bag&&s.bag[i]?s.bag[i]:null; selSlot=s.selSlot||0;
     catX=(doorC=FC0+2,(FC0+4)*TILE+TILE/2); catY=(doorR=FR0+3,(FR0+4)*TILE+TILE/2); setVillageMeta();
-    metCat=!!s.metCat; metFisher=!!s.metFisher; bossDefeated=!!s.bossDefeated;
+    metCat=!!s.metCat; metFisher=!!s.metFisher; bossDefeated=!!s.bossDefeated; seenIntro=!!s.seenIntro;
     for(const sn in equip)equip[sn]=(s.equip&&s.equip[sn]&&ITEMS[s.equip[sn]])?s.equip[sn]:null; recalcMax();
     player.hunger=(typeof s.hunger==="number")?s.hunger:player.maxHunger; player.regenT=0;player.starveT=0;
     area=(s.area==="village")?"village":"home"; setArea(area);
     setScene("out"); player.x=s.px;player.y=s.py;player.hp=s.hp??player.maxHp; return true; } }catch(e){} return false; }
-function save(){ localStorage.setItem("homestead4", JSON.stringify({v:5,area,home:gridHome,village:gridVillage,coins,clock,px:scene==="out"?player.x:outX,py:scene==="out"?player.y:outY,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,equip,hunger:player.hunger})); }
+function save(){ localStorage.setItem("homestead4", JSON.stringify({v:5,area,home:gridHome,village:gridVillage,coins,clock,px:scene==="out"?player.x:outX,py:scene==="out"?player.y:outY,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,equip,hunger:player.hunger})); }
 function syncUI(){ document.getElementById("coins").textContent=coins; }
 
 function resize(){ const rect=document.querySelector("main").getBoundingClientRect();
@@ -519,6 +538,7 @@ function spawnMob(){ const RW=gridOut.length, CW=gridOut[0].length; for(let i=0;
 /* ---- interaction ---- */
 function facedCell(){ const c=Math.floor((player.x+player.fx*TILE)/TILE), r=Math.floor((player.y+player.fy*TILE)/TILE); if(r<0||c<0||r>=GR||c>=GC)return null; return {r,c}; }
 function tryAttack(){ const range=TILE*1.6,dmg=(hasAxe?2:1)+gearBonus().atk; let hit=false;
+  if(player.hunger<=0){ if(mobs.some(m=>Math.hypot(m.x-player.x,m.y-player.y)<TILE*1.7)){ tooHungry(); return true; } return false; }
   for(const m of mobs){ const dx=m.x-player.x,dy=m.y-player.y,fwd=dx*player.fx+dy*player.fy,lat=Math.abs(dx*player.fy-dy*player.fx),dd=Math.hypot(dx,dy);
     if(dd<range&&(fwd>-10||dd<TILE*0.9)&&lat<TILE*1.1){ m.hp-=dmg;m.flash=0.18;const d=dd||1;m.kx=dx/d*7;m.ky=dy/d*7;hit=true;SND.hit();
       if(m.hp<=0){ const drop=3+(Math.random()*5|0); coins+=drop; gainItem("goo",1,m.x,m.y); if(Math.random()<0.3)gainItem("meat",1,m.x,m.y); if(Math.random()<0.18)gainItem("oil",1,m.x,m.y); float(m.x,m.y-30,"+"+drop+"c","#ffe27a"); burst(m.x,m.y,"#7be0a0",12); syncUI(); } } }
@@ -547,17 +567,17 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.
   // scoop oil from a seep
   if(t.type==="oil"){ SND.water(); burst(cx,cy,"#2e2a22",6); gainItem("oil",1,cx,cy); save(); return; }
   // mine ores
-  if(t.type==="iron"){ spendHunger(2); t.hits=(t.hits||IRONHITS())-1; SND.mine(); burst(cx,cy-6,"#c4ccd4",6); if(t.hits<=0){ gainItem("iron",1,cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
-  if(t.type==="gold"){ spendHunger(2); t.hits=(t.hits||GOLDHITS())-1; SND.mine(); burst(cx,cy-6,"#ffd84a",6); if(t.hits<=0){ gainItem("gold",1,cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
+  if(t.type==="iron"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||IRONHITS())-1; SND.mine(); burst(cx,cy-6,"#c4ccd4",6); if(t.hits<=0){ gainItem("iron",1,cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
+  if(t.type==="gold"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||GOLDHITS())-1; SND.mine(); burst(cx,cy-6,"#ffd84a",6); if(t.hits<=0){ gainItem("gold",1,cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
   // gather
-  if(t.type==="tree"){ spendHunger(2); t.hits=(t.hits||TREEHITS())-1; SND.chop(); burst(cx,cy-10,"#3a9b50",6); if(t.hits<=0){ gainItem("wood",1+(Math.random()<.5?1:0),cx,cy); if(Math.random()<0.25)gainItem("berry",1,cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
-  if(t.type==="rock"){ spendHunger(2); t.hits=(t.hits||ROCKHITS())-1; SND.mine(); burst(cx,cy-6,"#b7c0c8",6); if(t.hits<=0){ gainItem("stone",1+(Math.random()<.5?1:0),cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
+  if(t.type==="tree"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||TREEHITS())-1; SND.chop(); burst(cx,cy-10,"#3a9b50",6); if(t.hits<=0){ gainItem("wood",1+(Math.random()<.5?1:0),cx,cy); if(Math.random()<0.25)gainItem("berry",1,cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
+  if(t.type==="rock"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||ROCKHITS())-1; SND.mine(); burst(cx,cy-6,"#b7c0c8",6); if(t.hits<=0){ gainItem("stone",1+(Math.random()<.5?1:0),cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
   // farm (inside fence)
   if(inFarm(f.r,f.c)&&FARMLAND.has(t.type)){
     if(area==="home"&&f.r===Math.floor(catY/TILE)&&f.c===Math.floor(catX/TILE)){ SND.no(); float(cx,cy-10,"the cat is sitting here","#ffd9a8"); return; }
-    if(t.type==="grass"||t.type==="path"||t.type==="ppath"){ spendHunger(1); t.type="soil"; SND.till(); burst(cx,cy,"#6b4a2b",5); }
+    if(t.type==="grass"||t.type==="path"||t.type==="ppath"){ if(tooHungry())return; spendHunger(1); t.type="soil"; SND.till(); burst(cx,cy,"#6b4a2b",5); }
     else if(t.type==="soil"){
-      if(!t.crop){ if(sel&&ITEMS[sel.key].kind==="seed"){ spendHunger(1); const crop=ITEMS[sel.key].crop; t.crop={type:crop,grow:0,boost:0}; removeItem(sel.key,1); SND.plant(); burst(cx,cy,CROPS[crop].leaf,4); } else { SND.no(); float(cx,cy-10,"pick a seed (cat shop)","#ffd9a8"); } }
+      if(!t.crop){ if(sel&&ITEMS[sel.key].kind==="seed"){ if(tooHungry())return; spendHunger(1); const crop=ITEMS[sel.key].crop; t.crop={type:crop,grow:0,boost:0}; removeItem(sel.key,1); SND.plant(); burst(cx,cy,CROPS[crop].leaf,4); } else { SND.no(); float(cx,cy-10,"pick a seed (cat shop)","#ffd9a8"); } }
       else if(t.crop.grow>=1){ const crop=t.crop.type; t.crop=null; SND.harvest(); burst(cx,cy-12,CROPS[crop].c,12); gainItem("crop_"+crop,1,cx,cy); }
       else { t.crop.boost=now()+4; SND.water(); for(let i=0;i<7;i++){const a=-Math.PI/2+(Math.random()-.5)*1.3,s=1+Math.random()*1.8;fx.push({kind:"p",x:cx,y:cy-4,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col:"#8fd0ff",life:1});} }
     } save(); return;
@@ -676,7 +696,7 @@ function anyMove(){ return keys.u||keys.d||keys.l||keys.r; }
 addEventListener("keydown",e=>{ const k=e.key.toLowerCase();
   if(document.activeElement&&document.activeElement.id==="cheat")return;
   if(scene==="boss"){ if(["arrowup","w"," "].includes(k))bossJump(); else if(["arrowleft","a"].includes(k))keys.l=1; else if(["arrowright","d"].includes(k))keys.r=1; else if(k==="e")bossAttack(); e.preventDefault(); return; }
-  if(dialogOpen){ if(k==="e"||k===" "||k==="enter")advanceDialog(); else if(k==="escape")endDialog(); e.preventDefault(); return; }
+  if(dialogOpen){ if(k==="e"||k===" "||k==="enter")advanceDialog(); else if(k==="delete"||k==="escape")skipDialog(); e.preventDefault(); return; }
   if(["arrowup","w"].includes(k)){if(!e.repeat)dirTap("u");keys.u=1;e.preventDefault();} else if(["arrowdown","s"].includes(k)){if(!e.repeat)dirTap("d");keys.d=1;e.preventDefault();}
   else if(["arrowleft","a"].includes(k)){if(!e.repeat)dirTap("l");keys.l=1;e.preventDefault();} else if(["arrowright","d"].includes(k)){if(!e.repeat)dirTap("r");keys.r=1;e.preventDefault();}
   else if(k==="e"||k===" "){ e.preventDefault(); if(e.repeat)return; audio(); startHold(); interact(); }
@@ -850,7 +870,7 @@ function drawPlayer(){ const x=player.x-camX,y=player.y-camY,bob=player.moving?M
   ctx.fillStyle="#7a4a22";ctx.beginPath();ctx.arc(x,y-13+bob,8.5,Math.PI,2*Math.PI);ctx.fill();
   ctx.fillStyle="#22303f";const ex=player.dir==="l"?-3:player.dir==="r"?3:0;if(player.dir!=="u"){ctx.beginPath();ctx.arc(x-3+ex,y-9+bob,1.4,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+3+ex*0.4,y-9+bob,1.4,0,7);ctx.fill();}
   ctx.globalAlpha=1; }
-function heart(x,y,full){ ctx.fillStyle=full?"#ff5b78":"rgba(255,255,255,.25)";ctx.beginPath();ctx.moveTo(x,y+9);ctx.bezierCurveTo(x-10,y+1,x-6,y-7,x,y-2);ctx.bezierCurveTo(x+6,y-7,x+10,y+1,x,y+9);ctx.fill(); }
+function heart(x,y,full,s){ s=s||1; ctx.fillStyle=full?"#ff5b78":"rgba(255,255,255,.22)";ctx.beginPath();ctx.moveTo(x,y+9*s);ctx.bezierCurveTo(x-10*s,y+1*s,x-6*s,y-7*s,x,y-2*s);ctx.bezierCurveTo(x+6*s,y-7*s,x+10*s,y+1*s,x,y+9*s);ctx.fill();ctx.strokeStyle="rgba(0,0,0,.35)";ctx.lineWidth=1.5;ctx.stroke(); }
 function draw(){ ctx.clearRect(0,0,VW,VH);
   if(scene==="boss"){ drawBoss(); return; }
   for(let r=0;r<GR;r++)for(let c=0;c<GC;c++) drawTile(r,c);
@@ -870,13 +890,16 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
     ctx.globalCompositeOperation="lighter";
     for(let r=0;r<gridOut.length;r++)for(let c=0;c<gridOut[0].length;c++){ if(LIGHTS.has(gridOut[r][c].type)){ const x=c*TILE+TILE/2-camX,y=r*TILE+TILE/2-camY; if(x<-80||y<-80||x>VW+80||y>VH+80)continue; const g=ctx.createRadialGradient(x,y,4,x,y,70); g.addColorStop(0,"rgba(255,200,120,.55)");g.addColorStop(1,"rgba(255,200,120,0)"); ctx.fillStyle=g; ctx.beginPath();ctx.arc(x,y,70,0,7);ctx.fill(); } }
     ctx.globalCompositeOperation="source-over"; } }
-  for(let i=0;i<player.maxHp;i++) heart(16+i*22,20,i<player.hp);
-  // hunger bar
-  const hr=player.hunger/player.maxHunger, hbw=Math.min(132,player.maxHp*22), hy=34;
-  ctx.fillStyle="rgba(0,0,0,.4)"; ctx.fillRect(16,hy,hbw,9); ctx.fillStyle=hr>0.6?"#7bdc8a":hr>0.25?"#ffd27a":"#ff7a6a"; ctx.fillRect(16,hy,hbw*hr,9);
-  ctx.fillStyle="#fff"; ctx.font="10px Helvetica"; ctx.textAlign="left"; ctx.fillText("🍖",16+hbw+4,hy+9);
-  if(player.hunger<=0){ ctx.fillStyle="#ff7a6a"; ctx.font="700 12px Helvetica"; ctx.fillText(t("starving!"),16,hy+24); }
-  else if(player.hunger>=60&&player.hp<player.maxHp){ ctx.fillStyle="rgba(123,220,138,.9)"; ctx.font="700 11px Helvetica"; ctx.fillText(t("well fed · healing"),16,hy+24); }
+  // ---- big, readable HUD ----
+  const nH=player.maxHp, hsp=24, hbw=Math.max(170,nH*hsp), panelW=hbw+24;
+  ctx.fillStyle="rgba(8,14,42,.4)"; ctx.beginPath();ctx.roundRect(8,8,panelW,70,12);ctx.fill();
+  for(let i=0;i<nH;i++) heart(28+i*hsp,30,i<player.hp,1.3);
+  const hr=player.hunger/player.maxHunger, hbx=18, hby=52;
+  ctx.fillStyle="rgba(0,0,0,.5)"; ctx.beginPath();ctx.roundRect(hbx,hby,hbw,16,7);ctx.fill();
+  ctx.fillStyle=hr>0.6?"#7bdc8a":hr>0.25?"#ffd27a":"#ff6a6a"; ctx.beginPath();ctx.roundRect(hbx,hby,Math.max(0,hbw*hr),16,7);ctx.fill();
+  ctx.fillStyle="#fff"; ctx.font="700 12px Helvetica,Arial"; ctx.textAlign="left"; ctx.fillText("🍖 "+Math.ceil(player.hunger)+"/"+player.maxHunger,hbx+8,hby+12);
+  if(player.hunger<=0){ ctx.fillStyle="#ff8f8f"; ctx.font="800 13px Helvetica,Arial"; ctx.fillText(t("starving — eat food!"),hbx,hby+34); }
+  else if(player.hunger>=60&&player.hp<player.maxHp){ ctx.fillStyle="rgba(123,220,138,.95)"; ctx.font="700 12px Helvetica,Arial"; ctx.fillText(t("well fed · healing"),hbx,hby+34); }
   if(mapOpen) drawMinimap();
 }
 function drawMinimap(){ const rows=GR,cols=GC,cw=Math.max(1,Math.min(160/cols,160/rows)),W=cw*cols,H=cw*rows,ox=VW-W-12,oy=12;
@@ -1136,7 +1159,9 @@ function advanceDialog(){ if(!dlg)return;
   dlg.i++; if(dlg.i>=dlg.seq.length){ const after=dlg.onDone; endDialog(); if(after)after(); return; }
   const line=dlg.seq[dlg.i]; setPortrait(line); vnChoices.innerHTML=""; vnHint.style.display=line.choices?"none":"block"; typeLine(t(line.text)); }
 function endDialog(){ dialogOpen=false; dlg=null; clearInterval(typeTimer); typeTimer=null; vnChoices.innerHTML=""; vnEl.classList.remove("open"); }
+function skipDialog(){ if(!dlg)return; const after=dlg.onDone; endDialog(); if(after)after(); }   // Delete / Skip button
 vnEl.addEventListener("click",e=>{ if(e.target.tagName==="BUTTON")return; advanceDialog(); });
+document.getElementById("vnSkip").addEventListener("click",e=>{ e.stopPropagation(); skipDialog(); });
 function talkToCat(){ startDialog([
   {who:"cat",text:"Mrrrow! Welcome back to the homestead."},
   {who:"player",text:"Hi Whiskers! What have you got today?"},
@@ -1147,6 +1172,19 @@ function talkToFisher(){ startDialog([
   {who:"player",text:"Nice to meet you! Got any gear for me?"},
   {who:"fisher",text:"A rod and a net, aye. And I'll pay good coin for fish, ore and sand.",choices:[{label:"Show me",go:"trade"},{label:"Just passing"}]}
 ], openMarket); }
+/* opening story (plays once, inside the house) — skippable */
+function startIntro(){ setScene("in"); const mc=Math.floor(GC/2); player.x=mc*TILE+TILE/2; player.y=(GR-2)*TILE+TILE/2; player.dir="u";player.fx=0;player.fy=-1; transCD=1.2;
+  startDialog([
+    {who:"player",text:"Home at last… the old family cottage, just as I left it."},
+    {who:"player",text:"The city chewed me up — months of searching and not one job. So here I am, back where I started."},
+    {who:"player",text:"No more rent I can't pay. Maybe I can make a living off this little homestead instead."},
+    {who:"cat",text:"Mrrrow."},
+    {who:"player",text:"…A cat? Were you here this whole time?"},
+    {who:"cat",name:"???",text:"Not quite. I only look like a cat. In truth I'm a fairy, bound to this land long before your family came."},
+    {who:"cat",name:"Whiskers",text:"Tend the soil and treat the land kindly, and I'll help you trade, craft and grow. Your new life starts now — welcome home."}
+  ], finishIntro); }
+function finishIntro(){ seenIntro=true; setArea("home"); setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2+TILE; player.dir="d";player.fx=0;player.fy=1; transCD=0.6; save(); }
+function maybeIntro(){ if(!seenIntro)startIntro(); }
 
 function expandFarm(){ const oFR1=farmFR1,oFC1=farmFC1; farmFR1=Math.min(OROWS-2,farmFR1+2); farmFC1=Math.min(OCOLS-2,farmFC1+2);
   for(let c=FC0;c<=oFC1;c++){ if(gridOut[oFR1][c].type==="fence")gridOut[oFR1][c].type="grass"; }
@@ -1156,7 +1194,7 @@ function expandFarm(){ const oFR1=farmFR1,oFC1=farmFC1; farmFR1=Math.min(OROWS-2
 
 const sndBtn=document.getElementById("snd"); function syncSnd(){sndBtn.textContent=soundOn?"sound":"muted";sndBtn.classList.toggle("off",!soundOn);}
 sndBtn.addEventListener("click",()=>{soundOn=!soundOn;localStorage.setItem("hs-sound",soundOn?"on":"off");syncSnd();if(soundOn)audio();}); syncSnd();
-document.getElementById("new").addEventListener("click",()=>{ if(confirm("Start a new homestead? Progress will be cleared.")) reset(); });
+document.getElementById("new").addEventListener("click",()=>{ if(confirm("Start a new homestead? Progress will be cleared.")){ reset(); maybeIntro(); } });
 
 /* ---- save to / load from a file ---- */
 function exportSave(){ save(); const data=localStorage.getItem("homestead4")||"{}";
@@ -1175,7 +1213,7 @@ document.getElementById("langBtn").addEventListener("click",()=>{ lang=lang==="z
 setInterval(save,5000);
 if(!load()) reset(); else { renderBar(); syncUI(); }
 applyLang();
-resize(); requestAnimationFrame(frame);
+resize(); requestAnimationFrame(frame); maybeIntro();
 })();
 </script>
 </body>
