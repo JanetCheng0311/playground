@@ -89,6 +89,8 @@
   .craftlist{max-height:30vh;overflow-y:auto}
   .craftlist .item{cursor:pointer}
   .craftlist .item .dot{width:20px;height:20px;border-radius:5px;flex:0 0 auto;align-self:center}
+  .emo{line-height:1;pointer-events:none}
+  .craftlist .item .emo{flex:0 0 auto;align-self:center;width:22px;text-align:center}
   .craftlist .clue{display:block;font-size:11px;color:#ffb3b3;margin-top:3px;opacity:.95}
   #heldStack{position:fixed;z-index:60;width:40px;height:40px;border-radius:8px;display:none;place-items:center;pointer-events:none;transform:translate(-50%,-50%);background:rgba(10,20,60,.85);border:1.5px solid rgba(255,255,255,.5)}
   #heldStack.show{display:grid}
@@ -347,6 +349,12 @@ function howOf(k){ return (lang==="zh"&&HOWTO_ZH[k])?HOWTO_ZH[k]:(HOWTO[k]||"cra
 function itemName(k){ const it=ITEMS[k];
   if(lang==="zh"){ if(it.kind==="seed")return CROPNAME_ZH[it.crop]+"種子"; if(it.kind==="crop")return CROPNAME_ZH[it.crop]; if(NAME_ZH[k])return NAME_ZH[k]; }
   if(it.name)return it.name; return (it.kind==="seed"?it.crop+" seed":it.crop); }
+// plain Unicode emoji icons (system-font rendered — see licensing note at top)
+const CROP_EMOJI={ carrot:"🥕", wheat:"🌾", corn:"🌽", pumpkin:"🎃" };
+const ICON={ wood:"🪵", stone:"🪨", goo:"🟢", iron:"🔩", gold:"🪙", fish:"🐟", sand:"🏖️", glass:"🔷", oil:"🛢️", salve:"🧪",
+  torch:"🔥", fence:"🚧", ppath:"🧱", chair:"🪑", table:"🟫", lamp:"💡", rug:"🟥", lantern:"🏮", goldlamp:"🔆", mfence:"⛓️", oillamp:"🕯️",
+  rod:"🎣", net:"🥅", metal_sword:"🗡️", metal_armor:"🛡️", chest:"🧰", berry:"🫐", meat:"🍖", cap:"🧢", vest:"🦺", legguards:"👖", boots:"👢", ring:"💍", charm:"🔮" };
+function itemEmoji(k){ const it=ITEMS[k]; if(!it)return ""; if(it.kind==="seed"||it.kind==="crop")return CROP_EMOJI[it.crop]||""; return ICON[k]||""; }
 // translate static DOM text nodes (snapshots the English original so we can toggle back)
 const _orig=new WeakMap();
 function localizeAll(){ const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null);
@@ -926,8 +934,7 @@ function hideBarTip(){ barTip.classList.remove("show"); }
 function renderBar(){ barEl.innerHTML=""; hideBarTip();
   for(let i=0;i<10;i++){ const s=bag[i]; const el=document.createElement("div"); el.className="slot"+(i===selSlot?" on":"");
     let inner=`<span class="k">${(i+1)%10}</span>`;
-    if(s){ const it=ITEMS[s.key],sz=it.kind==="seed"?12:it.kind==="crop"?20:18,rad=it.kind==="mat"?3:50;
-      inner+=`<span class="dot" style="width:${sz}px;height:${sz}px;border-radius:${rad}px;background:${itemColor(s.key)}"></span><span class="n">${s.count}</span>`;
+    if(s){ inner+=iconSpan(s.key)+`<span class="n">${s.count}</span>`;
       el.addEventListener("pointerenter",()=>showBarTip(el,s.key)); el.addEventListener("pointerleave",hideBarTip); }
     el.innerHTML=inner; el.addEventListener("click",()=>{selSlot=i;renderBar();}); barEl.appendChild(el); } }
 
@@ -969,7 +976,8 @@ const craftGridEl=document.getElementById("craftGrid"), craftOutEl=document.getE
 const craftGrid=new Array(9).fill(null); let held=null;
 function baseKey(k){ return k.startsWith("seed_")?"seed":k.startsWith("crop_")?"crop":k; }
 function craftIcon(R){ return R.once?"#9aa3ab":itemColor(R.give); }
-function iconSpan(key,big){ const it=ITEMS[key],sz=it.kind==="seed"?(big?16:14):it.kind==="crop"?(big?24:22):(big?22:20),rad=it.kind==="mat"?4:50;
+function iconSpan(key,big){ const em=itemEmoji(key); if(em)return `<span class="emo" style="font-size:${big?26:20}px">${em}</span>`;
+  const it=ITEMS[key],sz=it.kind==="seed"?(big?16:14):it.kind==="crop"?(big?24:22):(big?22:20),rad=it.kind==="mat"?4:50;
   return `<span class="dot" style="width:${sz}px;height:${sz}px;border-radius:${rad}px;background:${itemColor(key)}"></span>`; }
 function renderHeld(){ if(held){ heldEl.classList.add("show"); heldEl.innerHTML=iconSpan(held.key)+(held.count>1?`<span class="n">${held.count}</span>`:""); } else { heldEl.classList.remove("show"); heldEl.innerHTML=""; } }
 /* bag slots — click picks up / drops the WHOLE stack (also lets you rearrange the hotbar) */
@@ -1010,7 +1018,7 @@ function renderCraftGrid(){ craftGridEl.innerHTML="";
   for(let i=0;i<9;i++){ const c=craftGrid[i],el=document.createElement("div"); el.className="cslot";
     if(c)el.innerHTML=iconSpan(c.key)+(c.count>1?`<span class="n">${c.count}</span>`:""); el.addEventListener("click",()=>cellClick(i)); craftGridEl.appendChild(el); }
   const R=matchRecipe(); craftOutEl.innerHTML=""; const out=document.createElement("div"); out.className="cslot"+(R?" ready":"");
-  if(R){ out.innerHTML=iconSpan(R.once?"stone":R.give,true); out.addEventListener("click",craftOutputClick); craftHintEl.textContent="✓ "+(R.once?t("Sturdy Axe"):itemName(R.give))+" — "+t("click it to craft"); }
+  if(R){ out.innerHTML=R.once?`<span class="emo" style="font-size:26px">🪓</span>`:iconSpan(R.give,true); out.addEventListener("click",craftOutputClick); craftHintEl.textContent="✓ "+(R.once?t("Sturdy Axe"):itemName(R.give))+" — "+t("click it to craft"); }
   else craftHintEl.textContent=Object.keys(gridCounts()).length?t("no recipe — see the recipe book below"):t("drop items into the grid to craft");
   craftOutEl.appendChild(out); }
 function craftOutputClick(){ const R=matchRecipe(); if(!R)return; craftGrid.fill(null);
@@ -1028,7 +1036,8 @@ function renderRecipes(){ recipeListEl.innerHTML=RECIPES.map(R=>{
     const parts=Object.entries(R.cost).map(([m,n])=>{ const ok=countItem(m)>=n; return `<span style="color:${ok?'#bfe6c2':'#ff9a9a'}">${n} ${itemName(m)}</span>`; }).join(" + ");
     const miss=missingFor(R), title=R.once?t("Sturdy Axe"):itemName(R.give), owned=R.once==="axe"&&hasAxe;
     const clue=(miss.length&&!owned)?`<span class="clue">${t("get")} ${clueText(miss)}</span>`:"";
-    return `<div class="item" data-fill="${R.key}"><span class="dot" style="background:${craftIcon(R)}"></span><div><b>${title}${owned?" · "+t("owned"):""}</b><span>${t("needs")} ${parts}</span>${clue}</div></div>`; }).join(""); }
+    const ic=R.once?`<span class="emo" style="font-size:20px">🪓</span>`:iconSpan(R.give);
+    return `<div class="item" data-fill="${R.key}">${ic}<div><b>${title}${owned?" · "+t("owned"):""}</b><span>${t("needs")} ${parts}</span>${clue}</div></div>`; }).join(""); }
 function fillFromRecipe(key){ const R=RECIPES.find(x=>x.key===key); if(!R||(R.once==="axe"&&hasAxe))return;
   const miss=missingFor(R); if(miss.length){ craftHintEl.textContent=t("need")+" "+clueText(miss); return; }
   returnGridToBag(); let i=0; for(const [m,n] of Object.entries(R.cost)) for(let j=0;j<n&&i<9;j++){ if(removeItem(m,1))craftGrid[i++]={key:m,count:1}; }
