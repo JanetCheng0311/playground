@@ -172,8 +172,8 @@
     </div>
   </div>
   <button class="close" id="bagClose">close</button>
-  <div id="heldStack"></div>
 </div></div>
+<div id="heldStack"></div>
 <div class="shop" id="help"><div class="card">
   <h2>How to play</h2>
   <div id="helpBody"></div>
@@ -184,6 +184,13 @@
   <h3>buy gear</h3><div id="gearList"></div>
   <h3>sell catch &amp; ore</h3><div id="mktSell"></div>
   <button class="close" id="mktClose">close</button>
+</div></div>
+<div class="shop" id="chest"><div class="card invcard">
+  <div class="invtop"><h2>Chest</h2><button id="chestPack" class="close" style="width:auto;margin:0;padding:6px 14px">pack up</button></div>
+  <div id="chestGrid" class="invgrid"></div>
+  <div class="invlabel">your bag</div>
+  <div id="chestBag" class="invgrid"></div>
+  <button class="close" id="chestClose">close</button>
 </div></div>
 <div id="vn"><div class="box">
   <div class="vnport"><img id="vnImg" alt=""><div id="vnFace" class="vnface"></div></div>
@@ -224,7 +231,8 @@ const ITEMS={
   lantern:{kind:"place",tile:"lantern",color:"#ffcf6e",name:"lantern"}, goldlamp:{kind:"place",tile:"goldlamp",color:"#ffe08a",name:"gold lamp"},
   mfence:{kind:"place",tile:"mfence",color:"#b9c2cc",name:"metal fence"},
   oil:{kind:"mat",color:"#2e2a22",name:"oil",sell:5}, oillamp:{kind:"place",tile:"oillamp",color:"#ffb347",name:"oil lamp"},
-  metal_sword:{kind:"gear",color:"#cfd6dd",name:"metal sword"}, metal_armor:{kind:"gear",color:"#9fb0c2",name:"metal armour"} };
+  metal_sword:{kind:"gear",color:"#cfd6dd",name:"metal sword"}, metal_armor:{kind:"gear",color:"#9fb0c2",name:"metal armour"},
+  chest:{kind:"place",tile:"chest",color:"#9c6b3f",name:"chest"} };
 const FURN=["chair","table","lamp","rug"];
 const DESC={ grass:["Grass","till it with use to make soil for planting"], wild:["Wild grass","out here you'll find trees, rocks & slimes"],
   soil:["Tilled soil","plant a seed, water it, harvest when ripe"], tree:["Tree","press use to chop it for wood"], rock:["Rock","press use to mine it for stone"],
@@ -238,7 +246,7 @@ const DESC={ grass:["Grass","till it with use to make soil for planting"], wild:
   lantern:["Lantern","a bright metal light you built"], goldlamp:["Gold lamp","a fancy golden light"], mfence:["Metal fence","a sturdy wall you built (hold use to remove)"],
   pfence:["Wooden fence","a wall you built — hold use 1-2s to remove it"], oil:["Oil seep","press use to scoop crude oil"], oillamp:["Oil lamp","a warm light fuelled by oil"],
   church:["Church","the heart of the village town"], shop:["Market shop","a village trader's stall"],
-  npc:["Pelle the Fisher","press use to buy a rod & net, or sell fish, ore, sand & oil"], villager:["Villager","a friendly local — press use to chat"] };
+  npc:["Pelle the Fisher","press use to buy a rod & net, or sell fish, ore, sand & oil"], villager:["Villager","a friendly local — press use to chat"], chest:["Chest","press use to open it and store items"] };
 const USE={ seed:"plant it on tilled soil", crop:"sell it at the cat shop for coins", wood:"craft torches, fences and paths",
   stone:"craft stone paths and a sturdy axe", goo:"craft a healing salve", salve:"select it and press use to heal 2 hearts",
   torch:"select it and place on the ground to light the night", fence:"select & place to build your own wall",
@@ -249,7 +257,8 @@ const USE={ seed:"plant it on tilled soil", crop:"sell it at the cat shop for co
   glass:"used to craft lanterns and gold lamps", rod:"select it, face water & press use to fish",
   net:"select it, face water & press use to catch more fish", lantern:"select & place a bright metal light",
   goldlamp:"select & place a fancy golden light", mfence:"select & place a metal wall (hold use to remove)",
-  oil:"press from corn, or drops from slimes — craft an oil lamp or sell it", oillamp:"select & place a warm oil lamp" };
+  oil:"press from corn, or drops from slimes — craft an oil lamp or sell it", oillamp:"select & place a warm oil lamp",
+  chest:"select & place a chest, then press use to store items in it" };
 function itemColor(k){ const it=ITEMS[k]; if(it.color)return it.color; return it.kind==="seed"?CROPS[it.crop].leaf:CROPS[it.crop].c; }
 
 /* ===== language (English / 繁體中文) ===== */
@@ -257,7 +266,7 @@ let lang = localStorage.getItem("hs-lang")==="zh" ? "zh" : "en";
 const CROPNAME_ZH={ carrot:"紅蘿蔔", wheat:"小麥", corn:"玉米", pumpkin:"南瓜" };
 const NAME_ZH={ wood:"木材", stone:"石頭", goo:"黏液", iron:"鐵礦", gold:"黃金", fish:"魚", sand:"沙", glass:"玻璃", oil:"油", salve:"藥膏",
   torch:"火把", fence:"木柵欄", ppath:"石板路", chair:"椅子", table:"桌子", lamp:"檯燈", rug:"地毯", lantern:"提燈", goldlamp:"黃金燈", mfence:"金屬柵欄",
-  oillamp:"油燈", rod:"釣竿", net:"漁網", metal_sword:"金屬劍", metal_armor:"金屬盔甲" };
+  oillamp:"油燈", rod:"釣竿", net:"漁網", metal_sword:"金屬劍", metal_armor:"金屬盔甲", chest:"箱子" };
 const DESC_ZH={ grass:["草地","用「使用」翻土成可種植的泥土"], wild:["野草","這裡有樹木、岩石和史萊姆"], soil:["泥土","種下種子、澆水，成熟後採收"],
   tree:["樹木","按「使用」砍伐取得木材"], rock:["岩石","按「使用」開採取得石頭"], iron:["鐵礦石","用「使用」開採取得鐵礦"], gold:["金礦石","用「使用」開採取得黃金"],
   pond:["池塘","用釣竿或漁網釣魚"], river:["河流","清水 — 用釣竿或漁網釣魚"], sea:["海洋","用釣竿或漁網釣魚"], sand:["海灘沙","按「使用」鏟取沙子"],
@@ -265,13 +274,14 @@ const DESC_ZH={ grass:["草地","用「使用」翻土成可種植的泥土"], w
   torch:["火把","照亮夜晚的周圍"], lamp:["檯燈","夜晚的溫暖燈光"], fence:["農場圍欄","農場的外牆 — 在貓商店擴建"], pfence:["木柵欄","你建造的牆 — 長按使用 1-2 秒可拆除"],
   mfence:["金屬柵欄","你建造的堅固牆（長按使用可拆除）"], bed:["床","按「使用」睡覺、回血並開始新的一天"], mat:["門墊","踩上去回到屋外"],
   cat:["商店貓","按「對話」購買種子、家具與升級，或販售素材"], npc:["漁夫培利","按「對話」購買釣竿與漁網，或販售漁獲、礦石、沙與油"], villager:["村民","友善的居民 — 按「對話」聊天"],
-  slime:["史萊姆","用「使用」揮擊打敗它，取得黏液與金幣"] };
+  slime:["史萊姆","用「使用」揮擊打敗它，取得黏液與金幣"], chest:["箱子","按「使用」打開來存放物品"] };
 const USE_ZH={ seed:"種在翻好的泥土上", crop:"在貓商店販售換金幣", wood:"製作火把、柵欄與道路", stone:"製作石板路與堅固斧頭", goo:"製作治療藥膏",
   salve:"選取後按使用回復 2 顆心", torch:"選取後放在地上照亮夜晚", fence:"選取並放置建造自己的牆", ppath:"選取並放置整齊的石板路",
   chair:"選取並放置裝飾", table:"選取並放置裝飾", lamp:"選取並放置發光檯燈", rug:"選取並放置柔軟地毯", iron:"製作提燈，或賣給漁夫",
   gold:"製作黃金燈，或高價賣出", fish:"賣給村莊裡的漁夫培利", sand:"在工作台用 2 個熔成玻璃", glass:"用來製作提燈與黃金燈",
   rod:"選取後面對水面按使用釣魚", net:"選取後面對水面按使用一次釣更多魚", lantern:"選取並放置明亮的金屬燈", goldlamp:"選取並放置華麗的黃金燈",
-  mfence:"選取並放置金屬牆（長按使用可拆除）", oil:"由玉米榨取或史萊姆掉落 — 做油燈或賣出", oillamp:"選取並放置溫暖的油燈" };
+  mfence:"選取並放置金屬牆（長按使用可拆除）", oil:"由玉米榨取或史萊姆掉落 — 做油燈或賣出", oillamp:"選取並放置溫暖的油燈",
+  chest:"選取並放置箱子，再按使用來存放物品" };
 const HOWTO_ZH={ wood:"砍樹", stone:"開採岩石", goo:"打敗史萊姆", iron:"開採鐵礦石", gold:"開採金礦石", sand:"在村莊海灘鏟沙",
   glass:"用 2 個沙製作", oil:"榨 2 個玉米、打史萊姆，或向漁夫購買", fish:"用釣竿或漁網釣魚", crop_corn:"種植並採收玉米（貓商店）" };
 const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金幣","save file":"儲存","load file":"載入","sound":"音效","muted":"靜音","new game":"新遊戲","playground":"遊樂場",
@@ -282,7 +292,7 @@ const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金�
   "How to play":"遊玩說明","🎣 Pelle the Fisher":"🎣 漁夫培利","buy gear":"購買裝備","sell catch & ore":"販售漁獲與礦石","space / tap ▾":"空白鍵 / 點擊 ▾",
   // dynamic phrases
   "grows into a":"可長成","crop":"金幣作物","each":"每個","max":"已滿","gather or harvest something to sell":"採集或收成東西才能販售","no one to talk to here":"這裡沒有人可以對話","Expand farm":"擴建農場","more land inside the fence":"圍欄內更多土地","Bigger house":"擴建房屋","a roomier home inside":"更寬敞的室內",
-  "place it to decorate your home or yard":"放置來裝飾你的家或庭院","craft":"製作","owned":"已擁有","needs":"需要","need":"需要","get":"取得","click it to craft":"點擊製作","you don't have those materials yet":"你還沒有這些材料","no recipe — see the recipe book below":"沒有配方 — 看下方配方書","drop items into the grid to craft":"把物品放進格子來製作","Sturdy Axe":"堅固斧頭",
+  "place it to decorate your home or yard":"放置來裝飾你的家或庭院","craft":"製作","owned":"已擁有","all":"全部","sell all":"全部販售","Sell everything":"全部販售","Chest":"箱子","your bag":"你的背包","pack up":"收起箱子","empty the chest first":"請先清空箱子","needs":"需要","need":"需要","get":"取得","click it to craft":"點擊製作","you don't have those materials yet":"你還沒有這些材料","no recipe — see the recipe book below":"沒有配方 — 看下方配方書","drop items into the grid to craft":"把物品放進格子來製作","Sturdy Axe":"堅固斧頭",
   "catch fish from any water":"可在任何水域釣魚","catch 2–3 fish at a time":"一次釣 2–3 條魚","grow corn & press it, or buy a barrel here":"種玉米榨油，或在此購買一桶","catch fish, mine ore or scoop sand, then sell it here":"釣魚、採礦或鏟沙，然後在此販售","oil":"油",
   // sections / help
   "shortcuts":"快捷鍵","tutorial":"教學","around the world":"世界中的事物","items in your bag":"背包中的物品","controls":"操作","tips":"提示",
@@ -330,6 +340,7 @@ const RECIPES=[
   {key:"lantern", give:"lantern", cost:{iron:2,glass:1}, desc:"a bright metal lantern to place"},
   {key:"goldlamp", give:"goldlamp", cost:{gold:1,glass:1}, desc:"a fancy golden lamp to place"},
   {key:"mfence", give:"mfence", cost:{iron:1}, desc:"a sturdy metal wall to place"},
+  {key:"chest", give:"chest", cost:{wood:6}, desc:"place it to store items"},
   {key:"oil", give:"oil", cost:{crop_corn:2}, desc:"press corn into oil"},
   {key:"metal_sword", give:"metal_sword", cost:{iron:3,wood:1}, desc:"a blade to fight the road boss"},
   {key:"metal_armor", give:"metal_armor", cost:{iron:4,gold:1}, desc:"armour to survive the road boss"},
@@ -352,7 +363,8 @@ const ROAD_R=OROWS-4;
 const VCOLS=46, VROWS=34;
 const VROAD_R=9, RIVER_C=14, SEA_C0=39, SAND_C=38, NPC_R=6, NPC_C=36;
 
-const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor"]);
+const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor","chest"]);
+const CHESTN=18;
 const WATER=new Set(["pond","river","sea"]);
 // player-placed tiles that can be removed (hold use) — maps the tile back to the item you get
 const TILE2ITEM={ pfence:"fence", mfence:"mfence", chair:"chair", table:"table", lamp:"lamp", rug:"rug", torch:"torch", lantern:"lantern", goldlamp:"goldlamp", oillamp:"oillamp", ppath:"ppath" };
@@ -490,8 +502,9 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.
   const f=facedCell(); if(!f)return; const t=gridOut[f.r][f.c]; const cx=f.c*TILE+TILE/2,cy=f.r*TILE+TILE/2;
   const sel=bag[selSlot];
   if(t.type==="door"){ enterHouse(); return; }
+  if(t.type==="chest"){ openChest(f.r,f.c); return; }
   // place crafted item
-  if(sel&&ITEMS[sel.key].kind==="place"&&PLACEABLE_ON.has(t.type)&&!t.crop&&!inFarmHouseConflict(f)){ t.type=ITEMS[sel.key].tile; removeItem(sel.key,1); SND.place(); burst(cx,cy,itemColor(sel.key),5); save(); return; }
+  if(sel&&ITEMS[sel.key].kind==="place"&&PLACEABLE_ON.has(t.type)&&!t.crop&&!inFarmHouseConflict(f)){ t.type=ITEMS[sel.key].tile; if(t.type==="chest")t.store=new Array(CHESTN).fill(null); removeItem(sel.key,1); SND.place(); burst(cx,cy,itemColor(sel.key),5); save(); return; }
   // fishing with a rod or net
   if(sel&&ITEMS[sel.key].kind==="tool"&&WATER.has(t.type)){ fishAt(cx,cy,sel.key); save(); return; }
   // scoop sand from the beach
@@ -605,7 +618,7 @@ addEventListener("keydown",e=>{ const k=e.key.toLowerCase();
   else if(k==="t"){ e.preventDefault(); if(e.repeat)return; audio(); talkInteract(); }
   else if(k==="m"){ e.preventDefault(); mapOpen=!mapOpen; }
   else if(k==="i"||k==="tab"||k==="b"){ e.preventDefault(); baguiEl.classList.contains("open")?closeBag():openBag(); }
-  else if(k==="escape"){ if(baguiEl.classList.contains("open"))closeBag(); document.querySelectorAll(".shop.open").forEach(s=>s.classList.remove("open")); }
+  else if(k==="escape"){ if(baguiEl.classList.contains("open"))closeBag(); if(chestEl.classList.contains("open"))closeChest(); document.querySelectorAll(".shop.open").forEach(s=>s.classList.remove("open")); }
   else if(/^[0-9]$/.test(k)){ selSlot=(k==="0")?9:(+k-1); renderBar(); } });
 addEventListener("keyup",e=>{ const k=e.key.toLowerCase();
   if(["arrowup","w"].includes(k))keys.u=0; else if(["arrowdown","s"].includes(k))keys.d=0; else if(["arrowleft","a"].includes(k))keys.l=0; else if(["arrowright","d"].includes(k))keys.r=0;
@@ -669,7 +682,7 @@ function update(dt){ if(scene==="boss"){ updateBoss(dt); return; }
 /* ---- draw ---- */
 function tileColor(t){ return {wild:"#5a9e4e",grass:"#7ec850",path:"#cdab73",ppath:"#bfa980",soil:"#9c6b3f",fence:"#5e8c3a",house:"#e9e4da",pond:"#5aa0e6",door:"#7a4a22",tree:"#5a9e4e",rock:"#5a9e4e",torch:"#7ec850",pfence:"#5a9e4e",floor:"#caa46a",wall:"#7a5230",bed:"#caa46a",mat:"#caa46a",
     road:"#c9b27e",river:"#4a8fd6",sea:"#2f6fb0",sand:"#e6d8a8",iron:"#5a9e4e",gold:"#5a9e4e",lantern:"#5a9e4e",goldlamp:"#5a9e4e",mfence:"#5a9e4e",oil:"#5a9e4e",oillamp:"#5a9e4e",
-    church:"#e3ddd2",churchtop:"#e3ddd2",shop:"#c98b5a",hdoor:"#cdbf9c"}[t.type]||"#5a9e4e"; }
+    church:"#e3ddd2",churchtop:"#e3ddd2",shop:"#c98b5a",hdoor:"#cdbf9c",chest:"#5a9e4e"}[t.type]||"#5a9e4e"; }
 function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE||y<-TILE||x>VW||y>VH)return;
   ctx.fillStyle=tileColor(t); ctx.fillRect(x,y,TILE,TILE);
   if(t.type==="wild"||t.type==="grass"){ ctx.fillStyle="rgba(0,0,0,0.05)";if((r+c)%2)ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle=shade(tileColor(t),1.08);ctx.fillRect(x+7,y+9,3,3);ctx.fillRect(x+24,y+27,3,3); }
@@ -705,6 +718,7 @@ function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE|
   else if(t.type==="churchtop"){ ctx.fillStyle="#e3ddd2";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#8a6a4a";ctx.beginPath();ctx.moveTo(x+6,y+TILE);ctx.lineTo(x+TILE/2,y+6);ctx.lineTo(x+TILE-6,y+TILE);ctx.fill();ctx.fillStyle="#ffd23b";ctx.fillRect(x+TILE/2-1.5,y-6,3,12);ctx.fillRect(x+TILE/2-5,y-2,10,3); }
   else if(t.type==="shop"){ ctx.fillStyle="#c98b5a";ctx.fillRect(x,y,TILE,TILE);for(let k=0;k<TILE;k+=10){ctx.fillStyle=(k/10)%2?"#e8584f":"#fff";ctx.fillRect(x+k,y,10,8);}ctx.fillStyle="#7a4a22";ctx.fillRect(x+6,y+18,TILE-12,TILE-20);ctx.fillStyle="#3a2a1a";ctx.fillRect(x+TILE/2-5,y+22,10,TILE-24); }
   else if(t.type==="hdoor"){ ctx.fillStyle="#cdbf9c";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#c9bfae";ctx.fillRect(x,y,TILE,7);ctx.fillStyle="#7a4a22";ctx.fillRect(x+TILE/2-8,y+10,16,TILE-10);ctx.fillStyle="#ffd23b";ctx.fillRect(x+TILE/2+3,y+TILE/2,3,3); }
+  else if(t.type==="chest"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#9c6b3f";ctx.fillRect(x+6,y+16,TILE-12,TILE-22);ctx.fillStyle="#7a4f29";ctx.fillRect(x+6,y+13,TILE-12,7);ctx.fillStyle="#ffd23b";ctx.fillRect(x+TILE/2-2,y+19,4,4);ctx.fillStyle="rgba(0,0,0,.18)";ctx.fillRect(x+6,y+19,TILE-12,2); }
   if(t.crop) drawCrop(x+TILE/2,y+TILE-8,t.crop);
 }
 function drawCrop(x,by,cr){ const C=CROPS[cr.type],ratio=Math.min(1,cr.grow),ripe=cr.grow>=1,h=6+ratio*20+(ripe?2:0),bob=ripe?Math.sin(now()*4+x)*1.5:0;
@@ -819,16 +833,19 @@ function renderBar(){ barEl.innerHTML=""; hideBarTip();
 
 /* ---- shop / craft ---- */
 const shopEl=document.getElementById("shop");
+function shopSellables(){ return [...CKEYS.map(k=>"crop_"+k),"wood","stone","goo"].filter(k=>countItem(k)>0); }
+function sellStack(k){ const n=countItem(k); if(n<=0)return; const v=k.startsWith("crop_")?CROPS[k.slice(5)].sell:ITEMS[k].sell; coins+=v*n; removeItem(k,n); SND.coin(); }
 function openShop(){ renderShop(); shopEl.classList.add("open"); }
 function renderShop(){ document.getElementById("shopCoins").textContent=coins;
   document.getElementById("buyList").innerHTML=CKEYS.map(k=>{ const C=CROPS[k];
     return `<div class="item"><div><b>${itemName("seed_"+k)}</b><span>${t("grows into a")} ${C.sell}c ${t("crop")}</span></div><button data-buy="${k}" ${coins<C.cost?"disabled":""}>${C.cost}c</button></div>`; }).join("");
   document.getElementById("furnList").innerHTML=FURN.map(k=>{ const it=ITEMS[k];
     return `<div class="item"><div><b>${itemName(k)}</b><span>${t("place it to decorate your home or yard")}</span></div><button data-buyf="${k}" ${coins<it.buy?"disabled":""}>${it.buy}c</button></div>`; }).join("");
-  const sellables=[...CKEYS.map(k=>"crop_"+k),"wood","stone","goo"].filter(k=>countItem(k)>0);
+  const sellables=shopSellables();
   document.getElementById("sellList").innerHTML=(sellables.length?sellables:["__none"]).map(k=>{ if(k==="__none")return `<div class="item"><div><span>${t("gather or harvest something to sell")}</span></div></div>`;
     const v=k.startsWith("crop_")?CROPS[k.slice(5)].sell:ITEMS[k].sell, n=countItem(k);
-    return `<div class="item"><div><b>${itemName(k)} ×${n}</b><span>${v}c ${t("each")}</span></div><button data-sell="${k}">${t("sell")}</button></div>`; }).join("");
+    return `<div class="item"><div><b>${itemName(k)} ×${n}</b><span>${v}c ${t("each")}</span></div><button data-sell="${k}">${t("sell")}</button><button data-sellall="${k}">${t("all")}</button></div>`; }).join("")
+    +(sellables.length?`<div class="item"><div><b>${t("Sell everything")}</b></div><button data-sellall="__shopall">${t("sell all")}</button></div>`:"");
   const fcost=80*(farmLvl+1),hcost=100*(houseLvl+1);
   document.getElementById("upList").innerHTML=
     `<div class="item"><div><b>${t("Expand farm")} (lv${farmLvl})</b><span>${t("more land inside the fence")}</span></div><button data-up="farm" ${farmLvl>=4||coins<fcost?"disabled":""}>${farmLvl>=4?t("max"):fcost+"c"}</button></div>`+
@@ -838,6 +855,7 @@ shopEl.addEventListener("click",e=>{ const d=e.target.dataset||{};
   if(d.buy){ const C=CROPS[d.buy]; if(coins>=C.cost&&addItem("seed_"+d.buy,1)){coins-=C.cost;SND.coin();} }
   else if(d.buyf){ const it=ITEMS[d.buyf]; if(coins>=it.buy&&addItem(d.buyf,1)){coins-=it.buy;SND.coin();} }
   else if(d.sell){ const k=d.sell; if(countItem(k)>0){ const v=k.startsWith("crop_")?CROPS[k.slice(5)].sell:ITEMS[k].sell; coins+=v; removeItem(k,1); SND.coin(); } }
+  else if(d.sellall){ if(d.sellall==="__shopall")shopSellables().forEach(sellStack); else sellStack(d.sellall); }
   else if(d.up==="farm"){ const cost=80*(farmLvl+1); if(farmLvl<4&&coins>=cost){coins-=cost;expandFarm();SND.coin();} }
   else if(d.up==="house"){ const cost=100*(houseLvl+1); if(houseLvl<3&&coins>=cost){coins-=cost;houseLvl++;SND.coin();float(player.x,player.y-20,"house upgraded","#fff");} }
   syncUI(); save(); renderShop();
@@ -855,12 +873,15 @@ function iconSpan(key,big){ const it=ITEMS[key],sz=it.kind==="seed"?(big?16:14):
   return `<span class="dot" style="width:${sz}px;height:${sz}px;border-radius:${rad}px;background:${itemColor(key)}"></span>`; }
 function renderHeld(){ if(held){ heldEl.classList.add("show"); heldEl.innerHTML=iconSpan(held.key)+(held.count>1?`<span class="n">${held.count}</span>`:""); } else { heldEl.classList.remove("show"); heldEl.innerHTML=""; } }
 /* bag slots — click picks up / drops the WHOLE stack (also lets you rearrange the hotbar) */
-function bagSlotClick(i){ const s=bag[i];
-  if(!held){ if(s){ held={key:s.key,count:s.count}; bag[i]=null; } }
-  else if(!s){ bag[i]={key:held.key,count:held.count}; held=null; }
+function moveStack(arr,i){ const s=arr[i];
+  if(!held){ if(s){ held={key:s.key,count:s.count}; arr[i]=null; } }
+  else if(!s){ arr[i]={key:held.key,count:held.count}; held=null; }
   else if(s.key===held.key){ s.count+=held.count; held=null; }
-  else { bag[i]={key:held.key,count:held.count}; held={key:s.key,count:s.count}; }
-  renderBag(); renderHeld(); }
+  else { arr[i]={key:held.key,count:held.count}; held={key:s.key,count:s.count}; } }
+function bagSlotClick(i){ moveStack(bag,i); renderBag(); renderHeld(); }
+function genSlot(arr,i,onclick){ const s=arr[i],el=document.createElement("div"); el.className="bslot";
+  if(s){ el.innerHTML=iconSpan(s.key)+(s.count>1?`<span class="n">${s.count}</span>`:""); el.title=itemName(s.key); }
+  el.addEventListener("click",onclick); return el; }
 function slotEl(i){ const s=bag[i],el=document.createElement("div"); el.className="bslot"+(i===selSlot?" on":"");
   if(s){ el.innerHTML=iconSpan(s.key)+(s.count>1?`<span class="n">${s.count}</span>`:""); const use=useOf(baseKey(s.key));
     el.addEventListener("pointerenter",()=>{ invName.innerHTML=`${itemName(s.key)}${use?`<span>${use}</span>`:""}`; }); el.title=itemName(s.key)+(use?" — "+use:""); }
@@ -910,6 +931,22 @@ document.getElementById("bagClose").addEventListener("click",closeBag);
 baguiEl.addEventListener("pointerdown",e=>{ if(e.target===baguiEl)closeBag(); });
 baguiEl.addEventListener("pointermove",e=>{ if(held){ heldEl.style.left=e.clientX+"px"; heldEl.style.top=e.clientY+"px"; } });
 recipeListEl.addEventListener("click",e=>{ const row=e.target.closest&&e.target.closest("[data-fill]"); if(row)fillFromRecipe(row.dataset.fill); });
+
+/* ---- storage chest ---- */
+const chestEl=document.getElementById("chest"), chestGridEl=document.getElementById("chestGrid"), chestBagEl=document.getElementById("chestBag"), chestPackEl=document.getElementById("chestPack");
+let curChest=null, curChestR=-1, curChestC=-1;
+function renderChest(){ if(!curChest)return;
+  chestGridEl.innerHTML=""; for(let i=0;i<CHESTN;i++)chestGridEl.appendChild(genSlot(curChest,i,()=>{ moveStack(curChest,i); renderChest(); renderHeld(); }));
+  chestBagEl.innerHTML=""; for(let i=0;i<BAGN;i++)chestBagEl.appendChild(genSlot(bag,i,()=>{ moveStack(bag,i); renderChest(); renderBar(); renderHeld(); }));
+  chestPackEl.disabled=curChest.some(s=>s); chestPackEl.textContent=curChest.some(s=>s)?t("empty the chest first"):t("pack up"); }
+function openChest(r,c){ const tile=gridOut[r][c]; if(!tile.store)tile.store=new Array(CHESTN).fill(null);
+  curChest=tile.store; curChestR=r; curChestC=c; renderChest(); chestEl.classList.add("open"); }
+function closeChest(){ if(held){ addItem(held.key,held.count); held=null; renderHeld(); } chestEl.classList.remove("open"); curChest=null; renderBar(); save(); }
+chestPackEl.addEventListener("click",()=>{ if(!curChest||curChest.some(s=>s))return; const tile=gridOut[curChestR][curChestC];
+  tile.type=inFarm(curChestR,curChestC)?"grass":"wild"; delete tile.store; addItem("chest",1); SND.chop(); closeChest(); });
+document.getElementById("chestClose").addEventListener("click",closeChest);
+chestEl.addEventListener("pointerdown",e=>{ if(e.target===chestEl)closeChest(); });
+chestEl.addEventListener("pointermove",e=>{ if(held){ heldEl.style.left=e.clientX+"px"; heldEl.style.top=e.clientY+"px"; } });
 
 /* ---- help / tutorial ---- */
 const helpEl=document.getElementById("help");
@@ -966,13 +1003,16 @@ function renderMarket(){ document.getElementById("mktCoins").textContent=coins;
   document.getElementById("gearList").innerHTML=gear.map(g=>{ const owned=countItem(g.k)>0,cost=GEARCOST[g.k];
     return `<div class="item"><div><b>${itemName(g.k)}</b><span>${g.d}</span></div><button data-buyg="${g.k}" ${owned||coins<cost?"disabled":""}>${owned?t("owned"):cost+"c"}</button></div>`; }).join("")
     +`<div class="item"><div><b>${t("oil")}</b><span>${t("grow corn & press it, or buy a barrel here")}</span></div><button data-buyoil="1" ${coins<8?"disabled":""}>8c</button></div>`;
-  const sellable=["fish","iron","gold","sand","glass","oil"].filter(k=>countItem(k)>0);
+  const sellable=mktSellables();
   document.getElementById("mktSell").innerHTML=(sellable.length?sellable:["__none"]).map(k=>{ if(k==="__none")return `<div class="item"><div><span>${t("catch fish, mine ore or scoop sand, then sell it here")}</span></div></div>`;
-    const v=ITEMS[k].sell,n=countItem(k); return `<div class="item"><div><b>${itemName(k)} ×${n}</b><span>${v}c ${t("each")}</span></div><button data-msell="${k}">${t("sell")}</button></div>`; }).join(""); }
+    const v=ITEMS[k].sell,n=countItem(k); return `<div class="item"><div><b>${itemName(k)} ×${n}</b><span>${v}c ${t("each")}</span></div><button data-msell="${k}">${t("sell")}</button><button data-msellall="${k}">${t("all")}</button></div>`; }).join("")
+    +(sellable.length?`<div class="item"><div><b>${t("Sell everything")}</b></div><button data-msellall="__mktall">${t("sell all")}</button></div>`:""); }
+function mktSellables(){ return ["fish","iron","gold","sand","glass","oil"].filter(k=>countItem(k)>0); }
 marketEl.addEventListener("click",e=>{ const d=e.target.dataset||{};
   if(d.buyg){ const cost=GEARCOST[d.buyg]; if(countItem(d.buyg)===0&&coins>=cost&&addItem(d.buyg,1)){coins-=cost;SND.coin();} }
   else if(d.buyoil){ if(coins>=8&&addItem("oil",1)){coins-=8;SND.coin();} }
   else if(d.msell){ const k=d.msell; if(countItem(k)>0){ coins+=ITEMS[k].sell; removeItem(k,1); SND.coin(); } }
+  else if(d.msellall){ if(d.msellall==="__mktall")mktSellables().forEach(sellStack); else sellStack(d.msellall); }
   syncUI(); save(); renderMarket(); });
 document.getElementById("mktClose").addEventListener("click",()=>marketEl.classList.remove("open"));
 marketEl.addEventListener("pointerdown",e=>{ if(e.target===marketEl)marketEl.classList.remove("open"); });
