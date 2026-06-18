@@ -90,6 +90,8 @@
   .craftlist .item{cursor:pointer}
   .craftlist .item .dot{width:20px;height:20px;border-radius:5px;flex:0 0 auto;align-self:center}
   .emo{line-height:1;pointer-events:none}
+  .shop .item>.emo,.shop .item>.dot{flex:0 0 auto;align-self:center;width:26px;text-align:center;font-size:20px}
+  #helpBody .item .ihead{font-size:17px;margin-right:4px}
   .craftlist .item .emo{flex:0 0 auto;align-self:center;width:22px;text-align:center}
   .craftlist .clue{display:block;font-size:11px;color:#ffb3b3;margin-top:3px;opacity:.95}
   #heldStack{position:fixed;z-index:60;width:40px;height:40px;border-radius:8px;display:none;place-items:center;pointer-events:none;transform:translate(-50%,-50%);background:rgba(10,20,60,.85);border:1.5px solid rgba(255,255,255,.5)}
@@ -945,13 +947,13 @@ function sellStack(k){ const n=countItem(k); if(n<=0)return; const v=k.startsWit
 function openShop(){ renderShop(); shopEl.classList.add("open"); }
 function renderShop(){ document.getElementById("shopCoins").textContent=coins;
   document.getElementById("buyList").innerHTML=CKEYS.map(k=>{ const C=CROPS[k];
-    return `<div class="item"><div><b>${itemName("seed_"+k)}</b><span>${t("grows into a")} ${C.sell}c ${t("crop")}</span></div><button data-buy="${k}" ${coins<C.cost?"disabled":""}>${C.cost}c</button></div>`; }).join("");
+    return `<div class="item">${iconSpan("seed_"+k)}<div><b>${itemName("seed_"+k)}</b><span>${t("grows into a")} ${C.sell}c ${t("crop")}</span></div><button data-buy="${k}" ${coins<C.cost?"disabled":""}>${C.cost}c</button></div>`; }).join("");
   document.getElementById("furnList").innerHTML=FURN.map(k=>{ const it=ITEMS[k];
-    return `<div class="item"><div><b>${itemName(k)}</b><span>${t("place it to decorate your home or yard")}</span></div><button data-buyf="${k}" ${coins<it.buy?"disabled":""}>${it.buy}c</button></div>`; }).join("");
+    return `<div class="item">${iconSpan(k)}<div><b>${itemName(k)}</b><span>${t("place it to decorate your home or yard")}</span></div><button data-buyf="${k}" ${coins<it.buy?"disabled":""}>${it.buy}c</button></div>`; }).join("");
   const sellables=shopSellables();
   document.getElementById("sellList").innerHTML=(sellables.length?sellables:["__none"]).map(k=>{ if(k==="__none")return `<div class="item"><div><span>${t("gather or harvest something to sell")}</span></div></div>`;
     const v=k.startsWith("crop_")?CROPS[k.slice(5)].sell:ITEMS[k].sell, n=countItem(k);
-    return `<div class="item"><div><b>${itemName(k)} ×${n}</b><span>${v}c ${t("each")}</span></div><button data-sell="${k}">${t("sell")}</button><button data-sellall="${k}">${t("all")}</button></div>`; }).join("")
+    return `<div class="item">${iconSpan(k)}<div><b>${itemName(k)} ×${n}</b><span>${v}c ${t("each")}</span></div><button data-sell="${k}">${t("sell")}</button><button data-sellall="${k}">${t("all")}</button></div>`; }).join("")
     +(sellables.length?`<div class="item"><div><b>${t("Sell everything")}</b></div><button data-sellall="__shopall">${t("sell all")}</button></div>`:"");
   const fcost=80*(farmLvl+1),hcost=100*(houseLvl+1);
   document.getElementById("upList").innerHTML=
@@ -1106,7 +1108,7 @@ function renderHelp(){ const tiles=["grass","soil","tree","rock","iron","gold","
   const useC=lang==="zh"?controlsZH:controls, useT=lang==="zh"?tipsZH:tips;
   const cH=useC.map(c=>`<div class="item"><b>${c[0]}</b><span>⌨️ ${c[1]} &nbsp;·&nbsp; 📱 ${c[2]}</span></div>`).join("");
   const tH=tiles.map(k=>{ const d=descOf(k); return d?`<div class="item"><b>${d[0]}</b><span>${d[1]}</span></div>`:""; }).join("");
-  const iH=items.map(k=>{ const base=k.startsWith("seed_")?"seed":k.startsWith("crop_")?"crop":k; const u=useOf(base)||useOf(k); return `<div class="item"><b>${itemName(k)}</b><span>${u}</span></div>`; }).join("");
+  const iH=items.map(k=>{ const base=k.startsWith("seed_")?"seed":k.startsWith("crop_")?"crop":k; const u=useOf(base)||useOf(k); const em=itemEmoji(k); return `<div class="item">${em?`<span class="emo ihead">${em}</span> `:""}<b>${itemName(k)}</b><span>${u}</span></div>`; }).join("");
   const tipsH=useT.map(x=>`<div class="item"><span>${x}</span></div>`).join("");
   document.getElementById("helpBody").innerHTML=
     `<div class="helpcols">`+
@@ -1124,11 +1126,11 @@ function openMarket(){ renderMarket(); marketEl.classList.add("open"); }
 function renderMarket(){ document.getElementById("mktCoins").textContent=coins;
   const gear=[{k:"rod",d:t("catch fish from any water")},{k:"net",d:t("catch 2–3 fish at a time")}];
   document.getElementById("gearList").innerHTML=gear.map(g=>{ const owned=countItem(g.k)>0,cost=GEARCOST[g.k];
-    return `<div class="item"><div><b>${itemName(g.k)}</b><span>${g.d}</span></div><button data-buyg="${g.k}" ${owned||coins<cost?"disabled":""}>${owned?t("owned"):cost+"c"}</button></div>`; }).join("")
-    +`<div class="item"><div><b>${t("oil")}</b><span>${t("grow corn & press it, or buy a barrel here")}</span></div><button data-buyoil="1" ${coins<8?"disabled":""}>8c</button></div>`;
+    return `<div class="item">${iconSpan(g.k)}<div><b>${itemName(g.k)}</b><span>${g.d}</span></div><button data-buyg="${g.k}" ${owned||coins<cost?"disabled":""}>${owned?t("owned"):cost+"c"}</button></div>`; }).join("")
+    +`<div class="item">${iconSpan("oil")}<div><b>${t("oil")}</b><span>${t("grow corn & press it, or buy a barrel here")}</span></div><button data-buyoil="1" ${coins<8?"disabled":""}>8c</button></div>`;
   const sellable=mktSellables();
   document.getElementById("mktSell").innerHTML=(sellable.length?sellable:["__none"]).map(k=>{ if(k==="__none")return `<div class="item"><div><span>${t("catch fish, mine ore or scoop sand, then sell it here")}</span></div></div>`;
-    const v=ITEMS[k].sell,n=countItem(k); return `<div class="item"><div><b>${itemName(k)} ×${n}</b><span>${v}c ${t("each")}</span></div><button data-msell="${k}">${t("sell")}</button><button data-msellall="${k}">${t("all")}</button></div>`; }).join("")
+    const v=ITEMS[k].sell,n=countItem(k); return `<div class="item">${iconSpan(k)}<div><b>${itemName(k)} ×${n}</b><span>${v}c ${t("each")}</span></div><button data-msell="${k}">${t("sell")}</button><button data-msellall="${k}">${t("all")}</button></div>`; }).join("")
     +(sellable.length?`<div class="item"><div><b>${t("Sell everything")}</b></div><button data-msellall="__mktall">${t("sell all")}</button></div>`:""); }
 function mktSellables(){ return ["fish","iron","gold","sand","glass","oil"].filter(k=>countItem(k)>0); }
 marketEl.addEventListener("click",e=>{ const d=e.target.dataset||{};
