@@ -203,6 +203,11 @@
   <div id="questBody"></div>
   <button class="close" id="questClose">close</button>
 </div></div>
+<div class="shop" id="merchant"><div class="card">
+  <h2>🐹 Hamu's Trades <span class="c">coins <b id="merchCoins">0</b></span></h2>
+  <h3>sell (Hamu pays +25%)</h3><div id="merchSell"></div>
+  <button class="close" id="merchClose">close</button>
+</div></div>
 <div class="shop" id="market"><div class="card">
   <h2>🎣 Pelle the Fisher <span class="c">coins <b id="mktCoins">0</b></span></h2>
   <h3>buy gear</h3><div id="gearList"></div>
@@ -372,6 +377,15 @@ const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金�
   "←/→ move · ↑/Space jump · E or ⟳use to slash · dodge the red charge & shots":"←/→ 移動 · ↑/空白鍵 跳躍 · E 或 使用鈕 揮擊 · 閃避紅色衝刺與射擊",
   "fight off the monsters first!":"先擊退怪物！","need a metal sword AND armour!":"需要金屬劍和盔甲！","the road is clear!":"道路暢通了！","defeated… craft better gear & retry":"戰敗了…製作更好的裝備再挑戰","cheat: road unlocked":"密技：道路已解鎖","cheat: sword & armour equipped":"密技：已裝備劍與盔甲",
   "name":"名字","📋 Quests":"📋 任務","📋 Missions":"📋 任務","claim":"領取","claimed":"已領取","reward":"獎勵","more quests coming from the village NPCs soon":"村莊的 NPC 很快會帶來更多任務","Enter your name:":"輸入你的名字：","name set":"名字已設定","Chop 5 trees":"砍 5 棵樹","Harvest 5 crops":"採收 5 個作物","Catch 8 fish":"釣 8 條魚",
+  "🐹 Hamu's Trades":"🐹 哈姆商行","sell (Hamu pays +25%)":"販售（哈姆多付 25%）","Louie: bring 100 fish":"路易：帶來 100 條魚","deliver to Louie in the village":"送去村莊的路易那裡",
+  "Hey there! Name's Louie. I run the fish stall — or I will, once I have stock.":"嘿！我叫路易，我顧魚攤 — 等我有貨之後啦。",
+  "Bring me 100 fish and I'll pay you 250 coins. Catch them with a rod or net from any water.":"幫我帶 100 條魚來，我付你 250 金幣。用釣竿或漁網在任何水域捕魚。",
+  "100 fish… you're on.":"100 條魚…交給我吧。",
+  "A hundred fish! You're a legend. Here's your 250 coins — the stall's open thanks to you.":"一百條魚！你真是傳奇。這是你的 250 金幣 — 多虧了你，魚攤開張了。",
+  "Fresh fish, all day! Thanks again for stocking me up.":"新鮮魚貨，整天供應！再次感謝你的補貨。",
+  "Woof! Welcome to the village, friend!":"汪！歡迎來到村莊，朋友！",
+  "Pelle fishes the sea, Hamu trades, Louie's got a job for you.":"培利在海邊釣魚，哈姆做買賣，路易有個任務給你。",
+  "I'll guard the town — go explore!":"小鎮交給我看守 — 去探險吧！",
   "buy food":"購買食物","restores":"恢復","hunger":"飽食","buff!":"增益！","cook":"烹調","cooked":"煮好了","🔥 Kitchen Stove":"🔥 廚房爐灶","cook buff food":"烹調增益食物",
   "+2 hearts for 2 min":"2 分鐘 +2 顆心","+1 attack for 2 min":"2 分鐘 +1 攻擊","faster for 2 min":"2 分鐘 加速",
   "heals faster for 2 min":"2 分鐘 加速回血","+1 heart & fast heal, 3 min":"3 分鐘 +1 心並加速回血",
@@ -406,7 +420,8 @@ function applyLang(){ localStorage.setItem("hs-lang",lang);
   if(document.getElementById("market").classList.contains("open"))renderMarket();
   if(baguiEl.classList.contains("open")){ renderBag(); renderCraftGrid(); renderRecipes(); }
   if(document.getElementById("help").classList.contains("open"))renderHelp();
-  if(document.getElementById("quests").classList.contains("open"))renderQuests(); }
+  if(document.getElementById("quests").classList.contains("open"))renderQuests();
+  if(document.getElementById("merchant").classList.contains("open"))renderMerchant(); }
 
 const RECIPES=[
   {key:"salve", give:"salve", cost:{goo:2}, desc:"restores 2 hearts (use it from your bag)"},
@@ -441,7 +456,7 @@ let catX=0, catY=0, npcX=0, npcY=0;
 const player={x:0,y:0,dir:"d",fx:0,fy:1,moving:false,hp:5,maxHp:5,inv:0,kx:0,ky:0,swing:0,hunger:100,maxHunger:100,regenT:0,starveT:0};
 const equip={sword:null,armor:null,hat:null,chest:null,pants:null,shoes:null,acc1:null,acc2:null};
 const mobs=[]; const fx=[]; let spawnT=0;
-let coins=25, clock=0, selSlot=0, outX, outY, metCat=false, metFisher=false, mapOpen=false, bossDefeated=false, seenIntro=false, catIntroPending=false, playerName="You";
+let coins=25, clock=0, selSlot=0, outX, outY, metCat=false, metFisher=false, mapOpen=false, bossDefeated=false, seenIntro=false, catIntroPending=false, playerName="You", louieQuest=0;
 const stats={trees:0,crops:0,fish:0}; const claimed={};   // mission progress + claimed quests
 const hasSword=()=>!!equip.sword, hasArmor=()=>!!equip.armor;
 function gearBonus(){ const b={atk:0,maxhp:0,regen:0,speed:0}; for(const sn in equip){ const k=equip[sn]; if(k&&ITEMS[k].bonus)for(const s in ITEMS[k].bonus)b[s]+=ITEMS[k].bonus[s]; } return b; }
@@ -486,7 +501,13 @@ function setVillageMeta(){ npcX=NPC_C*TILE+TILE/2; npcY=NPC_R*TILE+TILE/2;
   villagers.push({c:11,r:23,name:"Mara",face:"👩‍🌾",col:"#b8654f",lines:["Lovely day in the village, isn't it?","Pelle down by the sea sells fishing gear."]});
   villagers.push({c:30,r:23,name:"Tom",face:"🧑‍🔧",col:"#5a7a8f",lines:["Welcome to our little town!","The church bell rings at noon, they say."]});
   villagers.push({c:22,r:29,name:"Mayor Pim",face:"🎩",col:"#7a5aa0",lines:["As mayor, I'm proud of our growing town!","Build, farm, fish — make yourself at home."]});
-  for(const v of villagers){ v.x=v.c*TILE+TILE/2; v.y=v.r*TILE+TILE/2; } }
+  for(const v of villagers){ v.x=v.c*TILE+TILE/2; v.y=v.r*TILE+TILE/2; }
+  for(const n of VNPCS){ n.x=n.c*TILE+TILE/2; n.y=n.r*TILE+TILE/2; } }
+const VNPCS=[
+  {id:"hamu", c:26,r:24, name:"Hamu", face:"🐹", col:"#caa15a", role:"merchant", ears:"round"},
+  {id:"louie", c:14,r:27, name:"Louie", face:"🐱", col:"#5aa0e6", role:"quest", ears:"cat"},
+  {id:"david", c:20,r:23, name:"David", face:"🐶", col:"#e0913f", role:"chat", ears:"flop",
+    lines:["Woof! Welcome to the village, friend!","Pelle fishes the sea, Hamu trades, Louie's got a job for you.","I'll guard the town — go explore!"]} ];
 
 /* ---- inventory ---- */
 function addItem(key,n=1){ for(const s of bag){ if(s&&s.key===key){ s.count+=n; renderBar(); return true; } }
@@ -549,7 +570,7 @@ function setScene(s){ scene=s; if(s==="out"){G=gridOut;GR=gridOut.length;GC=grid
 
 function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false;bossDefeated=false; area="home"; gridHome=buildOut(); gridVillage=buildVillage(); setArea("home"); coins=25; clock=0;
   for(let i=0;i<bag.length;i++)bag[i]=null; bag[0]={key:"seed_carrot",count:6}; bag[1]={key:"seed_wheat",count:2}; selSlot=0;
-  for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; catIntroPending=false; playerName="You"; stats.trees=0;stats.crops=0;stats.fish=0; for(const k in claimed)delete claimed[k]; recalcMax();
+  for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; catIntroPending=false; playerName="You"; louieQuest=0; stats.trees=0;stats.crops=0;stats.fish=0; for(const k in claimed)delete claimed[k]; recalcMax();
   setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2+TILE; player.hp=player.maxHp;player.inv=0; mobs.length=0; save(); renderBar(); syncUI(); }
 function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); const home=s&&(s.home||s.gridOut); if(home&&home.length===OROWS){
     farmFR1=s.farmFR1||15;farmFC1=s.farmFC1||18;houseLvl=s.houseLvl||0;farmLvl=s.farmLvl||0;hasAxe=!!s.hasAxe;
@@ -557,12 +578,12 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); co
     for(let i=0;i<bag.length;i++)bag[i]=s.bag&&s.bag[i]?s.bag[i]:null; selSlot=s.selSlot||0;
     catX=(doorC=FC0+2,(FC0+4)*TILE+TILE/2); catY=(doorR=FR0+3,(FR0+4)*TILE+TILE/2); setVillageMeta();
     metCat=!!s.metCat; metFisher=!!s.metFisher; bossDefeated=!!s.bossDefeated; seenIntro=!!s.seenIntro; catIntroPending=!!s.catIntroPending;
-    playerName=s.playerName||"You"; if(s.stats)Object.assign(stats,s.stats); if(s.claimed)Object.assign(claimed,s.claimed);
+    playerName=s.playerName||"You"; louieQuest=s.louieQuest||0; if(s.stats)Object.assign(stats,s.stats); if(s.claimed)Object.assign(claimed,s.claimed);
     for(const sn in equip)equip[sn]=(s.equip&&s.equip[sn]&&ITEMS[s.equip[sn]])?s.equip[sn]:null; recalcMax();
     player.hunger=(typeof s.hunger==="number")?s.hunger:player.maxHunger; player.regenT=0;player.starveT=0;
     area=(s.area==="village")?"village":"home"; setArea(area);
     setScene("out"); player.x=s.px;player.y=s.py;player.hp=s.hp??player.maxHp; return true; } }catch(e){} return false; }
-function save(){ localStorage.setItem("homestead4", JSON.stringify({v:5,area,home:gridHome,village:gridVillage,coins,clock,px:scene==="out"?player.x:outX,py:scene==="out"?player.y:outY,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger,playerName,stats,claimed})); }
+function save(){ localStorage.setItem("homestead4", JSON.stringify({v:5,area,home:gridHome,village:gridVillage,coins,clock,px:scene==="out"?player.x:outX,py:scene==="out"?player.y:outY,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger,playerName,louieQuest,stats,claimed})); }
 function syncUI(){ document.getElementById("coins").textContent=coins; }
 
 function resize(){ const rect=document.querySelector("main").getBoundingClientRect();
@@ -606,6 +627,8 @@ function tryAttack(){ const range=TILE*1.6,dmg=(hasAxe?2:1)+totalBonus().atk; le
 function talkInteract(){ if(scene!=="out"){ return; }
   if(area==="home"&&Math.hypot(catX-player.x,catY-player.y)<TILE*1.7){ if(nearThreat())return blockTalk(); SND.meow(); if(metCat)openShop(); else {metCat=true;save();talkToCat();} return; }
   if(area==="village"){ if(Math.hypot(npcX-player.x,npcY-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); if(metFisher)openMarket(); else {metFisher=true;save();talkToFisher();} return; }
+    for(const n of VNPCS){ if(Math.hypot(n.x-player.x,n.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow();
+      if(n.role==="merchant")openMerchant(); else if(n.role==="quest")talkLouie(); else startDialog(n.lines.map(s=>({who:"vnpc",name:n.name,face:n.face,col:n.col,text:s})),null); return; } }
     for(const v of villagers){ if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); startDialog(v.lines.map(s=>({who:"vill",name:v.name,face:v.face,col:v.col,text:s})),null); return; } } }
   float(player.x,player.y-22,"no one to talk to here","#cfe0ff"); }
 function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.18;
@@ -935,6 +958,16 @@ function drawVillager(v){ const x=v.x-camX,y=v.y-camY,bob=Math.sin(now()*2+v.c)*
   ctx.fillStyle="#ffd9a8";ctx.beginPath();ctx.arc(x,y-9+bob,7,0,7);ctx.fill();
   ctx.fillStyle="#3a2a1a";ctx.beginPath();ctx.arc(x-2.5,y-9+bob,1.3,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+2.5,y-9+bob,1.3,0,7);ctx.fill();
   if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.7){ ctx.fillStyle="rgba(255,255,255,.9)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText(lang==="zh"?t(v.name)+" ▸ 對話":v.name+" ▸ use",x,y-20+bob); } }
+function drawCritter(n){ const x=n.x-camX,y=n.y-camY,bob=Math.sin(now()*3+n.c)*1.5;
+  ctx.fillStyle="rgba(0,0,0,.22)";ctx.beginPath();ctx.ellipse(x,y+11,10,4,0,0,7);ctx.fill();
+  ctx.fillStyle=n.col;ctx.beginPath();ctx.ellipse(x,y+3+bob,9,8,0,0,7);ctx.fill();   // body
+  ctx.beginPath();ctx.arc(x,y-6+bob,7,0,7);ctx.fill();                                 // head
+  if(n.ears==="cat"){ ctx.beginPath();ctx.moveTo(x-6,y-10+bob);ctx.lineTo(x-2,y-15+bob);ctx.lineTo(x,y-9+bob);ctx.fill();ctx.beginPath();ctx.moveTo(x+6,y-10+bob);ctx.lineTo(x+2,y-15+bob);ctx.lineTo(x,y-9+bob);ctx.fill(); }
+  else if(n.ears==="flop"){ ctx.beginPath();ctx.ellipse(x-7,y-6+bob,3,6,0.4,0,7);ctx.fill();ctx.beginPath();ctx.ellipse(x+7,y-6+bob,3,6,-0.4,0,7);ctx.fill(); }
+  else { ctx.beginPath();ctx.arc(x-6,y-11+bob,3.2,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+6,y-11+bob,3.2,0,7);ctx.fill(); }   // round (hamster)
+  ctx.fillStyle="#22303f";ctx.beginPath();ctx.arc(x-3,y-6+bob,1.4,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+3,y-6+bob,1.4,0,7);ctx.fill();
+  ctx.fillStyle="#ffb3c0";ctx.beginPath();ctx.arc(x,y-3+bob,1.3,0,7);ctx.fill();
+  if(Math.hypot(n.x-player.x,n.y-player.y)<TILE*1.8){ ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText((lang==="zh"?t(n.name)+" ▸ 對話":n.name+" ▸ use"),x,y-19+bob); } }
 function drawPlayer(){ const x=player.x-camX,y=player.y-camY,bob=player.moving?Math.sin(now()*10)*1.5:0,blink=player.inv>0&&Math.floor(now()*12)%2===0;if(blink)ctx.globalAlpha=0.45;
   ctx.fillStyle="rgba(0,0,0,0.2)";ctx.beginPath();ctx.ellipse(x,y+12,11,5,0,0,7);ctx.fill();
   if(player.swing>0){ctx.strokeStyle="rgba(255,255,255,.85)";ctx.lineWidth=4;ctx.lineCap="round";const a=Math.atan2(player.fy,player.fx);ctx.beginPath();ctx.arc(x+player.fx*8,y+player.fy*8,18,a-0.9,a+0.9);ctx.stroke();}
@@ -965,7 +998,7 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
     if(farm||gather||inr){ ctx.strokeStyle="rgba(255,255,255,0.7)";ctx.lineWidth=2;ctx.strokeRect(f.c*TILE-camX+2,f.r*TILE-camY+2,TILE-4,TILE-4); } }
   const ents=[...(scene==="out"?mobs.map(m=>({y:m.y,d:()=>drawMob(m)})):[]),{y:player.y,d:drawPlayer}];
   if(scene==="out"&&area==="home"){ ents.push({y:catY,d:drawCat}); if(!bossDefeated)ents.push({y:ROAD_R*TILE+TILE/2,d:drawGuardian}); }
-  if(scene==="out"&&area==="village"){ ents.push({y:npcY,d:drawNpc}); villagers.forEach(v=>ents.push({y:v.y,d:()=>drawVillager(v)})); }
+  if(scene==="out"&&area==="village"){ ents.push({y:npcY,d:drawNpc}); villagers.forEach(v=>ents.push({y:v.y,d:()=>drawVillager(v)})); VNPCS.forEach(n=>ents.push({y:n.y,d:()=>drawCritter(n)})); }
   ents.sort((a,b)=>a.y-b.y); ents.forEach(e=>e.d());
   if(holdUse&&scene==="out"){ const hf=facedCell(); if(hf&&BREAKABLE.has(G[hf.r][hf.c].type)){ const prog=Math.min(1,(now()-holdStart)/1.2),hx=hf.c*TILE-camX+TILE/2,hy=hf.r*TILE-camY+TILE/2;
     ctx.strokeStyle="rgba(0,0,0,.4)";ctx.lineWidth=3;ctx.beginPath();ctx.arc(hx,hy,15,0,7);ctx.stroke();
@@ -1224,6 +1257,8 @@ function questProg(m){ return Math.min(stats[m.stat]||0,m.goal); }
 function renderQuests(){ document.getElementById("questBody").innerHTML=MISSIONS.map(m=>{ const p=questProg(m),done=p>=m.goal,cl=!!claimed[m.id];
     const btn=cl?`<button disabled>${t("claimed")}</button>`:done?`<button data-claim="${m.id}">${t("claim")} +${m.reward}c</button>`:`<button disabled>${p}/${m.goal}</button>`;
     return `<div class="item"><div><b>${t(m.desc)}</b><span>${t("reward")}: ${m.reward}c · ${p}/${m.goal}</span></div>${btn}</div>`; }).join("")
+    +(louieQuest===1?`<div class="item">${iconSpan("fish")}<div><b>${t("Louie: bring 100 fish")}</b><span>${countItem("fish")}/100 · ${t("deliver to Louie in the village")}</span></div></div>`:"")
+    +(louieQuest===2?`<div class="item">${iconSpan("fish")}<div><b>${t("Louie: bring 100 fish")}</b><span>✓ ${t("claimed")}</span></div></div>`:"")
     +`<div class="item"><div><span>${t("more quests coming from the village NPCs soon")}</span></div></div>`; }
 function openQuests(){ renderQuests(); questsEl.classList.add("open"); }
 questsEl.addEventListener("click",e=>{ const id=e.target.dataset&&e.target.dataset.claim; if(!id)return; const m=MISSIONS.find(x=>x.id===id);
@@ -1257,6 +1292,20 @@ marketEl.addEventListener("click",e=>{ const d=e.target.dataset||{};
   syncUI(); save(); renderMarket(); });
 document.getElementById("mktClose").addEventListener("click",()=>marketEl.classList.remove("open"));
 marketEl.addEventListener("pointerdown",e=>{ if(e.target===marketEl)marketEl.classList.remove("open"); });
+
+/* ---- Hamu the hamster merchant: buys materials at +25% ---- */
+const merchEl=document.getElementById("merchant");
+function merchPrice(k){ const b=k.startsWith("crop_")?CROPS[k.slice(5)].sell:ITEMS[k].sell; return Math.ceil(b*1.25); }
+function merchSellables(){ return [...CKEYS.map(k=>"crop_"+k),"wood","stone","goo","coal","silver","gold","iron","diamond","red_jewel","green_jewel","fossil","fish","sand","glass","oil","jewelry"].filter(k=>countItem(k)>0); }
+function merchSell(k){ const n=countItem(k); if(n<=0)return; coins+=merchPrice(k)*n; removeItem(k,n); SND.coin(); }
+function openMerchant(){ renderMerchant(); merchEl.classList.add("open"); }
+function renderMerchant(){ document.getElementById("merchCoins").textContent=coins; const list=merchSellables();
+  document.getElementById("merchSell").innerHTML=(list.length?list:["__none"]).map(k=>{ if(k==="__none")return `<div class="item"><div><span>${t("gather or harvest something to sell")}</span></div></div>`;
+    const n=countItem(k); return `<div class="item">${iconSpan(k)}<div><b>${itemName(k)} ×${n}</b><span>${merchPrice(k)}c ${t("each")}</span></div><button data-msl="${k}">${t("all")}</button></div>`; }).join("")
+    +(list.length?`<div class="item"><div><b>${t("Sell everything")}</b></div><button data-msl="__all">${t("sell all")}</button></div>`:""); }
+merchEl.addEventListener("click",e=>{ const k=e.target.dataset&&e.target.dataset.msl; if(!k)return; if(k==="__all")merchSellables().forEach(merchSell); else merchSell(k); syncUI(); save(); renderMerchant(); });
+document.getElementById("merchClose").addEventListener("click",()=>merchEl.classList.remove("open"));
+merchEl.addEventListener("pointerdown",e=>{ if(e.target===merchEl)merchEl.classList.remove("open"); });
 
 /* ---- custom art (drops in by filename; falls back to built-in drawing) ---- */
 const WORLD={}, PORTRAIT={};
@@ -1299,6 +1348,17 @@ function talkToFisher(){ startDialog([
   {who:"player",text:"Nice to meet you! Got any gear for me?"},
   {who:"fisher",text:"A rod and a net, aye. And I'll pay good coin for fish, ore and sand.",choices:[{label:"Show me",go:"trade"},{label:"Just passing"}]}
 ], openMarket); }
+/* Louie the blue cat — first quest: bring 100 fish */
+const LOUIE_REWARD=250;
+function talkLouie(){ const L="louie",nm="Louie",fc="🐱",cl="#5aa0e6";
+  if(louieQuest===0){ louieQuest=1; save(); startDialog([
+    {who:L,name:nm,face:fc,col:cl,text:"Hey there! Name's Louie. I run the fish stall — or I will, once I have stock."},
+    {who:L,name:nm,face:fc,col:cl,text:"Bring me 100 fish and I'll pay you "+LOUIE_REWARD+" coins. Catch them with a rod or net from any water."},
+    {who:"player",text:"100 fish… you're on."} ],null); return; }
+  if(louieQuest===1){ if(countItem("fish")>=100){ removeItem("fish",100); coins+=LOUIE_REWARD; louieQuest=2; SND.coin(); syncUI(); save();
+      startDialog([{who:L,name:nm,face:fc,col:cl,text:"A hundred fish! You're a legend. Here's your "+LOUIE_REWARD+" coins — the stall's open thanks to you."}],null); }
+    else startDialog([{who:L,name:nm,face:fc,col:cl,text:"Still need fish — "+countItem("fish")+" of 100 so far. Keep at it!"}],null); return; }
+  startDialog([{who:L,name:nm,face:fc,col:cl,text:"Fresh fish, all day! Thanks again for stocking me up."}],null); }
 /* opening story (plays once, inside the house) — skippable */
 function startIntro(){ setScene("in"); const mc=Math.floor(GC/2); player.x=mc*TILE+TILE/2; player.y=(GR-2)*TILE+TILE/2; player.dir="u";player.fx=0;player.fy=-1; transCD=1.2;
   startDialog([
