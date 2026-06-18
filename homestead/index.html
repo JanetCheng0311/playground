@@ -501,15 +501,11 @@ function inFarm(r,c){ return area==="home"&&r>FR0&&r<farmFR1&&c>FC0&&c<farmFC1; 
 const TREEHITS=()=>hasAxe?2:3, ROCKHITS=()=>hasAxe?3:4, IRONHITS=()=>hasAxe?4:5, GOLDHITS=()=>hasAxe?5:6;
 const villagers=[];
 function setVillageMeta(){ npcX=NPC_C*TILE+TILE/2; npcY=NPC_R*TILE+TILE/2;
-  villagers.length=0;
-  villagers.push({c:11,r:23,name:"Mara",face:"👩‍🌾",col:"#b8654f",lines:["Lovely day in the village, isn't it?","Pelle down by the sea sells fishing gear."]});
-  villagers.push({c:30,r:23,name:"Tom",face:"🧑‍🔧",col:"#5a7a8f",lines:["Welcome to our little town!","The church bell rings at noon, they say."]});
-  villagers.push({c:22,r:29,name:"Mayor Pim",face:"🎩",col:"#7a5aa0",lines:["As mayor, I'm proud of our growing town!","Build, farm, fish — make yourself at home."]});
-  for(const v of villagers){ v.x=v.c*TILE+TILE/2; v.y=v.r*TILE+TILE/2; }
+  villagers.length=0;   // animal NPCs only — human townsfolk removed
   for(const n of VNPCS){ n.x=n.c*TILE+TILE/2; n.y=n.r*TILE+TILE/2; } }
 const VNPCS=[
-  {id:"hamu", c:26,r:24, name:"Hamu", face:"🐹", col:"#caa15a", role:"merchant", ears:"round"},
-  {id:"louie", c:14,r:27, name:"Louie", face:"🐱", col:"#5aa0e6", role:"quest", ears:"cat"},
+  {id:"hamu", c:26,r:24, name:"Hamu", face:"🐹", col:"#f49ac6", role:"merchant", ears:"round"},
+  {id:"louie", c:11,r:27, name:"Louie", face:"🐱", col:"#5aa0e6", role:"quest", ears:"cat"},
   {id:"david", c:20,r:23, name:"David", face:"🐶", col:"#e0913f", role:"chat", ears:"flop",
     lines:["Woof! Welcome to the village, friend!","Pelle fishes the sea, Hamu trades, Louie's got a job for you.","I'll guard the town — go explore!"]} ];
 
@@ -557,6 +553,7 @@ function buildVillage(){ const g=[]; for(let r=0;r<VROWS;r++){ const row=[]; for
   for(let c=0;c<=24;c++) set(VROAD_R,c,"road"); set(VROAD_R,RIVER_C,"road");      // entry road from the left + bridge
   for(let r=VROAD_R;r<=22;r++) set(r,24,"road");                                  // main street south to the square
   for(let r=22;r<=30;r++)for(let c=8;c<=34;c++){ if(g[r][c].type==="wild")set(r,c,"path"); }  // town square
+  for(let r=24;r<=28;r++) set(r,RIVER_C,"road");                                  // bridge across the river through the town
   for(let r=30;r<=33;r++) set(r,24,"path");                                       // path south through town
   block(25,22,2,2,"pond");                                                        // fountain in the square
   [[23,18],[23,30],[29,18],[29,30]].forEach(([r,c])=>{ if(g[r][c].type==="path")set(r,c,"lamp"); });  // street lamps
@@ -947,13 +944,14 @@ function drawNpc(){ const x=npcX-camX,y=npcY-camY,bob=Math.sin(now()*2)*1.4;
   ctx.fillStyle="rgba(0,0,0,.2)";ctx.beginPath();ctx.ellipse(x,y+12,10,4,0,0,7);ctx.fill();
   const fimg=WORLD.fisher;
   if(fimg){ const h=58,w=h*(fimg.width/fimg.height||1); ctx.drawImage(fimg,x-w/2,y+13-h,w,h); }
-  else {
-  ctx.fillStyle="#3a7d8f";ctx.beginPath();ctx.roundRect(x-8,y-3+bob,16,16,5);ctx.fill();      // overalls
-  ctx.fillStyle="#ffd9a8";ctx.beginPath();ctx.arc(x,y-10+bob,8,0,7);ctx.fill();               // head
-  ctx.fillStyle="#e7c54a";ctx.beginPath();ctx.arc(x,y-13+bob,9,Math.PI,2*Math.PI);ctx.fill(); // sou'wester hat
-  ctx.fillRect(x-10,y-13+bob,20,2);
-  ctx.fillStyle="#22303f";ctx.beginPath();ctx.arc(x-3,y-9+bob,1.4,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+3,y-9+bob,1.4,0,7);ctx.fill();
-  ctx.strokeStyle="#7a542e";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x+8,y-2+bob);ctx.lineTo(x+18,y-14+bob);ctx.stroke();   // fishing rod
+  else {   // Pelle is a frog (animal NPCs only)
+  ctx.fillStyle="#5aa84a";ctx.beginPath();ctx.ellipse(x,y+3+bob,10,8,0,0,7);ctx.fill();        // body
+  ctx.beginPath();ctx.arc(x,y-6+bob,7.5,0,7);ctx.fill();                                        // head
+  ctx.fillStyle="#7cc85f";ctx.beginPath();ctx.arc(x-5,y-12+bob,3.6,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+5,y-12+bob,3.6,0,7);ctx.fill();  // eye bumps
+  ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(x-5,y-12+bob,1.8,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+5,y-12+bob,1.8,0,7);ctx.fill();
+  ctx.fillStyle="#22303f";ctx.beginPath();ctx.arc(x-5,y-12+bob,1,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+5,y-12+bob,1,0,7);ctx.fill();    // pupils
+  ctx.strokeStyle="#2f6b2a";ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y-5+bob,4,0.2,Math.PI-0.2);ctx.stroke();   // smile
+  ctx.strokeStyle="#7a542e";ctx.lineWidth=2;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(x+8,y-1+bob);ctx.lineTo(x+18,y-14+bob);ctx.stroke();   // fishing rod
   ctx.strokeStyle="rgba(255,255,255,.5)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+18,y-14+bob);ctx.lineTo(x+18,y-2+bob);ctx.stroke();
   }
   if(Math.hypot(npcX-player.x,npcY-player.y)<TILE*1.7){ ctx.fillStyle="rgba(255,255,255,.9)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText(t("fisher ▸ use"),x,y-24+bob); } }
@@ -1321,7 +1319,7 @@ function loadImg(into,who,src){ try{ const im=new Image(); im.onload=()=>{into[w
 ["player","cat","fisher"].forEach(w=>{ loadImg(WORLD,w,"art/"+w+".png"); loadImg(PORTRAIT,w,"art/portrait-"+w+".png"); });
 
 /* ---- visual-novel dialogue ---- */
-const SPEAKERS={ player:{name:"You",face:"🧑",col:"#2f6dd0"}, cat:{name:"Whiskers",face:"🐱",col:"#f3a64b"}, fisher:{name:"Pelle",face:"🎣",col:"#3a7d8f"} };
+const SPEAKERS={ player:{name:"You",face:"🧑",col:"#2f6dd0"}, cat:{name:"Whiskers",face:"🐱",col:"#f3a64b"}, fisher:{name:"Pelle",face:"🐸",col:"#5aa84a"} };
 const vnEl=document.getElementById("vn"),vnImg=document.getElementById("vnImg"),vnFace=document.getElementById("vnFace"),vnName=document.getElementById("vnName"),vnText=document.getElementById("vnText"),vnChoices=document.getElementById("vnChoices"),vnHint=document.getElementById("vnHint");
 let dialogOpen=false, dlg=null, typeTimer=null, fullText="";
 function setPortrait(line){ const who=line.who, sp=SPEAKERS[who]||{}, img=PORTRAIT[who];
@@ -1367,7 +1365,7 @@ function talkLouie(){ const L="louie",nm="Louie",fc="🐱",cl="#5aa0e6";
       startDialog([{who:L,name:nm,face:fc,col:cl,text:"A hundred fish! You're a legend. Here's your "+LOUIE_REWARD+" coins — the stall's open thanks to you."}],null); }
     else startDialog([{who:L,name:nm,face:fc,col:cl,text:"Still need fish — "+countItem("fish")+" of 100 so far. Keep at it!"}],null); return; }
   startDialog([{who:L,name:nm,face:fc,col:cl,text:"Fresh fish, all day! Thanks again for stocking me up."}],null); }
-function hamuIntro(){ const H="hamu",nm="Hamu",fc="🐹",cl="#caa15a"; startDialog([
+function hamuIntro(){ const H="hamu",nm="Hamu",fc="🐹",cl="#f49ac6"; startDialog([
   {who:H,name:nm,face:fc,col:cl,text:"Squeak! Hamu's the name — trading's my game. I'll pay top coin for your goods."},
   {who:H,name:nm,face:fc,col:cl,text:"A word of advice: a fierce Road Guardian blocks the path between the lands."},
   {who:H,name:nm,face:fc,col:cl,text:"Forge a metal sword AND metal armour, then beat it — that's the only way through. It's in your Quests list!"}
