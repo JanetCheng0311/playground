@@ -881,6 +881,17 @@ function drawPlayer(){ const x=player.x-camX,y=player.y-camY,bob=player.moving?M
   ctx.fillStyle="#22303f";const ex=player.dir==="l"?-3:player.dir==="r"?3:0;if(player.dir!=="u"){ctx.beginPath();ctx.arc(x-3+ex,y-9+bob,1.4,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+3+ex*0.4,y-9+bob,1.4,0,7);ctx.fill();}
   ctx.globalAlpha=1; }
 function heart(x,y,full,s){ s=s||1; ctx.fillStyle=full?"#ff5b78":"rgba(255,255,255,.22)";ctx.beginPath();ctx.moveTo(x,y+9*s);ctx.bezierCurveTo(x-10*s,y+1*s,x-6*s,y-7*s,x,y-2*s);ctx.bezierCurveTo(x+6*s,y-7*s,x+10*s,y+1*s,x,y+9*s);ctx.fill();ctx.strokeStyle="rgba(0,0,0,.35)";ctx.lineWidth=1.5;ctx.stroke(); }
+// Minecraft/Stardew-style icon HUD pieces
+function heartShape(x,y,r){ ctx.beginPath();ctx.moveTo(x,y+0.55*r);ctx.bezierCurveTo(x-1.05*r,y-0.18*r,x-0.6*r,y-0.82*r,x,y-0.22*r);ctx.bezierCurveTo(x+0.6*r,y-0.82*r,x+1.05*r,y-0.18*r,x,y+0.55*r);ctx.closePath(); }
+function heartIcon(x,y,r,full){ heartShape(x+1.5,y+2,r); ctx.fillStyle="rgba(0,0,0,.45)"; ctx.fill();
+  heartShape(x,y,r); ctx.fillStyle=full?"#e8344e":"#4a3640"; ctx.fill(); ctx.lineWidth=2.5; ctx.strokeStyle=full?"#7c1730":"#231a1f"; ctx.stroke();
+  if(full){ ctx.fillStyle="rgba(255,255,255,.6)"; ctx.beginPath();ctx.ellipse(x-r*0.34,y-r*0.3,r*0.22,r*0.13,-0.5,0,7);ctx.fill(); } }
+function drumShape(x,y,r,col,bone){ ctx.strokeStyle=col;ctx.lineCap="round";ctx.lineWidth=r*0.62;ctx.beginPath();ctx.moveTo(x-r*0.55,y+r*0.55);ctx.lineTo(x+r*0.05,y-r*0.05);ctx.stroke();
+  ctx.fillStyle=col;ctx.beginPath();ctx.arc(x+r*0.28,y-r*0.28,r*0.62,0,7);ctx.fill();
+  if(bone){ ctx.fillStyle="#efe7d6";ctx.beginPath();ctx.arc(x-r*0.62,y+r*0.62,r*0.26,0,7);ctx.fill(); } }
+function foodIcon(x,y,r,fill){ drumShape(x+1.5,y+2,r,"rgba(0,0,0,.45)",false);   // shadow
+  drumShape(x,y,r,"#473f33",false);                                              // empty socket
+  if(fill>0){ ctx.save();ctx.beginPath();ctx.rect(x-r*1.4,y-r*1.4,2.8*r*fill,2.8*r);ctx.clip(); drumShape(x,y,r,"#cf9540",true); ctx.lineWidth=1.5;ctx.strokeStyle="rgba(90,55,20,.6)";ctx.beginPath();ctx.arc(x+r*0.28,y-r*0.28,r*0.62,0,7);ctx.stroke(); ctx.restore(); } }
 function draw(){ ctx.clearRect(0,0,VW,VH);
   if(scene==="boss"){ drawBoss(); return; }
   for(let r=0;r<GR;r++)for(let c=0;c<GC;c++) drawTile(r,c);
@@ -900,22 +911,13 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
     ctx.globalCompositeOperation="lighter";
     for(let r=0;r<gridOut.length;r++)for(let c=0;c<gridOut[0].length;c++){ if(LIGHTS.has(gridOut[r][c].type)){ const x=c*TILE+TILE/2-camX,y=r*TILE+TILE/2-camY; if(x<-80||y<-80||x>VW+80||y>VH+80)continue; const g=ctx.createRadialGradient(x,y,4,x,y,70); g.addColorStop(0,"rgba(255,200,120,.55)");g.addColorStop(1,"rgba(255,200,120,0)"); ctx.fillStyle=g; ctx.beginPath();ctx.arc(x,y,70,0,7);ctx.fill(); } }
     ctx.globalCompositeOperation="source-over"; } }
-  // ---- big, clear HUD: labelled HEALTH + HUNGER bars ----
-  const bx=58, bw=216, bh=24, panelW=bw+72;
-  ctx.fillStyle="rgba(8,14,42,.62)"; ctx.beginPath();ctx.roundRect(8,8,panelW,86,16);ctx.fill();
-  ctx.strokeStyle="rgba(255,255,255,.28)"; ctx.lineWidth=2; ctx.stroke();
-  ctx.textBaseline="middle"; const stat=(y,icon,frac,col,txt)=>{
-    ctx.textAlign="left"; ctx.font="24px Helvetica,Arial"; ctx.fillStyle="#fff"; ctx.fillText(icon,18,y+bh/2);
-    ctx.fillStyle="rgba(0,0,0,.55)"; ctx.beginPath();ctx.roundRect(bx,y,bw,bh,bh/2);ctx.fill();
-    if(frac>0){ ctx.fillStyle=col; ctx.beginPath();ctx.roundRect(bx,y,Math.max(bh,bw*Math.min(1,frac)),bh,bh/2);ctx.fill(); }
-    ctx.fillStyle="#fff"; ctx.font="800 15px Helvetica,Arial"; ctx.textAlign="center";
-    ctx.lineWidth=3; ctx.strokeStyle="rgba(0,0,0,.5)"; ctx.strokeText(txt,bx+bw/2,y+bh/2+1); ctx.fillText(txt,bx+bw/2,y+bh/2+1); };
-  const hf=player.hunger/player.maxHunger;
-  stat(18,"❤️",player.hp/player.maxHp,"#ff4d6d",player.hp+" / "+player.maxHp);
-  stat(54,"🍖",hf,hf>0.6?"#56c96a":hf>0.25?"#ffc24d":"#ff5b5b",Math.ceil(player.hunger)+" / "+player.maxHunger);
-  ctx.textBaseline="alphabetic";
-  if(player.hunger<=0){ ctx.fillStyle="#ff8f8f"; ctx.font="800 14px Helvetica,Arial"; ctx.textAlign="left"; ctx.fillText(t("starving — eat food!"),14,110); }
-  else if(player.hunger>=60&&player.hp<player.maxHp){ ctx.fillStyle="#8ef0a0"; ctx.font="700 13px Helvetica,Arial"; ctx.textAlign="left"; ctx.fillText(t("well fed · healing"),14,110); }
+  // ---- icon HUD (Minecraft/Stardew style): a row of hearts + a row of food ----
+  const R=11, SP=25, X0=24, YH=26, YF=YH+30, NF=10, step=player.maxHunger/NF;
+  for(let i=0;i<player.maxHp;i++) heartIcon(X0+i*SP,YH,R,i<player.hp);
+  for(let i=0;i<NF;i++){ const f=Math.max(0,Math.min(1,(player.hunger-i*step)/step)); foodIcon(X0+i*SP,YF,R,f); }
+  ctx.textAlign="left"; ctx.textBaseline="alphabetic";
+  if(player.hunger<=0){ ctx.font="800 14px Helvetica,Arial"; ctx.fillStyle="rgba(0,0,0,.55)";ctx.fillText(t("starving — eat food!"),15,YF+27); ctx.fillStyle="#ff8f8f"; ctx.fillText(t("starving — eat food!"),14,YF+26); }
+  else if(player.hunger>=60&&player.hp<player.maxHp){ ctx.font="700 13px Helvetica,Arial"; ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillText(t("well fed · healing"),15,YF+27); ctx.fillStyle="#8ef0a0"; ctx.fillText(t("well fed · healing"),14,YF+26); }
   if(mapOpen) drawMinimap();
 }
 function drawMinimap(){ const rows=GR,cols=GC,cw=Math.max(1,Math.min(160/cols,160/rows)),W=cw*cols,H=cw*rows,ox=VW-W-12,oy=12;
