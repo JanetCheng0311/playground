@@ -159,6 +159,7 @@
 <div class="shop" id="shop"><div class="card">
   <h2>🐾 Whiskers' Shop <span class="c">coins <b id="shopCoins">0</b></span></h2>
   <h3>buy seeds</h3><div id="buyList"></div>
+  <h3>buy food</h3><div id="foodList"></div>
   <h3>buy furniture</h3><div id="furnList"></div>
   <h3>sell</h3><div id="sellList"></div>
   <h3>upgrades</h3><div id="upList"></div>
@@ -207,6 +208,11 @@
   <div class="invlabel">your bag</div>
   <div id="chestBag" class="invgrid"></div>
   <button class="close" id="chestClose">close</button>
+</div></div>
+<div class="shop" id="stove"><div class="card">
+  <h2>🔥 Kitchen Stove</h2>
+  <h3>cook buff food</h3><div id="stoveList"></div>
+  <button class="close" id="stoveClose">close</button>
 </div></div>
 <div id="vn"><div class="box">
   <div class="vnport"><img id="vnImg" alt=""><div id="vnFace" class="vnface"></div></div>
@@ -258,10 +264,14 @@ const ITEMS={
   metal_sword:{kind:"gear",slot:"sword",color:"#cfd6dd",name:"metal sword",bonus:{atk:1}}, metal_armor:{kind:"gear",slot:"armor",color:"#9fb0c2",name:"metal armour",bonus:{maxhp:2}},
   chest:{kind:"place",tile:"chest",color:"#9c6b3f",name:"chest"},
   berry:{kind:"food",color:"#c8466b",name:"berry",food:14}, meat:{kind:"food",color:"#c0603a",name:"meat",food:30},
+  bread:{kind:"food",color:"#d8a24a",name:"bread",food:35,buy:20}, pie:{kind:"food",color:"#e0913f",name:"berry pie",food:60,buy:40}, salad:{kind:"food",color:"#5fae4a",name:"garden salad",food:40},
+  hearty_stew:{kind:"food",color:"#b5612e",name:"hearty stew",food:60,buff:{bonus:{maxhp:2},dur:120}}, power_roast:{kind:"food",color:"#a23b2a",name:"power roast",food:50,buff:{bonus:{atk:1},dur:120}}, swift_salad:{kind:"food",color:"#5fc06a",name:"swift greens",food:40,buff:{bonus:{speed:30},dur:120}},
+  stove:{kind:"place",tile:"stove",color:"#7d8893",name:"stove"},
   cap:{kind:"gear",slot:"hat",color:"#7aa86b",name:"cloth cap",bonus:{maxhp:1}}, vest:{kind:"gear",slot:"chest",color:"#b9883f",name:"leather vest",bonus:{maxhp:2}},
   legguards:{kind:"gear",slot:"pants",color:"#8a8f98",name:"leg guards",bonus:{maxhp:1}}, boots:{kind:"gear",slot:"shoes",color:"#6b4a2b",name:"swift boots",bonus:{maxhp:1,speed:22}},
   ring:{kind:"gear",slot:"acc",color:"#ffd84a",name:"healing ring",bonus:{regen:1}}, charm:{kind:"gear",slot:"acc",color:"#c46aff",name:"power charm",bonus:{atk:1}} };
 const FURN=["chair","table","lamp","rug"];
+const CATFOOD=["bread","pie"];   // food the cat sells (≥20c)
 const DESC={ grass:["Grass","till it with use to make soil for planting"], wild:["Wild grass","out here you'll find trees, rocks & slimes"],
   soil:["Tilled soil","plant a seed, water it, harvest when ripe"], tree:["Tree","press use to chop it for wood"], rock:["Rock","press use to mine it for stone"],
   pond:["Pond","fish it with a rod or net for fish"], fence:["Farm fence","the wall around your farm — expand it at the cat shop"],
@@ -295,7 +305,8 @@ const CROPNAME_ZH={ carrot:"紅蘿蔔", wheat:"小麥", corn:"玉米", pumpkin:"
 const NAME_ZH={ wood:"木材", stone:"石頭", goo:"黏液", iron:"鐵礦", gold:"黃金", fish:"魚", sand:"沙", glass:"玻璃", oil:"油", salve:"藥膏",
   torch:"火把", fence:"木柵欄", ppath:"石板路", chair:"椅子", table:"桌子", lamp:"檯燈", rug:"地毯", lantern:"提燈", goldlamp:"黃金燈", mfence:"金屬柵欄",
   oillamp:"油燈", rod:"釣竿", net:"漁網", metal_sword:"金屬劍", metal_armor:"金屬盔甲", chest:"箱子",
-  berry:"莓果", meat:"肉", cap:"布帽", vest:"皮背心", legguards:"護腿", boots:"輕快靴", ring:"治療戒指", charm:"力量護符" };
+  berry:"莓果", meat:"肉", cap:"布帽", vest:"皮背心", legguards:"護腿", boots:"輕快靴", ring:"治療戒指", charm:"力量護符",
+  bread:"麵包", pie:"莓果派", salad:"花園沙拉", hearty_stew:"豐盛燉湯", power_roast:"力量烤肉", swift_salad:"迅捷青蔬", stove:"爐灶" };
 const DESC_ZH={ grass:["草地","用「使用」翻土成可種植的泥土"], wild:["野草","這裡有樹木、岩石和史萊姆"], soil:["泥土","種下種子、澆水，成熟後採收"],
   tree:["樹木","按「使用」砍伐取得木材"], rock:["岩石","按「使用」開採取得石頭"], iron:["鐵礦石","用「使用」開採取得鐵礦"], gold:["金礦石","用「使用」開採取得黃金"],
   pond:["池塘","用釣竿或漁網釣魚"], river:["河流","清水 — 用釣竿或漁網釣魚"], sea:["海洋","用釣竿或漁網釣魚"], sand:["海灘沙","按「使用」鏟取沙子"],
@@ -349,6 +360,8 @@ const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金�
   "ROAD GUARDIAN":"道路守衛","VICTORY!":"勝利！","DEFEATED":"戰敗","shop ▸ use":"商店 ▸ 對話","fisher ▸ use":"漁夫 ▸ 對話","BOSS ▸ approach":"頭目 ▸ 靠近","no one to talk to here":"這裡沒有人可以對話",
   "←/→ move · ↑/Space jump · E or ⟳use to slash · dodge the red charge & shots":"←/→ 移動 · ↑/空白鍵 跳躍 · E 或 使用鈕 揮擊 · 閃避紅色衝刺與射擊",
   "fight off the monsters first!":"先擊退怪物！","need a metal sword AND armour!":"需要金屬劍和盔甲！","the road is clear!":"道路暢通了！","defeated… craft better gear & retry":"戰敗了…製作更好的裝備再挑戰","cheat: road unlocked":"密技：道路已解鎖","cheat: sword & armour equipped":"密技：已裝備劍與盔甲",
+  "buy food":"購買食物","restores":"恢復","hunger":"飽食","buff!":"增益！","cook":"烹調","cooked":"煮好了","🔥 Kitchen Stove":"🔥 廚房爐灶","cook buff food":"烹調增益食物",
+  "+2 hearts for 2 min":"2 分鐘 +2 顆心","+1 attack for 2 min":"2 分鐘 +1 攻擊","faster for 2 min":"2 分鐘 加速",
   "the village":"村莊","home sweet home":"溫暖的家","slept · new day":"睡了一覺 · 新的一天","farm expanded":"農場已擴建","house upgraded":"房屋已升級","sturdy axe!":"堅固斧頭！","fainted! home safe":"昏倒了！安全回到家",
   "morning":"早晨","noon":"中午","evening":"傍晚","night":"夜晚","day":"第","indoors":"室內" };
 function t(s){ return lang==="zh" && ZH[s]!==undefined ? ZH[s] : s; }
@@ -362,7 +375,8 @@ function itemName(k){ const it=ITEMS[k];
 const CROP_EMOJI={ carrot:"🥕", wheat:"🌾", corn:"🌽", pumpkin:"🎃" };
 const ICON={ wood:"🪵", stone:"🪨", goo:"🟢", iron:"🔩", gold:"🪙", fish:"🐟", sand:"🏖️", glass:"🔷", oil:"🛢️", salve:"🧪",
   torch:"🔥", fence:"🚧", ppath:"🧱", chair:"🪑", table:"🟫", lamp:"💡", rug:"🟥", lantern:"🏮", goldlamp:"🔆", mfence:"⛓️", oillamp:"🕯️",
-  rod:"🎣", net:"🥅", metal_sword:"🗡️", metal_armor:"🛡️", chest:"🧰", berry:"🫐", meat:"🍖", cap:"🧢", vest:"🦺", legguards:"👖", boots:"👢", ring:"💍", charm:"🔮" };
+  rod:"🎣", net:"🥅", metal_sword:"🗡️", metal_armor:"🛡️", chest:"🧰", berry:"🫐", meat:"🍖", cap:"🧢", vest:"🦺", legguards:"👖", boots:"👢", ring:"💍", charm:"🔮",
+  bread:"🍞", pie:"🥧", salad:"🥗", hearty_stew:"🍲", power_roast:"🍗", swift_salad:"🥬", stove:"🔥" };
 function itemEmoji(k){ const it=ITEMS[k]; if(!it)return ""; if(it.kind==="seed"||it.kind==="crop")return CROP_EMOJI[it.crop]||""; return ICON[k]||""; }
 // translate static DOM text nodes (snapshots the English original so we can toggle back)
 const _orig=new WeakMap();
@@ -389,6 +403,9 @@ const RECIPES=[
   {key:"goldlamp", give:"goldlamp", cost:{gold:1,glass:1}, desc:"a fancy golden lamp to place"},
   {key:"mfence", give:"mfence", cost:{iron:1}, desc:"a sturdy metal wall to place"},
   {key:"chest", give:"chest", cost:{wood:6}, desc:"place it to store items"},
+  {key:"stove", give:"stove", cost:{stone:4,iron:1}, desc:"place it, then cook buff food at it"},
+  {key:"bread", give:"bread", cost:{crop_wheat:2}, desc:"food — restores hunger"},
+  {key:"salad", give:"salad", cost:{crop_carrot:1,crop_corn:1}, desc:"food — restores hunger"},
   {key:"cap", give:"cap", cost:{goo:2,wood:1}, desc:"a cloth cap (+1 heart)"},
   {key:"vest", give:"vest", cost:{iron:2,goo:2}, desc:"a leather vest (+2 hearts)"},
   {key:"legguards", give:"legguards", cost:{iron:2}, desc:"leg guards (+1 heart)"},
@@ -411,14 +428,19 @@ const mobs=[]; const fx=[]; let spawnT=0;
 let coins=25, clock=0, selSlot=0, outX, outY, metCat=false, metFisher=false, mapOpen=false, bossDefeated=false, seenIntro=false, catIntroPending=false;
 const hasSword=()=>!!equip.sword, hasArmor=()=>!!equip.armor;
 function gearBonus(){ const b={atk:0,maxhp:0,regen:0,speed:0}; for(const sn in equip){ const k=equip[sn]; if(k&&ITEMS[k].bonus)for(const s in ITEMS[k].bonus)b[s]+=ITEMS[k].bonus[s]; } return b; }
-function recalcMax(){ player.maxHp=5+gearBonus().maxhp; if(player.hp>player.maxHp)player.hp=player.maxHp; }
+let activeBuff=null;   // {bonus,until,key} from eating buff food cooked at a stove
+function buffBonus(){ return (activeBuff&&now()<activeBuff.until)?activeBuff.bonus:{}; }
+function totalBonus(){ const g=gearBonus(),f=buffBonus(),o={atk:0,maxhp:0,regen:0,speed:0}; for(const s in o)o[s]=(g[s]||0)+(f[s]||0); return o; }
+function recalcMax(){ player.maxHp=5+totalBonus().maxhp; if(player.hp>player.maxHp)player.hp=player.maxHp; }
 function itemFitsSlot(key,sn){ const it=ITEMS[key]; if(!it||it.kind!=="gear")return false; return (sn==="acc1"||sn==="acc2")?it.slot==="acc":it.slot===sn; }
 function spendHunger(n){ player.hunger=Math.max(0,player.hunger-n); }
 function tooHungry(){ if(player.hunger<=0){ SND.no(); float(player.x,player.y-24,"too hungry — eat first!","#ff8f8f"); return true; } return false; }
 function eatFood(){ let i=(bag[selSlot]&&isFood(bag[selSlot].key))?selSlot:bag.findIndex(s=>s&&isFood(s.key));
-  if(i<0){ float(player.x,player.y-24,"no food to eat","#cfe0ff"); return; } const s=bag[i],fv=foodVal(s.key);
-  if(player.hunger>=player.maxHunger){ float(player.x,player.y-24,"already full","#cfe0ff"); return; }
-  player.hunger=Math.min(player.maxHunger,player.hunger+fv); removeItem(s.key,1); SND.heal(); float(player.x,player.y-24,"+"+fv+" food","#ffd27a"); save(); }
+  if(i<0){ float(player.x,player.y-24,"no food to eat","#cfe0ff"); return; } const s=bag[i],it=ITEMS[s.key],fv=foodVal(s.key),bf=it.buff;
+  if(player.hunger>=player.maxHunger&&!bf){ float(player.x,player.y-24,"already full","#cfe0ff"); return; }
+  player.hunger=Math.min(player.maxHunger,player.hunger+fv);
+  if(bf){ activeBuff={bonus:bf.bonus,until:now()+bf.dur,key:s.key}; recalcMax(); float(player.x,player.y-32,t("buff!")+" "+itemName(s.key),"#9ad8ff"); }
+  removeItem(s.key,1); SND.heal(); float(player.x,player.y-24,"+"+fv+" food","#ffd27a"); save(); }
 function isFood(k){ return ITEMS[k].kind==="food" || (k.startsWith("crop_")&&CROPS[k.slice(5)].food); }
 function foodVal(k){ return ITEMS[k].kind==="food"?ITEMS[k].food:(CROPS[k.slice(5)]?CROPS[k.slice(5)].food:0); }
 function faint(){ player.x=doorC*TILE+TILE/2;player.y=(doorR+1)*TILE+TILE/2;player.hp=player.maxHp;player.inv=2;mobs.length=0; setArea("home"); setScene("out"); float(player.x,player.y-30,"fainted! home safe","#fff"); }
@@ -430,11 +452,11 @@ const ROAD_R=OROWS-4;
 const VCOLS=46, VROWS=34;
 const VROAD_R=9, RIVER_C=14, SEA_C0=39, SAND_C=38, NPC_R=6, NPC_C=36;
 
-const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor","chest"]);
+const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor","chest","stove"]);
 const CHESTN=18;
 const WATER=new Set(["pond","river","sea"]);
 // player-placed tiles that can be removed (hold use) — maps the tile back to the item you get
-const TILE2ITEM={ pfence:"fence", mfence:"mfence", chair:"chair", table:"table", lamp:"lamp", rug:"rug", torch:"torch", lantern:"lantern", goldlamp:"goldlamp", oillamp:"oillamp", ppath:"ppath" };
+const TILE2ITEM={ pfence:"fence", mfence:"mfence", chair:"chair", table:"table", lamp:"lamp", rug:"rug", torch:"torch", lantern:"lantern", goldlamp:"goldlamp", oillamp:"oillamp", ppath:"ppath", stove:"stove" };
 const BREAKABLE=new Set(Object.keys(TILE2ITEM));   // NOT the farm "fence" (only expand that via the cat)
 const FARMLAND=new Set(["grass","soil","path","ppath"]);
 const PLACEABLE_ON=new Set(["grass","wild","path","ppath","floor","rug","road"]);
@@ -555,7 +577,7 @@ function spawnMob(){ const RW=gridOut.length, CW=gridOut[0].length; for(let i=0;
 /* ---- interaction ---- */
 function facedCell(){ let c=Math.floor((player.x+player.fx*TILE)/TILE), r=Math.floor((player.y+player.fy*TILE)/TILE);
   c=Math.max(0,Math.min(GC-1,c)); r=Math.max(0,Math.min(GR-1,r)); return {r,c}; }   // snap onto the map (nearest in-bounds tile)
-function tryAttack(){ const range=TILE*1.6,dmg=(hasAxe?2:1)+gearBonus().atk; let hit=false;
+function tryAttack(){ const range=TILE*1.6,dmg=(hasAxe?2:1)+totalBonus().atk; let hit=false;
   if(player.hunger<=0){ if(mobs.some(m=>Math.hypot(m.x-player.x,m.y-player.y)<TILE*1.7)){ tooHungry(); return true; } return false; }
   for(const m of mobs){ const dx=m.x-player.x,dy=m.y-player.y,fwd=dx*player.fx+dy*player.fy,lat=Math.abs(dx*player.fy-dy*player.fx),dd=Math.hypot(dx,dy);
     if(dd<range&&(fwd>-10||dd<TILE*0.9)&&lat<TILE*1.1){ m.hp-=dmg;m.flash=0.18;const d=dd||1;m.kx=dx/d*7;m.ky=dy/d*7;hit=true;SND.hit();
@@ -576,6 +598,7 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.
   const sel=bag[selSlot];
   if(t.type==="door"){ enterHouse(); return; }
   if(t.type==="chest"){ openChest(f.r,f.c); return; }
+  if(t.type==="stove"){ openStove(); return; }
   // place crafted item
   if(sel&&ITEMS[sel.key].kind==="place"&&PLACEABLE_ON.has(t.type)&&!t.crop&&!inFarmHouseConflict(f)){ t.type=ITEMS[sel.key].tile; if(t.type==="chest")t.store=new Array(CHESTN).fill(null); removeItem(sel.key,1); SND.place(); burst(cx,cy,itemColor(sel.key),5); save(); return; }
   // fishing with a rod or net
@@ -632,7 +655,7 @@ function bossInit(){ const GY=VH-50;
   boss.atkType=""; boss.markX=boss.px; boss.slamUp=false; boss.slamT=0; boss.proj=[]; boss.end=0; boss.win=false; boss.bflash=0; }
 function bossJump(){ if(scene==="boss"&&(boss.pg||boss.coyote>0)){ boss.pvy=-470; boss.pg=false; boss.coyote=0; SND.swing(); } }
 function bossAttack(){ if(scene!=="boss"||boss.atk>0||boss.end)return; boss.atk=0.24; SND.hit();
-  if(Math.abs(boss.bx-boss.px)<74&&Math.sign(boss.bx-boss.px||1)===boss.pdir&&Math.abs(boss.by-boss.py)<78){ boss.bhp-=1+gearBonus().atk; boss.bflash=0.16; } }
+  if(Math.abs(boss.bx-boss.px)<74&&Math.sign(boss.bx-boss.px||1)===boss.pdir&&Math.abs(boss.by-boss.py)<78){ boss.bhp-=1+totalBonus().atk; boss.bflash=0.16; } }
 function bhitPlayer(d,p){ if(boss.pinv>0||boss.end)return; boss.php-=d; boss.pinv=1.1; boss.flash=0.14; boss.pvy=-240; boss.pg=false; SND.hurt(); if(p)p.t=0; }
 function bossFire(){ const a=Math.atan2((boss.py-22)-(boss.by-24),boss.px-boss.bx); const ph=boss.bhp<=boss.bmax/2, spd=ph?255:225;
   for(let i=-2;i<=2;i++){ const an=a+i*0.20; boss.proj.push({x:boss.bx,y:boss.by-24,vx:Math.cos(an)*spd,vy:Math.sin(an)*spd,t:3.2}); } SND.swing(); }
@@ -783,7 +806,8 @@ function update(dt){ if(scene==="boss"){ updateBoss(dt); return; }
     treeT-=dt; if(treeT<=0){ treeT=26+Math.random()*20; if(countTiles("tree")<60)respawnRes("tree"); }
     rockT-=dt; if(rockT<=0){ rockT=65+Math.random()*35; if(countTiles("rock")<40)respawnRes("rock"); }
     // hunger, regen & starvation
-    player.hunger=Math.max(0,player.hunger-dt*0.45); const gb=gearBonus();
+    if(activeBuff&&now()>=activeBuff.until){ activeBuff=null; recalcMax(); }
+    player.hunger=Math.max(0,player.hunger-dt*0.45); const gb=totalBonus();
     if(player.hunger>=60){ player.regenT+=dt*(1+gb.regen); if(player.regenT>=10){ player.regenT=0; if(player.hp<player.maxHp)player.hp++; } } else player.regenT=0;
     if(player.hunger<=0){ player.starveT+=dt; if(player.starveT>=6){ player.starveT=0; if(player.hp>0){ player.hp--; SND.hurt(); if(player.hp<=0)faint(); } } } else player.starveT=0;
     clock+=dt;
@@ -796,7 +820,7 @@ function update(dt){ if(scene==="boss"){ updateBoss(dt); return; }
 /* ---- draw ---- */
 function tileColor(t){ return {wild:"#5a9e4e",grass:"#7ec850",path:"#cdab73",ppath:"#bfa980",soil:"#9c6b3f",fence:"#5e8c3a",house:"#e9e4da",pond:"#5aa0e6",door:"#7a4a22",tree:"#5a9e4e",rock:"#5a9e4e",torch:"#7ec850",pfence:"#5a9e4e",floor:"#caa46a",wall:"#7a5230",bed:"#caa46a",mat:"#caa46a",
     road:"#c9b27e",river:"#4a8fd6",sea:"#2f6fb0",sand:"#e6d8a8",iron:"#5a9e4e",gold:"#5a9e4e",lantern:"#5a9e4e",goldlamp:"#5a9e4e",mfence:"#5a9e4e",oil:"#5a9e4e",oillamp:"#5a9e4e",
-    church:"#e3ddd2",churchtop:"#e3ddd2",shop:"#c98b5a",hdoor:"#cdbf9c",chest:"#5a9e4e"}[t.type]||"#5a9e4e"; }
+    church:"#e3ddd2",churchtop:"#e3ddd2",shop:"#c98b5a",hdoor:"#cdbf9c",chest:"#5a9e4e",stove:"#5a9e4e"}[t.type]||"#5a9e4e"; }
 function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE||y<-TILE||x>VW||y>VH)return;
   ctx.fillStyle=tileColor(t); ctx.fillRect(x,y,TILE,TILE);
   if(t.type==="wild"||t.type==="grass"){ ctx.fillStyle="rgba(0,0,0,0.05)";if((r+c)%2)ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle=shade(tileColor(t),1.08);ctx.fillRect(x+7,y+9,3,3);ctx.fillRect(x+24,y+27,3,3); }
@@ -833,6 +857,7 @@ function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE|
   else if(t.type==="shop"){ ctx.fillStyle="#c98b5a";ctx.fillRect(x,y,TILE,TILE);for(let k=0;k<TILE;k+=10){ctx.fillStyle=(k/10)%2?"#e8584f":"#fff";ctx.fillRect(x+k,y,10,8);}ctx.fillStyle="#7a4a22";ctx.fillRect(x+6,y+18,TILE-12,TILE-20);ctx.fillStyle="#3a2a1a";ctx.fillRect(x+TILE/2-5,y+22,10,TILE-24); }
   else if(t.type==="hdoor"){ ctx.fillStyle="#cdbf9c";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#c9bfae";ctx.fillRect(x,y,TILE,7);ctx.fillStyle="#7a4a22";ctx.fillRect(x+TILE/2-8,y+10,16,TILE-10);ctx.fillStyle="#ffd23b";ctx.fillRect(x+TILE/2+3,y+TILE/2,3,3); }
   else if(t.type==="chest"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#9c6b3f";ctx.fillRect(x+6,y+16,TILE-12,TILE-22);ctx.fillStyle="#7a4f29";ctx.fillRect(x+6,y+13,TILE-12,7);ctx.fillStyle="#ffd23b";ctx.fillRect(x+TILE/2-2,y+19,4,4);ctx.fillStyle="rgba(0,0,0,.18)";ctx.fillRect(x+6,y+19,TILE-12,2); }
+  else if(t.type==="stove"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#6c757d";ctx.fillRect(x+6,y+12,TILE-12,TILE-16);ctx.fillStyle="#3a4047";ctx.fillRect(x+9,y+22,TILE-18,TILE-26);const gl=0.5+0.4*Math.sin(now()*8+c);ctx.fillStyle="rgba(255,140,40,"+gl+")";ctx.fillRect(x+12,y+25,TILE-24,TILE-31);ctx.fillStyle="#9aa3ab";ctx.fillRect(x+8,y+12,TILE-16,4); }
   if(t.crop) drawCrop(x+TILE/2,y+TILE-8,t.crop);
 }
 function drawCrop(x,by,cr){ const C=CROPS[cr.type],ratio=Math.min(1,cr.grow),ripe=cr.grow>=1,h=6+ratio*20+(ripe?2:0),bob=ripe?Math.sin(now()*4+x)*1.5:0;
@@ -928,6 +953,7 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
   const R=11, SP=25, X0=24, YH=26, YF=YH+30, NF=10, step=player.maxHunger/NF;
   for(let i=0;i<player.maxHp;i++) heartIcon(X0+i*SP,YH,R,i<player.hp);
   for(let i=0;i<NF;i++){ const f=Math.max(0,Math.min(1,(player.hunger-i*step)/step)); foodIcon(X0+i*SP,YF,R,f); }
+  if(activeBuff&&now()<activeBuff.until){ const secs=Math.ceil(activeBuff.until-now()),by=(player.hunger<=0||(player.hunger>=60&&player.hp<player.maxHp))?YF+46:YF+26; ctx.font="700 13px Helvetica,Arial";ctx.textAlign="left";ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillText("⏫ "+itemName(activeBuff.key)+" "+secs+"s",X0-9,by+1);ctx.fillStyle="#9ad8ff";ctx.fillText("⏫ "+itemName(activeBuff.key)+" "+secs+"s",X0-10,by); }
   ctx.textAlign="left"; ctx.textBaseline="alphabetic";
   if(player.hunger<=0){ ctx.font="800 14px Helvetica,Arial"; ctx.fillStyle="rgba(0,0,0,.55)";ctx.fillText(t("starving — eat food!"),15,YF+27); ctx.fillStyle="#ff8f8f"; ctx.fillText(t("starving — eat food!"),14,YF+26); }
   else if(player.hunger>=60&&player.hp<player.maxHp){ ctx.font="700 13px Helvetica,Arial"; ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillText(t("well fed · healing"),15,YF+27); ctx.fillStyle="#8ef0a0"; ctx.fillText(t("well fed · healing"),14,YF+26); }
@@ -969,6 +995,8 @@ function openShop(){ renderShop(); shopEl.classList.add("open"); }
 function renderShop(){ document.getElementById("shopCoins").textContent=coins;
   document.getElementById("buyList").innerHTML=CKEYS.map(k=>{ const C=CROPS[k];
     return `<div class="item">${iconSpan("seed_"+k)}<div><b>${itemName("seed_"+k)}</b><span>${t("grows into a")} ${C.sell}c ${t("crop")}</span></div><button data-buy="${k}" ${coins<C.cost?"disabled":""}>${C.cost}c</button></div>`; }).join("");
+  document.getElementById("foodList").innerHTML=CATFOOD.map(k=>{ const it=ITEMS[k];
+    return `<div class="item">${iconSpan(k)}<div><b>${itemName(k)}</b><span>${t("restores")} ${it.food} ${t("hunger")}</span></div><button data-buyfd="${k}" ${coins<it.buy?"disabled":""}>${it.buy}c</button></div>`; }).join("");
   document.getElementById("furnList").innerHTML=FURN.map(k=>{ const it=ITEMS[k];
     return `<div class="item">${iconSpan(k)}<div><b>${itemName(k)}</b><span>${t("place it to decorate your home or yard")}</span></div><button data-buyf="${k}" ${coins<it.buy?"disabled":""}>${it.buy}c</button></div>`; }).join("");
   const sellables=shopSellables();
@@ -984,6 +1012,7 @@ function renderShop(){ document.getElementById("shopCoins").textContent=coins;
 shopEl.addEventListener("click",e=>{ const d=e.target.dataset||{};
   if(d.buy){ const C=CROPS[d.buy]; if(coins>=C.cost&&addItem("seed_"+d.buy,1)){coins-=C.cost;SND.coin();} }
   else if(d.buyf){ const it=ITEMS[d.buyf]; if(coins>=it.buy&&addItem(d.buyf,1)){coins-=it.buy;SND.coin();} }
+  else if(d.buyfd){ const it=ITEMS[d.buyfd]; if(coins>=it.buy&&addItem(d.buyfd,1)){coins-=it.buy;SND.coin();} }
   else if(d.sell){ const k=d.sell; if(countItem(k)>0){ const v=k.startsWith("crop_")?CROPS[k.slice(5)].sell:ITEMS[k].sell; coins+=v; removeItem(k,1); SND.coin(); } }
   else if(d.sellall){ if(d.sellall==="__shopall")shopSellables().forEach(sellStack); else sellStack(d.sellall); }
   else if(d.up==="farm"){ const cost=80*(farmLvl+1); if(farmLvl<4&&coins>=cost){coins-=cost;expandFarm();SND.coin();} }
@@ -1090,6 +1119,22 @@ chestPackEl.addEventListener("click",()=>{ if(!curChest||curChest.some(s=>s))ret
 document.getElementById("chestClose").addEventListener("click",closeChest);
 chestEl.addEventListener("pointerdown",e=>{ if(e.target===chestEl)closeChest(); });
 chestEl.addEventListener("pointermove",e=>{ if(held){ heldEl.style.left=e.clientX+"px"; heldEl.style.top=e.clientY+"px"; } });
+
+/* ---- kitchen stove: cook buff food ---- */
+const stoveEl=document.getElementById("stove");
+const STOVE_RECIPES=[
+  {give:"hearty_stew", cost:{meat:1,crop_carrot:1,crop_corn:1}, eff:"+2 hearts for 2 min"},
+  {give:"power_roast", cost:{meat:2}, eff:"+1 attack for 2 min"},
+  {give:"swift_salad", cost:{crop_carrot:2,berry:1}, eff:"faster for 2 min"} ];
+function openStove(){ renderStove(); stoveEl.classList.add("open"); }
+function renderStove(){ document.getElementById("stoveList").innerHTML=STOVE_RECIPES.map((R,i)=>{ const cs=Object.entries(R.cost).map(([m,n])=>`${n} ${itemName(m)}`).join(" + ");
+    const can=Object.entries(R.cost).every(([m,n])=>countItem(m)>=n);
+    return `<div class="item">${iconSpan(R.give)}<div><b>${itemName(R.give)}</b><span>${t(R.eff)} · ${cs}</span></div><button data-cook="${i}" ${can?"":"disabled"}>${t("cook")}</button></div>`; }).join(""); }
+stoveEl.addEventListener("click",e=>{ const d=e.target.dataset||{}; if(d.cook==null)return; const R=STOVE_RECIPES[+d.cook];
+  if(Object.entries(R.cost).every(([m,n])=>countItem(m)>=n)){ Object.entries(R.cost).forEach(([m,n])=>removeItem(m,n)); addItem(R.give,1); SND.craft(); float(player.x,player.y-22,t("cooked")+" "+itemName(R.give),"#ffd27a"); save(); }
+  renderStove(); renderBar(); });
+document.getElementById("stoveClose").addEventListener("click",()=>stoveEl.classList.remove("open"));
+stoveEl.addEventListener("pointerdown",e=>{ if(e.target===stoveEl)stoveEl.classList.remove("open"); });
 
 /* ---- help / tutorial ---- */
 const helpEl=document.getElementById("help");
@@ -1223,7 +1268,7 @@ function catReveal(){ metCat=true; catIntroPending=false; save(); startDialog([
     {who:"cat",name:"Whiskers",text:"Come and see me whenever you like — I'm your shop. I'll buy your harvest and loot, and sell you seeds, furniture and upgrades."},
     {who:"cat",name:"Whiskers",text:"Now go on — tend the soil. Your new life starts here."}
   ], null); }
-function maybeIntro(){ if(!seenIntro)startIntro(); else startInHouse(); }
+function maybeIntro(){ if(!seenIntro)startIntro(); else if(catIntroPending)startInHouse(); }   // only stage the house if the cat greeting is still owed; otherwise resume saved spot
 
 function expandFarm(){ const oFR1=farmFR1,oFC1=farmFC1; farmFR1=Math.min(OROWS-2,farmFR1+2); farmFC1=Math.min(OCOLS-2,farmFC1+2);
   for(let c=FC0;c<=oFC1;c++){ if(gridOut[oFR1][c].type==="fence")gridOut[oFR1][c].type="grass"; }
