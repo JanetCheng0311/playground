@@ -95,6 +95,10 @@
   #barTip b{font-size:13px;font-weight:800}#barTip span{display:block;font-size:11px;opacity:.72;margin-top:2px}
   #cheat{position:fixed;right:6px;bottom:5px;z-index:50;width:26px;height:20px;opacity:.25;font:inherit;font-size:11px;text-align:center;color:#fff;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.25);border-radius:6px;outline:none;transition:width .15s,opacity .15s}
   #cheat:focus{width:90px;opacity:.95;background:rgba(0,0,0,.7)}
+  #help .card{width:min(820px,100%)}
+  .helpcols{display:flex;gap:22px;align-items:flex-start}
+  .helpcol{flex:1 1 0;min-width:0}
+  @media (max-width:680px){ .helpcols{flex-direction:column;gap:0} }
   #helpBody .item{display:block;padding:8px 0;border-top:1px solid rgba(255,255,255,.16)}
   #helpBody b{font-size:14px}#helpBody span{display:block;font-size:12px;opacity:.75;margin-top:2px}
   #helpBody h4{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin:14px 0 4px}
@@ -943,7 +947,12 @@ function renderHelp(){ const tiles=["grass","soil","tree","rock","iron","gold","
   const cH=useC.map(c=>`<div class="item"><b>${c[0]}</b><span>⌨️ ${c[1]} &nbsp;·&nbsp; 📱 ${c[2]}</span></div>`).join("");
   const tH=tiles.map(k=>{ const d=descOf(k); return d?`<div class="item"><b>${d[0]}</b><span>${d[1]}</span></div>`:""; }).join("");
   const iH=items.map(k=>{ const base=k.startsWith("seed_")?"seed":k.startsWith("crop_")?"crop":k; const u=useOf(base)||useOf(k); return `<div class="item"><b>${itemName(k)}</b><span>${u}</span></div>`; }).join("");
-  document.getElementById("helpBody").innerHTML=`<h4>${t("shortcuts")}</h4>${cH}<h4>${t("tutorial")}</h4>${useT.map(x=>`<div class="item"><span>${x}</span></div>`).join("")}<h4>${t("around the world")}</h4>${tH}<h4>${t("items in your bag")}</h4>${iH}`; }
+  const tipsH=useT.map(x=>`<div class="item"><span>${x}</span></div>`).join("");
+  document.getElementById("helpBody").innerHTML=
+    `<div class="helpcols">`+
+      `<div class="helpcol"><h4>${t("shortcuts")}</h4>${cH}<h4>${t("tutorial")}</h4>${tipsH}</div>`+
+      `<div class="helpcol"><h4>${t("around the world")}</h4>${tH}<h4>${t("items in your bag")}</h4>${iH}</div>`+
+    `</div>`; }
 document.getElementById("helpBtn").addEventListener("click",()=>{ renderHelp(); helpEl.classList.add("open"); });
 document.getElementById("helpClose").addEventListener("click",()=>helpEl.classList.remove("open"));
 helpEl.addEventListener("pointerdown",e=>{ if(e.target===helpEl)helpEl.classList.remove("open"); });
