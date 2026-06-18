@@ -125,6 +125,7 @@
   <button id="impBtn">load file</button>
   <button id="snd">sound</button>
   <button id="new">new game</button>
+  <button id="langBtn">中文</button>
   <a href="../">playground</a>
   <input type="file" id="impFile" accept="application/json,.json" style="display:none">
 </header>
@@ -246,7 +247,75 @@ const USE={ seed:"plant it on tilled soil", crop:"sell it at the cat shop for co
   goldlamp:"select & place a fancy golden light", mfence:"select & place a metal wall (hold use to remove)",
   oil:"press from corn, or drops from slimes — craft an oil lamp or sell it", oillamp:"select & place a warm oil lamp" };
 function itemColor(k){ const it=ITEMS[k]; if(it.color)return it.color; return it.kind==="seed"?CROPS[it.crop].leaf:CROPS[it.crop].c; }
-function itemName(k){ const it=ITEMS[k]; if(it.name)return it.name; return (it.kind==="seed"?it.crop+" seed":it.crop); }
+
+/* ===== language (English / 繁體中文) ===== */
+let lang = localStorage.getItem("hs-lang")==="zh" ? "zh" : "en";
+const CROPNAME_ZH={ carrot:"紅蘿蔔", wheat:"小麥", corn:"玉米", pumpkin:"南瓜" };
+const NAME_ZH={ wood:"木材", stone:"石頭", goo:"黏液", iron:"鐵礦", gold:"黃金", fish:"魚", sand:"沙", glass:"玻璃", oil:"油", salve:"藥膏",
+  torch:"火把", fence:"木柵欄", ppath:"石板路", chair:"椅子", table:"桌子", lamp:"檯燈", rug:"地毯", lantern:"提燈", goldlamp:"黃金燈", mfence:"金屬柵欄",
+  oillamp:"油燈", rod:"釣竿", net:"漁網", metal_sword:"金屬劍", metal_armor:"金屬盔甲" };
+const DESC_ZH={ grass:["草地","用「使用」翻土成可種植的泥土"], wild:["野草","這裡有樹木、岩石和史萊姆"], soil:["泥土","種下種子、澆水，成熟後採收"],
+  tree:["樹木","按「使用」砍伐取得木材"], rock:["岩石","按「使用」開採取得石頭"], iron:["鐵礦石","用「使用」開採取得鐵礦"], gold:["金礦石","用「使用」開採取得黃金"],
+  pond:["池塘","用釣竿或漁網釣魚"], river:["河流","清水 — 用釣竿或漁網釣魚"], sea:["海洋","用釣竿或漁網釣魚"], sand:["海灘沙","按「使用」鏟取沙子"],
+  road:["道路","沿著它在家園與村莊之間往返"], church:["教堂","村莊小鎮的中心"], shop:["市集攤位","村莊商人的攤位"], door:["家門","走進去進入屋內"],
+  torch:["火把","照亮夜晚的周圍"], lamp:["檯燈","夜晚的溫暖燈光"], fence:["農場圍欄","農場的外牆 — 在貓商店擴建"], pfence:["木柵欄","你建造的牆 — 長按使用 1-2 秒可拆除"],
+  mfence:["金屬柵欄","你建造的堅固牆（長按使用可拆除）"], bed:["床","按「使用」睡覺、回血並開始新的一天"], mat:["門墊","踩上去回到屋外"],
+  cat:["商店貓","按「對話」購買種子、家具與升級，或販售素材"], npc:["漁夫培利","按「對話」購買釣竿與漁網，或販售漁獲、礦石、沙與油"], villager:["村民","友善的居民 — 按「對話」聊天"],
+  slime:["史萊姆","用「使用」揮擊打敗它，取得黏液與金幣"] };
+const USE_ZH={ seed:"種在翻好的泥土上", crop:"在貓商店販售換金幣", wood:"製作火把、柵欄與道路", stone:"製作石板路與堅固斧頭", goo:"製作治療藥膏",
+  salve:"選取後按使用回復 2 顆心", torch:"選取後放在地上照亮夜晚", fence:"選取並放置建造自己的牆", ppath:"選取並放置整齊的石板路",
+  chair:"選取並放置裝飾", table:"選取並放置裝飾", lamp:"選取並放置發光檯燈", rug:"選取並放置柔軟地毯", iron:"製作提燈，或賣給漁夫",
+  gold:"製作黃金燈，或高價賣出", fish:"賣給村莊裡的漁夫培利", sand:"在工作台用 2 個熔成玻璃", glass:"用來製作提燈與黃金燈",
+  rod:"選取後面對水面按使用釣魚", net:"選取後面對水面按使用一次釣更多魚", lantern:"選取並放置明亮的金屬燈", goldlamp:"選取並放置華麗的黃金燈",
+  mfence:"選取並放置金屬牆（長按使用可拆除）", oil:"由玉米榨取或史萊姆掉落 — 做油燈或賣出", oillamp:"選取並放置溫暖的油燈" };
+const HOWTO_ZH={ wood:"砍樹", stone:"開採岩石", goo:"打敗史萊姆", iron:"開採鐵礦石", gold:"開採金礦石", sand:"在村莊海灘鏟沙",
+  glass:"用 2 個沙製作", oil:"榨 2 個玉米、打史萊姆，或向漁夫購買", fish:"用釣竿或漁網釣魚", crop_corn:"種植並採收玉米（貓商店）" };
+const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金幣","save file":"儲存","load file":"載入","sound":"音效","muted":"靜音","new game":"新遊戲","playground":"遊樂場",
+  "💬 Talk":"💬 對話","🎒 Bag":"🎒 背包","🗺 Map":"🗺 地圖","？ Help":"？ 說明",
+  "WASD/arrows move (double-tap a direction to run) · 1–0 pick item · E/Space to act (till, chop/mine, fish, fight, place) · hold use ~1.5s to remove anything you placed · press T to talk to the cat/fisher · M for the map · I for bag & crafting":"WASD/方向鍵移動（連按兩下方向衝刺）· 1–0 選物品 · E/空白鍵 動作（翻土、砍伐/開採、釣魚、戰鬥、放置）· 長按使用約1.5秒可拆除你放置的東西 · 按 T 與貓/漁夫對話 · M 開地圖 · I 開背包與製作",
+  "🐾 Whiskers' Shop":"🐾 小鬍子商店","buy seeds":"購買種子","buy furniture":"購買家具","sell":"販售","upgrades":"升級","close":"關閉",
+  "Backpack":"背包","hotbar · keys 1–0":"快捷欄 · 按鍵 1–0","🔨 Crafting table":"🔨 工作台","drop items into the grid to craft":"把物品放進格子來製作","recipe book":"配方書",
+  "How to play":"遊玩說明","🎣 Pelle the Fisher":"🎣 漁夫培利","buy gear":"購買裝備","sell catch & ore":"販售漁獲與礦石","space / tap ▾":"空白鍵 / 點擊 ▾",
+  // dynamic phrases
+  "grows into a":"可長成","crop":"金幣作物","each":"每個","max":"已滿","gather or harvest something to sell":"採集或收成東西才能販售","no one to talk to here":"這裡沒有人可以對話","Expand farm":"擴建農場","more land inside the fence":"圍欄內更多土地","Bigger house":"擴建房屋","a roomier home inside":"更寬敞的室內",
+  "place it to decorate your home or yard":"放置來裝飾你的家或庭院","craft":"製作","owned":"已擁有","needs":"需要","need":"需要","get":"取得","click it to craft":"點擊製作","you don't have those materials yet":"你還沒有這些材料","no recipe — see the recipe book below":"沒有配方 — 看下方配方書","drop items into the grid to craft":"把物品放進格子來製作","Sturdy Axe":"堅固斧頭",
+  "catch fish from any water":"可在任何水域釣魚","catch 2–3 fish at a time":"一次釣 2–3 條魚","grow corn & press it, or buy a barrel here":"種玉米榨油，或在此購買一桶","catch fish, mine ore or scoop sand, then sell it here":"釣魚、採礦或鏟沙，然後在此販售","oil":"油",
+  // sections / help
+  "shortcuts":"快捷鍵","tutorial":"教學","around the world":"世界中的事物","items in your bag":"背包中的物品","controls":"操作","tips":"提示",
+  // dialogue (cat)
+  "Mrrrow! Welcome back to the homestead.":"喵～歡迎回到家園。","Hi Whiskers! What have you got today?":"嗨小鬍子！今天有什麼好東西？","Seeds, comfy furniture, handy upgrades — and I'll buy your harvest and loot.":"種子、舒適的家具、實用的升級 — 我也會收購你的收成和素材。","Let's trade":"來交易","Maybe later":"晚點再說",
+  // dialogue (fisher)
+  "Ahoy there! The village waters are full of fish today.":"哈囉！今天村莊的水域滿是魚兒。","Nice to meet you! Got any gear for me?":"很高興認識你！有什麼裝備嗎？","A rod and a net, aye. And I'll pay good coin for fish, ore and sand.":"釣竿和漁網都有。我也會用好價錢收購魚、礦石和沙。","Show me":"給我看看","Just passing":"只是路過",
+  // villagers
+  "Lovely day in the village, isn't it?":"村莊今天天氣真好，對吧？","Pelle down by the sea sells fishing gear.":"海邊的培利有賣釣魚裝備。","Welcome to our little town!":"歡迎來到我們的小鎮！","The church bell rings at noon, they say.":"聽說教堂的鐘會在正午響起。","As mayor, I'm proud of our growing town!":"身為鎮長，我為日益繁榮的小鎮感到驕傲！","Build, farm, fish — make yourself at home.":"建造、耕作、釣魚 — 把這裡當成自己的家。",
+  "Mara":"瑪拉","Tom":"湯姆","Mayor Pim":"皮姆鎮長","You":"你","Whiskers":"小鬍子","Pelle":"培利",
+  // boss / world tags / floats
+  "ROAD GUARDIAN":"道路守衛","VICTORY!":"勝利！","DEFEATED":"戰敗","shop ▸ use":"商店 ▸ 對話","fisher ▸ use":"漁夫 ▸ 對話","BOSS ▸ approach":"頭目 ▸ 靠近","no one to talk to here":"這裡沒有人可以對話",
+  "←/→ move · ↑/Space jump · E or ⟳use to slash · dodge the red charge & shots":"←/→ 移動 · ↑/空白鍵 跳躍 · E 或 使用鈕 揮擊 · 閃避紅色衝刺與射擊",
+  "fight off the monsters first!":"先擊退怪物！","need a metal sword AND armour!":"需要金屬劍和盔甲！","the road is clear!":"道路暢通了！","defeated… craft better gear & retry":"戰敗了…製作更好的裝備再挑戰","cheat: road unlocked":"密技：道路已解鎖",
+  "the village":"村莊","home sweet home":"溫暖的家","slept · new day":"睡了一覺 · 新的一天","farm expanded":"農場已擴建","house upgraded":"房屋已升級","sturdy axe!":"堅固斧頭！","fainted! home safe":"昏倒了！安全回到家",
+  "morning":"早晨","noon":"中午","evening":"傍晚","night":"夜晚","day":"第","indoors":"室內" };
+function t(s){ return lang==="zh" && ZH[s]!==undefined ? ZH[s] : s; }
+function descOf(k){ return (lang==="zh"&&DESC_ZH[k])?DESC_ZH[k]:DESC[k]; }
+function useOf(base){ return (lang==="zh"&&USE_ZH[base])?USE_ZH[base]:(USE[base]||""); }
+function howOf(k){ return (lang==="zh"&&HOWTO_ZH[k])?HOWTO_ZH[k]:(HOWTO[k]||"craft it"); }
+function itemName(k){ const it=ITEMS[k];
+  if(lang==="zh"){ if(it.kind==="seed")return CROPNAME_ZH[it.crop]+"種子"; if(it.kind==="crop")return CROPNAME_ZH[it.crop]; if(NAME_ZH[k])return NAME_ZH[k]; }
+  if(it.name)return it.name; return (it.kind==="seed"?it.crop+" seed":it.crop); }
+// translate static DOM text nodes (snapshots the English original so we can toggle back)
+const _orig=new WeakMap();
+function localizeAll(){ const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,null);
+  const nodes=[]; let n; while(n=w.nextNode())nodes.push(n);
+  for(const node of nodes){ const par=node.parentNode; if(par&&(par.tagName==="SCRIPT"||par.tagName==="STYLE"||par.id==="langBtn"||par.id==="clock"))continue;
+    if(!_orig.has(node)){ const tx=node.nodeValue; if(!tx||!tx.trim())continue; _orig.set(node,tx); }
+    const en=_orig.get(node); if(en===undefined)continue; const key=en.trim();
+    if(lang==="zh"&&ZH[key]!==undefined) node.nodeValue=en.replace(key,ZH[key]); else node.nodeValue=en; } }
+function applyLang(){ localStorage.setItem("hs-lang",lang);
+  localizeAll(); const lb=document.getElementById("langBtn"); if(lb)lb.textContent=lang==="zh"?"EN":"中文"; renderBar();
+  if(document.getElementById("shop").classList.contains("open"))renderShop();
+  if(document.getElementById("market").classList.contains("open"))renderMarket();
+  if(baguiEl.classList.contains("open")){ renderBag(); renderCraftGrid(); renderRecipes(); }
+  if(document.getElementById("help").classList.contains("open"))renderHelp(); }
 
 const RECIPES=[
   {key:"salve", give:"salve", cost:{goo:2}, desc:"restores 2 hearts (use it from your bag)"},
@@ -389,7 +458,7 @@ const SND={ step(){tone("sine",150,110,0.06,0.05);},till(){tone("triangle",240,1
   chop(){tone("square",200,120,0.08,0.14);},mine(){tone("square",380,200,0.07,0.12);},place(){tone("sine",500,700,0.07,0.12);},craft(){tone("sine",600,900,0.12,0.14);setTimeout(()=>tone("sine",900,1200,0.1,0.12),80);},
   hurt(){tone("sawtooth",200,90,0.18,0.2);},heal(){tone("sine",520,880,0.2,0.16);},door(){tone("sine",300,500,0.12,0.12);},meow(){tone("sine",700,500,0.12,0.1);setTimeout(()=>tone("sine",520,640,0.1,0.08),90);},no(){tone("sawtooth",170,120,0.1,0.12);} };
 
-function float(x,y,text,col){ fx.push({kind:"text",x,y,text,col,life:1}); }
+function float(x,y,text,col){ fx.push({kind:"text",x,y,text:t(text),col,life:1}); }
 function burst(x,y,col,n){ for(let i=0;i<n;i++){const a=Math.random()*7,s=1+Math.random()*2.6;fx.push({kind:"p",x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1.4,col,life:1});} }
 
 /* ---- monsters ---- */
@@ -407,7 +476,7 @@ function tryAttack(){ const range=TILE*1.6,dmg=hasAxe?2:1; let hit=false;
 function talkInteract(){ if(scene!=="out"){ return; }
   if(area==="home"&&Math.hypot(catX-player.x,catY-player.y)<TILE*1.7){ if(nearThreat())return blockTalk(); SND.meow(); if(metCat)openShop(); else {metCat=true;save();talkToCat();} return; }
   if(area==="village"){ if(Math.hypot(npcX-player.x,npcY-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); if(metFisher)openMarket(); else {metFisher=true;save();talkToFisher();} return; }
-    for(const v of villagers){ if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); startDialog(v.lines.map(t=>({who:"vill",name:v.name,face:v.face,col:v.col,text:t})),null); return; } } }
+    for(const v of villagers){ if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); startDialog(v.lines.map(s=>({who:"vill",name:v.name,face:v.face,col:v.col,text:s})),null); return; } } }
   float(player.x,player.y-22,"no one to talk to here","#cfe0ff"); }
 function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.18;
   if(scene==="in"){ const f=facedCell(); if(!f)return; const t=gridIn[f.r][f.c]; if(t.type==="bed")sleep(); else if(t.type==="mat")exitHouse(); return; }
@@ -503,14 +572,14 @@ function drawBoss(){ ctx.fillStyle="#1a1030"; ctx.fillRect(0,0,VW,VH);
   ctx.globalAlpha=1;
   for(let i=0;i<boss.pmax;i++){ ctx.fillStyle=i<boss.php?"#ff5b78":"rgba(255,255,255,.2)"; ctx.fillRect(16+i*20,16,15,15); }
   ctx.fillStyle="rgba(0,0,0,.45)";ctx.fillRect(VW/2-110,18,220,12); ctx.fillStyle="#c46aff";ctx.fillRect(VW/2-110,18,220*Math.max(0,boss.bhp)/boss.bmax,12);
-  ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="800 12px Helvetica";ctx.fillText("ROAD GUARDIAN",VW/2,44);
-  ctx.fillStyle="rgba(255,255,255,.6)";ctx.font="11px Helvetica";ctx.fillText("←/→ move · ↑/Space jump · E or ⟳use to slash · dodge the red charge & shots",VW/2,VH-16);
-  if(boss.end){ ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillRect(0,0,VW,VH); ctx.fillStyle=boss.win?"#bfe6c2":"#ff9a9a";ctx.font="800 28px Helvetica";ctx.fillText(boss.win?"VICTORY!":"DEFEATED",VW/2,VH/2); } }
+  ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="800 12px Helvetica";ctx.fillText(t("ROAD GUARDIAN"),VW/2,44);
+  ctx.fillStyle="rgba(255,255,255,.6)";ctx.font="11px Helvetica";ctx.fillText(t("←/→ move · ↑/Space jump · E or ⟳use to slash · dodge the red charge & shots"),VW/2,VH-16);
+  if(boss.end){ ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillRect(0,0,VW,VH); ctx.fillStyle=boss.win?"#bfe6c2":"#ff9a9a";ctx.font="800 28px Helvetica";ctx.fillText(boss.win?t("VICTORY!"):t("DEFEATED"),VW/2,VH/2); } }
 function drawGuardian(){ const x=(OCOLS-1)*TILE+TILE/2-camX,y=ROAD_R*TILE+TILE/2-camY,bob=Math.sin(now()*2)*1.5;
   ctx.fillStyle="rgba(0,0,0,.25)";ctx.beginPath();ctx.ellipse(x,y+12,13,5,0,0,7);ctx.fill();
   ctx.fillStyle="#6a3a8a";ctx.beginPath();ctx.roundRect(x-12,y-16+bob,24,28,8);ctx.fill();
   ctx.fillStyle="#ffd23b";ctx.beginPath();ctx.arc(x-5,y-6+bob,3,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+5,y-6+bob,3,0,7);ctx.fill();
-  ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText("BOSS ▸ approach",x,y-24+bob); }
+  ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText(t("BOSS ▸ approach"),x,y-24+bob); }
 function enterHouse(){ outX=player.x;outY=player.y; SND.door(); setScene("in"); const mc=Math.floor(GC/2); player.x=mc*TILE+TILE/2; player.y=(GR-2)*TILE+TILE/2; player.dir="u";player.fx=0;player.fy=-1; transCD=0.5; }
 function exitHouse(){ SND.door(); setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2; player.dir="d";player.fx=0;player.fy=1; transCD=0.5; save(); }
 function sleep(){ const ph=(clock%DAYLEN)/DAYLEN; clock+=(1-ph)*DAYLEN; player.hp=player.maxHp; SND.heal(); float(player.x,player.y-26,"slept · new day","#fff"); save(); }
@@ -660,7 +729,7 @@ function drawCat(){ const x=catX-camX,y=catY-camY,bob=Math.sin(now()*2)*1.5;
   ctx.fillStyle="#ff9";ctx.fillRect(x-1,y-4+bob,2,2);
   }
   // "shop" tag if near
-  if(Math.hypot(catX-player.x,catY-player.y)<TILE*1.6){ ctx.fillStyle="rgba(255,255,255,.9)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText("shop ▸ use",x,y-22+bob); }
+  if(Math.hypot(catX-player.x,catY-player.y)<TILE*1.6){ ctx.fillStyle="rgba(255,255,255,.9)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText(t("shop ▸ use"),x,y-22+bob); }
 }
 function drawNpc(){ const x=npcX-camX,y=npcY-camY,bob=Math.sin(now()*2)*1.4;
   ctx.fillStyle="rgba(0,0,0,.2)";ctx.beginPath();ctx.ellipse(x,y+12,10,4,0,0,7);ctx.fill();
@@ -675,13 +744,13 @@ function drawNpc(){ const x=npcX-camX,y=npcY-camY,bob=Math.sin(now()*2)*1.4;
   ctx.strokeStyle="#7a542e";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x+8,y-2+bob);ctx.lineTo(x+18,y-14+bob);ctx.stroke();   // fishing rod
   ctx.strokeStyle="rgba(255,255,255,.5)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+18,y-14+bob);ctx.lineTo(x+18,y-2+bob);ctx.stroke();
   }
-  if(Math.hypot(npcX-player.x,npcY-player.y)<TILE*1.7){ ctx.fillStyle="rgba(255,255,255,.9)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText("fisher ▸ use",x,y-24+bob); } }
+  if(Math.hypot(npcX-player.x,npcY-player.y)<TILE*1.7){ ctx.fillStyle="rgba(255,255,255,.9)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText(t("fisher ▸ use"),x,y-24+bob); } }
 function drawVillager(v){ const x=v.x-camX,y=v.y-camY,bob=Math.sin(now()*2+v.c)*1.3;
   ctx.fillStyle="rgba(0,0,0,.2)";ctx.beginPath();ctx.ellipse(x,y+12,9,4,0,0,7);ctx.fill();
   ctx.fillStyle=v.col;ctx.beginPath();ctx.roundRect(x-7,y-2+bob,14,15,5);ctx.fill();
   ctx.fillStyle="#ffd9a8";ctx.beginPath();ctx.arc(x,y-9+bob,7,0,7);ctx.fill();
   ctx.fillStyle="#3a2a1a";ctx.beginPath();ctx.arc(x-2.5,y-9+bob,1.3,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+2.5,y-9+bob,1.3,0,7);ctx.fill();
-  if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.7){ ctx.fillStyle="rgba(255,255,255,.9)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText(v.name+" ▸ use",x,y-20+bob); } }
+  if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.7){ ctx.fillStyle="rgba(255,255,255,.9)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText(lang==="zh"?t(v.name)+" ▸ 對話":v.name+" ▸ use",x,y-20+bob); } }
 function drawPlayer(){ const x=player.x-camX,y=player.y-camY,bob=player.moving?Math.sin(now()*10)*1.5:0,blink=player.inv>0&&Math.floor(now()*12)%2===0;if(blink)ctx.globalAlpha=0.45;
   ctx.fillStyle="rgba(0,0,0,0.2)";ctx.beginPath();ctx.ellipse(x,y+12,11,5,0,0,7);ctx.fill();
   if(player.swing>0){ctx.strokeStyle="rgba(255,255,255,.85)";ctx.lineWidth=4;ctx.lineCap="round";const a=Math.atan2(player.fy,player.fx);ctx.beginPath();ctx.arc(x+player.fx*8,y+player.fy*8,18,a-0.9,a+0.9);ctx.stroke();}
@@ -727,12 +796,12 @@ let hover=null; // kept for compatibility; map name-tooltips were removed (names
 let lastT=0;
 function frame(ts){ const nw=ts/1000,dt=lastT?Math.min(0.05,nw-lastT):0;lastT=nw; update(dt); draw();
   const ph=(clock%DAYLEN)/DAYLEN,day=1+Math.floor(clock/DAYLEN),part=ph<0.25?"morning":ph<0.5?"noon":ph<0.72?"evening":"night";
-  document.getElementById("clock").textContent=(scene==="in"?"indoors · ":"")+`day ${day} · ${part}`; requestAnimationFrame(frame); }
+  document.getElementById("clock").textContent=(scene==="in"?t("indoors")+" · ":"")+(lang==="zh"?`${t("day")} ${day} 天 · ${t(part)}`:`day ${day} · ${part}`); requestAnimationFrame(frame); }
 
 /* ---- hotbar ---- */
 const barEl=document.getElementById("bar");
 const barTip=document.getElementById("barTip");
-function showBarTip(el,key){ const base=key.startsWith("seed_")?"seed":key.startsWith("crop_")?"crop":key; const use=USE[base]||"";
+function showBarTip(el,key){ const base=key.startsWith("seed_")?"seed":key.startsWith("crop_")?"crop":key; const use=useOf(base);
   barTip.innerHTML=`<b>${itemName(key)}</b>${use?`<span>${use}</span>`:""}`; const r=el.getBoundingClientRect();
   barTip.style.left=(r.left+r.width/2)+"px"; barTip.style.top=(r.top-8)+"px"; barTip.classList.add("show"); }
 function hideBarTip(){ barTip.classList.remove("show"); }
@@ -749,17 +818,17 @@ const shopEl=document.getElementById("shop");
 function openShop(){ renderShop(); shopEl.classList.add("open"); }
 function renderShop(){ document.getElementById("shopCoins").textContent=coins;
   document.getElementById("buyList").innerHTML=CKEYS.map(k=>{ const C=CROPS[k];
-    return `<div class="item"><div><b>${C.name} seed</b><span>grows into a ${C.sell}c crop</span></div><button data-buy="${k}" ${coins<C.cost?"disabled":""}>${C.cost}c</button></div>`; }).join("");
+    return `<div class="item"><div><b>${itemName("seed_"+k)}</b><span>${t("grows into a")} ${C.sell}c ${t("crop")}</span></div><button data-buy="${k}" ${coins<C.cost?"disabled":""}>${C.cost}c</button></div>`; }).join("");
   document.getElementById("furnList").innerHTML=FURN.map(k=>{ const it=ITEMS[k];
-    return `<div class="item"><div><b>${it.name}</b><span>place it to decorate your home or yard</span></div><button data-buyf="${k}" ${coins<it.buy?"disabled":""}>${it.buy}c</button></div>`; }).join("");
+    return `<div class="item"><div><b>${itemName(k)}</b><span>${t("place it to decorate your home or yard")}</span></div><button data-buyf="${k}" ${coins<it.buy?"disabled":""}>${it.buy}c</button></div>`; }).join("");
   const sellables=[...CKEYS.map(k=>"crop_"+k),"wood","stone","goo"].filter(k=>countItem(k)>0);
-  document.getElementById("sellList").innerHTML=(sellables.length?sellables:["__none"]).map(k=>{ if(k==="__none")return `<div class="item"><div><span>gather or harvest something to sell</span></div></div>`;
+  document.getElementById("sellList").innerHTML=(sellables.length?sellables:["__none"]).map(k=>{ if(k==="__none")return `<div class="item"><div><span>${t("gather or harvest something to sell")}</span></div></div>`;
     const v=k.startsWith("crop_")?CROPS[k.slice(5)].sell:ITEMS[k].sell, n=countItem(k);
-    return `<div class="item"><div><b>${itemName(k)} ×${n}</b><span>${v}c each</span></div><button data-sell="${k}">sell</button></div>`; }).join("");
+    return `<div class="item"><div><b>${itemName(k)} ×${n}</b><span>${v}c ${t("each")}</span></div><button data-sell="${k}">${t("sell")}</button></div>`; }).join("");
   const fcost=80*(farmLvl+1),hcost=100*(houseLvl+1);
   document.getElementById("upList").innerHTML=
-    `<div class="item"><div><b>Expand farm (lvl ${farmLvl})</b><span>more land inside the fence</span></div><button data-up="farm" ${farmLvl>=4||coins<fcost?"disabled":""}>${farmLvl>=4?"max":fcost+"c"}</button></div>`+
-    `<div class="item"><div><b>Bigger house (lvl ${houseLvl})</b><span>a roomier home inside</span></div><button data-up="house" ${houseLvl>=3||coins<hcost?"disabled":""}>${houseLvl>=3?"max":hcost+"c"}</button></div>`;
+    `<div class="item"><div><b>${t("Expand farm")} (lv${farmLvl})</b><span>${t("more land inside the fence")}</span></div><button data-up="farm" ${farmLvl>=4||coins<fcost?"disabled":""}>${farmLvl>=4?t("max"):fcost+"c"}</button></div>`+
+    `<div class="item"><div><b>${t("Bigger house")} (lv${houseLvl})</b><span>${t("a roomier home inside")}</span></div><button data-up="house" ${houseLvl>=3||coins<hcost?"disabled":""}>${houseLvl>=3?t("max"):hcost+"c"}</button></div>`;
 }
 shopEl.addEventListener("click",e=>{ const d=e.target.dataset||{};
   if(d.buy){ const C=CROPS[d.buy]; if(coins>=C.cost&&addItem("seed_"+d.buy,1)){coins-=C.cost;SND.coin();} }
@@ -789,7 +858,7 @@ function bagSlotClick(i){ const s=bag[i];
   else { bag[i]={key:held.key,count:held.count}; held={key:s.key,count:s.count}; }
   renderBag(); renderHeld(); }
 function slotEl(i){ const s=bag[i],el=document.createElement("div"); el.className="bslot"+(i===selSlot?" on":"");
-  if(s){ el.innerHTML=iconSpan(s.key)+(s.count>1?`<span class="n">${s.count}</span>`:""); const use=USE[baseKey(s.key)]||"";
+  if(s){ el.innerHTML=iconSpan(s.key)+(s.count>1?`<span class="n">${s.count}</span>`:""); const use=useOf(baseKey(s.key));
     el.addEventListener("pointerenter",()=>{ invName.innerHTML=`${itemName(s.key)}${use?`<span>${use}</span>`:""}`; }); el.title=itemName(s.key)+(use?" — "+use:""); }
   el.addEventListener("pointerleave",()=>{ invName.innerHTML=""; });
   el.addEventListener("click",()=>bagSlotClick(i)); return el; }
@@ -807,8 +876,8 @@ function renderCraftGrid(){ craftGridEl.innerHTML="";
   for(let i=0;i<9;i++){ const c=craftGrid[i],el=document.createElement("div"); el.className="cslot";
     if(c)el.innerHTML=iconSpan(c.key)+(c.count>1?`<span class="n">${c.count}</span>`:""); el.addEventListener("click",()=>cellClick(i)); craftGridEl.appendChild(el); }
   const R=matchRecipe(); craftOutEl.innerHTML=""; const out=document.createElement("div"); out.className="cslot"+(R?" ready":"");
-  if(R){ out.innerHTML=iconSpan(R.once?"stone":R.give,true); out.addEventListener("click",craftOutputClick); craftHintEl.textContent="✓ "+(R.once?"Sturdy Axe":itemName(R.give))+" — click it to craft"; }
-  else craftHintEl.textContent=Object.keys(gridCounts()).length?"no recipe — see the recipe book below":"drop items into the grid to craft";
+  if(R){ out.innerHTML=iconSpan(R.once?"stone":R.give,true); out.addEventListener("click",craftOutputClick); craftHintEl.textContent="✓ "+(R.once?t("Sturdy Axe"):itemName(R.give))+" — "+t("click it to craft"); }
+  else craftHintEl.textContent=Object.keys(gridCounts()).length?t("no recipe — see the recipe book below"):t("drop items into the grid to craft");
   craftOutEl.appendChild(out); }
 function craftOutputClick(){ const R=matchRecipe(); if(!R)return; craftGrid.fill(null);
   if(R.once==="axe"){ hasAxe=true; float(player.x,player.y-20,"sturdy axe!","#fff"); } else addItem(R.give,1); SND.craft();
@@ -819,15 +888,15 @@ const HOWTO={ wood:"chop trees", stone:"mine rocks", goo:"defeat slimes", iron:"
   sand:"scoop sand on the village beach", glass:"craft from 2 sand", oil:"press 2 corn, kill slimes, or buy from the fisher",
   fish:"fish water with a rod or net", crop_corn:"plant & harvest corn seeds (cat shop)" };
 function missingFor(R){ return Object.entries(R.cost).filter(([m,n])=>countItem(m)<n).map(([m,n])=>({m,short:n-countItem(m)})); }
-function clueText(miss){ return miss.map(x=>`${x.short} more ${itemName(x.m)} — ${HOWTO[x.m]||"craft it"}`).join("; "); }
+function clueText(miss){ return miss.map(x=>`${itemName(x.m)} ×${x.short} — ${howOf(x.m)}`).join(lang==="zh"?"、":"; "); }
 /* recipe book — click a row to auto-fill the grid from your bag */
 function renderRecipes(){ recipeListEl.innerHTML=RECIPES.map(R=>{
     const parts=Object.entries(R.cost).map(([m,n])=>{ const ok=countItem(m)>=n; return `<span style="color:${ok?'#bfe6c2':'#ff9a9a'}">${n} ${itemName(m)}</span>`; }).join(" + ");
-    const miss=missingFor(R), title=R.once?"Sturdy Axe":itemName(R.give), owned=R.once==="axe"&&hasAxe;
-    const clue=(miss.length&&!owned)?`<span class="clue">get ${clueText(miss)}</span>`:"";
-    return `<div class="item" data-fill="${R.key}"><span class="dot" style="background:${craftIcon(R)}"></span><div><b>${title}${owned?" · owned":""}</b><span>needs ${parts}</span>${clue}</div></div>`; }).join(""); }
+    const miss=missingFor(R), title=R.once?t("Sturdy Axe"):itemName(R.give), owned=R.once==="axe"&&hasAxe;
+    const clue=(miss.length&&!owned)?`<span class="clue">${t("get")} ${clueText(miss)}</span>`:"";
+    return `<div class="item" data-fill="${R.key}"><span class="dot" style="background:${craftIcon(R)}"></span><div><b>${title}${owned?" · "+t("owned"):""}</b><span>${t("needs")} ${parts}</span>${clue}</div></div>`; }).join(""); }
 function fillFromRecipe(key){ const R=RECIPES.find(x=>x.key===key); if(!R||(R.once==="axe"&&hasAxe))return;
-  const miss=missingFor(R); if(miss.length){ craftHintEl.textContent="need "+clueText(miss); return; }
+  const miss=missingFor(R); if(miss.length){ craftHintEl.textContent=t("need")+" "+clueText(miss); return; }
   returnGridToBag(); let i=0; for(const [m,n] of Object.entries(R.cost)) for(let j=0;j<n&&i<9;j++){ if(removeItem(m,1))craftGrid[i++]={key:m,count:1}; }
   renderCraftGrid(); renderBag(); }
 function openBag(){ document.getElementById("bagCoins").textContent=coins; invName.innerHTML=""; renderBag(); renderCraftGrid(); renderRecipes(); baguiEl.classList.add("open"); }
@@ -858,13 +927,23 @@ function renderHelp(){ const tiles=["grass","soil","tree","rock","iron","gold","
   const tips=["Walk to act on the tile you face. <b>Double-tap</b> a direction to <b>run</b>.",
     "Talking is on its <b>own</b> button (T / 💬) so use/E can farm & gather right next to NPCs. You can't talk while a monster is attacking you.",
     "<b>Anything you place</b> — fences, chairs, tables, lamps, rugs, torches, paths — returns to your bag if you <b>hold</b> use on it ~1.5s. The <b>farm fence</b> can't be broken (expand it at the cat shop).",
-    "<b>Oil</b> now comes from <b>corn</b>: buy corn seeds at the cat, grow & harvest corn, then press <b>2 corn → oil</b> at the crafting grid. Slimes also drop oil, and the fisher sells it.",
-    "Craft by opening the bag and <b>dropping items into the 3×3 grid</b> — a match lights up the result; click it. The <b>recipe book</b> shows what you're missing and where to find it, and auto-fills the grid.",
+    "<b>Oil</b> comes from <b>corn</b>: buy corn seeds at the cat, grow & harvest corn, then press <b>2 corn → oil</b> at the crafting grid. Slimes also drop oil, and the fisher sells it.",
+    "Craft by opening the bag and <b>dropping items into the 3×3 grid</b> — a match lights up the result; click it. The <b>recipe book</b> shows what you're missing and where to find it.",
+    "Beat the road <b>boss</b> (needs a metal sword + armour) to reach the village. Cheat: the tiny box in the bottom-right corner — type <b>111</b> + Enter to skip it.",
     "Use <b>save file</b> to download your progress and <b>load file</b> to bring it back on any device."];
-  const cH=controls.map(c=>`<div class="item"><b>${c[0]}</b><span>⌨️ ${c[1]} &nbsp;·&nbsp; 📱 ${c[2]}</span></div>`).join("");
-  const tH=tiles.map(k=>{ const d=DESC[k]; return d?`<div class="item"><b>${d[0]}</b><span>${d[1]}</span></div>`:""; }).join("");
-  const iH=items.map(k=>{ const base=k.startsWith("seed_")?"seed":k.startsWith("crop_")?"crop":k; const u=USE[base]||USE[k]||""; return `<div class="item"><b>${itemName(k)}</b><span>${u}</span></div>`; }).join("");
-  document.getElementById("helpBody").innerHTML=`<h4>controls</h4>${cH}<h4>tips</h4>${tips.map(t=>`<div class="item"><span>${t}</span></div>`).join("")}<h4>around the world</h4>${tH}<h4>items in your bag</h4>${iH}`; }
+  const controlsZH=[["移動","W A S D / 方向鍵","D-pad（左下）"],["衝刺","連按兩下同方向","連按兩下 D-pad 方向"],["使用 / 動作（翻土、種植、澆水、採收、砍伐、開採、釣魚、戰鬥、放置）","E 或 空白鍵","圓形「使用」鈕"],["拆除你放置的東西","長按使用約 1.5 秒","長按「使用」鈕"],["與貓 / 漁夫 / 村民對話","T","💬 鈕"],["選快捷欄物品","數字鍵 1–0","點快捷欄格子"],["背包與製作","I（或 B / Tab）","🎒 背包鈕"],["地圖","M","🗺 地圖鈕"],["推進對話","空白鍵 / E / Enter","點對話框"],["關閉選單","Esc","✕ / 點外面"],["音效 · 新遊戲 · 儲存/載入","上方按鈕","上方按鈕"]];
+  const tipsZH=["走到面對的格子按使用來動作。<b>連按兩下</b>方向可<b>衝刺</b>。",
+    "對話是<b>獨立</b>按鈕（T / 💬），所以 使用/E 可在 NPC 旁邊耕作採集。怪物攻擊你時不能對話。",
+    "<b>你放置的任何東西</b> — 柵欄、椅子、桌子、檯燈、地毯、火把、道路 — <b>長按</b>使用約 1.5 秒即可收回背包。<b>農場圍欄</b>不能拆（在貓商店擴建）。",
+    "<b>油</b>來自<b>玉米</b>：在貓商店買玉米種子，種植採收後，在製作格用 <b>2 玉米 → 油</b>。史萊姆也會掉油，漁夫也有賣。",
+    "打開背包，<b>把物品放進 3×3 格子</b>來製作 — 配對成功會亮起結果，點它即可。<b>配方書</b>會顯示你缺什麼與取得方式。",
+    "打敗道路<b>頭目</b>（需金屬劍+盔甲）才能前往村莊。密技：右下角的小框，輸入 <b>111</b> + Enter 可跳過。",
+    "用<b>儲存</b>下載進度，用<b>載入</b>在任何裝置帶回。"];
+  const useC=lang==="zh"?controlsZH:controls, useT=lang==="zh"?tipsZH:tips;
+  const cH=useC.map(c=>`<div class="item"><b>${c[0]}</b><span>⌨️ ${c[1]} &nbsp;·&nbsp; 📱 ${c[2]}</span></div>`).join("");
+  const tH=tiles.map(k=>{ const d=descOf(k); return d?`<div class="item"><b>${d[0]}</b><span>${d[1]}</span></div>`:""; }).join("");
+  const iH=items.map(k=>{ const base=k.startsWith("seed_")?"seed":k.startsWith("crop_")?"crop":k; const u=useOf(base)||useOf(k); return `<div class="item"><b>${itemName(k)}</b><span>${u}</span></div>`; }).join("");
+  document.getElementById("helpBody").innerHTML=`<h4>${t("shortcuts")}</h4>${cH}<h4>${t("tutorial")}</h4>${useT.map(x=>`<div class="item"><span>${x}</span></div>`).join("")}<h4>${t("around the world")}</h4>${tH}<h4>${t("items in your bag")}</h4>${iH}`; }
 document.getElementById("helpBtn").addEventListener("click",()=>{ renderHelp(); helpEl.classList.add("open"); });
 document.getElementById("helpClose").addEventListener("click",()=>helpEl.classList.remove("open"));
 helpEl.addEventListener("pointerdown",e=>{ if(e.target===helpEl)helpEl.classList.remove("open"); });
@@ -874,13 +953,13 @@ const marketEl=document.getElementById("market");
 const GEARCOST={rod:12,net:30};
 function openMarket(){ renderMarket(); marketEl.classList.add("open"); }
 function renderMarket(){ document.getElementById("mktCoins").textContent=coins;
-  const gear=[{k:"rod",d:"catch fish from any water"},{k:"net",d:"catch 2–3 fish at a time"}];
+  const gear=[{k:"rod",d:t("catch fish from any water")},{k:"net",d:t("catch 2–3 fish at a time")}];
   document.getElementById("gearList").innerHTML=gear.map(g=>{ const owned=countItem(g.k)>0,cost=GEARCOST[g.k];
-    return `<div class="item"><div><b>${itemName(g.k)}</b><span>${g.d}</span></div><button data-buyg="${g.k}" ${owned||coins<cost?"disabled":""}>${owned?"owned":cost+"c"}</button></div>`; }).join("")
-    +`<div class="item"><div><b>oil</b><span>grow corn & press it, or buy a barrel here</span></div><button data-buyoil="1" ${coins<8?"disabled":""}>8c</button></div>`;
+    return `<div class="item"><div><b>${itemName(g.k)}</b><span>${g.d}</span></div><button data-buyg="${g.k}" ${owned||coins<cost?"disabled":""}>${owned?t("owned"):cost+"c"}</button></div>`; }).join("")
+    +`<div class="item"><div><b>${t("oil")}</b><span>${t("grow corn & press it, or buy a barrel here")}</span></div><button data-buyoil="1" ${coins<8?"disabled":""}>8c</button></div>`;
   const sellable=["fish","iron","gold","sand","glass","oil"].filter(k=>countItem(k)>0);
-  document.getElementById("mktSell").innerHTML=(sellable.length?sellable:["__none"]).map(k=>{ if(k==="__none")return `<div class="item"><div><span>catch fish, mine ore or scoop sand, then sell it here</span></div></div>`;
-    const v=ITEMS[k].sell,n=countItem(k); return `<div class="item"><div><b>${itemName(k)} ×${n}</b><span>${v}c each</span></div><button data-msell="${k}">sell</button></div>`; }).join(""); }
+  document.getElementById("mktSell").innerHTML=(sellable.length?sellable:["__none"]).map(k=>{ if(k==="__none")return `<div class="item"><div><span>${t("catch fish, mine ore or scoop sand, then sell it here")}</span></div></div>`;
+    const v=ITEMS[k].sell,n=countItem(k); return `<div class="item"><div><b>${itemName(k)} ×${n}</b><span>${v}c ${t("each")}</span></div><button data-msell="${k}">${t("sell")}</button></div>`; }).join(""); }
 marketEl.addEventListener("click",e=>{ const d=e.target.dataset||{};
   if(d.buyg){ const cost=GEARCOST[d.buyg]; if(countItem(d.buyg)===0&&coins>=cost&&addItem(d.buyg,1)){coins-=cost;SND.coin();} }
   else if(d.buyoil){ if(coins>=8&&addItem("oil",1)){coins-=8;SND.coin();} }
@@ -902,11 +981,11 @@ function setPortrait(line){ const who=line.who, sp=SPEAKERS[who]||{}, img=PORTRA
   const name=line.name||sp.name||"You", face=line.face||sp.face||"🧑", col=line.col||sp.col||"#2f6dd0";
   if(img){ vnImg.src=img.src; vnImg.classList.add("show"); vnFace.style.display="none"; }
   else { vnImg.classList.remove("show"); vnFace.style.display="grid"; vnFace.textContent=face; vnFace.style.background=col; }
-  vnName.textContent=name; }
+  vnName.textContent=t(name); }
 function typeLine(text){ clearInterval(typeTimer); fullText=text; vnText.textContent=""; let i=0;
   typeTimer=setInterval(()=>{ vnText.textContent=text.slice(0,++i); if(i>=text.length){clearInterval(typeTimer);typeTimer=null;} },18); }
 function showChoices(choices){ vnHint.style.display="none"; vnChoices.innerHTML="";
-  choices.forEach(c=>{ const b=document.createElement("button"); b.textContent=c.label;
+  choices.forEach(c=>{ const b=document.createElement("button"); b.textContent=t(c.label);
     b.addEventListener("click",()=>{ const after=dlg&&dlg.onDone; endDialog(); if(c.go==="trade"&&after)after(); }); vnChoices.appendChild(b); }); }
 function startDialog(seq,onDone){ dlg={seq,i:-1,onDone}; dialogOpen=true; vnEl.classList.add("open"); advanceDialog(); }
 function advanceDialog(){ if(!dlg)return;
@@ -915,7 +994,7 @@ function advanceDialog(){ if(!dlg)return;
   if(cur&&cur.choices){ if(!vnChoices.children.length)showChoices(cur.choices); return; }   // never skip past a choice
   if(vnChoices.children.length)return;
   dlg.i++; if(dlg.i>=dlg.seq.length){ const after=dlg.onDone; endDialog(); if(after)after(); return; }
-  const line=dlg.seq[dlg.i]; setPortrait(line); vnChoices.innerHTML=""; vnHint.style.display=line.choices?"none":"block"; typeLine(line.text); }
+  const line=dlg.seq[dlg.i]; setPortrait(line); vnChoices.innerHTML=""; vnHint.style.display=line.choices?"none":"block"; typeLine(t(line.text)); }
 function endDialog(){ dialogOpen=false; dlg=null; clearInterval(typeTimer); typeTimer=null; vnChoices.innerHTML=""; vnEl.classList.remove("open"); }
 vnEl.addEventListener("click",e=>{ if(e.target.tagName==="BUTTON")return; advanceDialog(); });
 function talkToCat(){ startDialog([
@@ -952,8 +1031,10 @@ impFile.addEventListener("change",e=>{ const file=e.target.files[0]; if(!file)re
       if(load()){ renderBar(); syncUI(); float(player.x,player.y-26,"save loaded!","#fff"); } else throw 0;
     }catch(err){ alert("That doesn't look like a Homestead save file."); } impFile.value=""; };
   rd.readAsText(file); });
+document.getElementById("langBtn").addEventListener("click",()=>{ lang=lang==="zh"?"en":"zh"; applyLang(); });
 setInterval(save,5000);
 if(!load()) reset(); else { renderBar(); syncUI(); }
+applyLang();
 resize(); requestAnimationFrame(frame);
 })();
 </script>
