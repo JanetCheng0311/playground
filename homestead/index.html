@@ -12,7 +12,16 @@
   html,body{height:100%;overflow:hidden}
   body{background:var(--blue);color:var(--white);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
     user-select:none;-webkit-user-select:none;touch-action:none;min-height:100dvh;display:flex;flex-direction:column}
-  header{display:flex;align-items:baseline;gap:16px;padding:14px clamp(12px,4vw,40px);font-size:14px;font-weight:500;flex:0 0 auto;flex-wrap:wrap}
+  header{display:flex;align-items:baseline;gap:12px;padding:8px clamp(10px,3vw,30px);font-size:13px;font-weight:500;flex:0 0 auto;flex-wrap:wrap}
+  .setrow{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}
+  .setrow button{font:inherit;font-size:13px;font-weight:700;color:#fff;background:rgba(255,255,255,.16);border:1.5px solid rgba(255,255,255,.4);border-radius:999px;padding:8px 14px;cursor:pointer;touch-action:manipulation}
+  .setrow button:active{background:rgba(255,255,255,.3)}
+  .artrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid rgba(255,255,255,.14)}
+  .artrow .nm{flex:1;font-size:13px;font-weight:600}
+  .artrow .thumb{width:36px;height:36px;border-radius:8px;background:rgba(0,0,0,.28);display:grid;place-items:center;overflow:hidden;flex:0 0 auto}
+  .artrow .thumb img{max-width:100%;max-height:100%;display:block}
+  .artrow label{font-size:11px;font-weight:700;color:#0a2acc;background:#fff;border-radius:999px;padding:6px 11px;cursor:pointer;white-space:nowrap}
+  .artrow input[type=file]{display:none}
   header a,header button{font:inherit;color:var(--white);background:none;border:none;cursor:pointer;text-decoration:none;padding:2px 0;border-bottom:1px solid transparent;transition:border-color .15s}
   header a:hover,header button:hover{border-bottom-color:var(--white)}
   header .title{font-weight:600;margin-right:auto}
@@ -29,22 +38,26 @@
   .slot .n{position:absolute;right:3px;bottom:1px;font-size:11px;font-weight:700;text-shadow:0 1px 2px #000}
   .slot .k{position:absolute;left:4px;top:2px;font-size:9px;opacity:.5;font-weight:700}
   .hint{flex:0 0 auto;font-size:12px;opacity:.6;text-align:center;padding:0 16px 14px;line-height:1.5}
+  button,.slot{touch-action:manipulation}   /* kill iOS double-tap-to-zoom on the controls */
   .pad{position:fixed;left:0;right:0;bottom:12px;z-index:10;display:none;justify-content:space-between;align-items:flex-end;padding:0 16px;pointer-events:none}
-  .dpad{display:grid;grid-template-columns:repeat(3,46px);grid-template-rows:repeat(3,46px);gap:5px;pointer-events:auto}
-  .dpad button{border:1.5px solid rgba(255,255,255,.5);background:rgba(255,255,255,.12);color:#fff;border-radius:12px;font-size:19px;font-weight:700;cursor:pointer}
-  .dpad button:active{background:rgba(255,255,255,.3)}
-  .dpad .u{grid-area:1/2}.dpad .l{grid-area:2/1}.dpad .r{grid-area:2/3}.dpad .d{grid-area:3/2}
-  .actcol{pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:8px}
-  .act{pointer-events:auto;width:82px;height:82px;border-radius:50%;border:1.5px solid rgba(255,255,255,.6);background:rgba(255,255,255,.18);color:#fff;font-size:14px;font-weight:700;cursor:pointer}
+  /* virtual joystick (replaces the d-pad) */
+  .joy{position:relative;width:104px;height:104px;border-radius:50%;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.1);pointer-events:auto;touch-action:none;flex:0 0 auto}
+  .joynub{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(255,255,255,.4);border:1.5px solid rgba(255,255,255,.75);pointer-events:none;transition:transform .04s linear}
+  .joy.run .joynub{background:#ffd24a;border-color:#fff}
+  .actcol{pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:7px}
+  .act{pointer-events:auto;width:64px;height:64px;border-radius:50%;border:1.5px solid rgba(255,255,255,.6);background:rgba(255,255,255,.18);color:#fff;font-size:13px;font-weight:700;cursor:pointer}
   .act:active{background:rgba(255,255,255,.34)}
-  .act2{pointer-events:auto;width:56px;height:56px;border-radius:50%;border:1.5px solid rgba(255,255,255,.5);background:rgba(255,255,255,.14);color:#fff;font-size:20px;cursor:pointer}
+  .act2{pointer-events:auto;width:46px;height:46px;border-radius:50%;border:1.5px solid rgba(255,255,255,.5);background:rgba(255,255,255,.14);color:#fff;font-size:18px;cursor:pointer}
   .act2:active{background:rgba(255,255,255,.3)}
   body.inboss .pad{display:flex}
-  body.inboss .act{width:120px;height:120px;font-size:20px;border-width:2.5px}
+  body.inboss .joy{display:none}
+  body.inboss .act{width:104px;height:104px;font-size:18px;border-width:2.5px}
   body.inboss .act2{display:none}
   .shop{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(0,12,60,.55);backdrop-filter:blur(4px);padding:16px}
   .shop.open{display:flex}
-  .shop .card{background:#0a2acc;border:1px solid rgba(255,255,255,.3);border-radius:20px;width:min(470px,100%);max-height:88vh;overflow-y:auto;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+  .shop .card{position:relative;background:#0a2acc;border:1px solid rgba(255,255,255,.3);border-radius:20px;width:min(470px,100%);max-height:88vh;overflow-y:auto;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+  .xclose{position:sticky;top:-6px;float:right;margin:-8px -6px 0 8px;width:38px;height:38px;border-radius:50%;border:1.5px solid rgba(255,255,255,.5);background:#0a2acc;color:#fff;font-size:18px;font-weight:700;cursor:pointer;z-index:6;line-height:1;display:grid;place-items:center;touch-action:manipulation}
+  .xclose:active{background:rgba(255,255,255,.28)}
   .shop h2{font-size:16px;font-weight:700;display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
   .shop h2 .c{margin-left:auto;font-size:14px}
   .shop h3{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin:15px 0 6px}
@@ -54,9 +67,9 @@
   .shop .item button{font:inherit;font-size:12px;font-weight:700;color:#0a2acc;background:#fff;border:none;border-radius:999px;padding:7px 13px;cursor:pointer;min-width:54px}
   .shop .item button[disabled]{opacity:.4;cursor:default}
   .shop .close{margin-top:16px;width:100%;font:inherit;font-weight:700;color:#fff;background:none;border:1.5px solid rgba(255,255,255,.5);border-radius:999px;padding:11px;cursor:pointer}
-  .toolbar{flex:0 0 auto;display:flex;gap:10px;justify-content:center;padding:10px 16px 0}
-  .toolbar button{font:inherit;font-weight:700;font-size:14px;color:#fff;background:rgba(255,255,255,.16);border:1.5px solid rgba(255,255,255,.45);border-radius:999px;padding:9px 20px;cursor:pointer;transition:background .15s}
-  .toolbar button em{font-style:normal;opacity:.6;font-weight:400;font-size:12px}
+  .toolbar{flex:0 0 auto;display:flex;gap:7px;justify-content:center;flex-wrap:wrap;padding:8px 12px 0}
+  .toolbar button{font:inherit;font-weight:700;font-size:12.5px;color:#fff;background:rgba(255,255,255,.16);border:1.5px solid rgba(255,255,255,.45);border-radius:999px;padding:6px 13px;cursor:pointer;transition:background .15s}
+  .toolbar button em{font-style:normal;opacity:.6;font-weight:400;font-size:11px}
   .toolbar button:hover,.toolbar button:active{background:rgba(255,255,255,.28)}
   /* inventory (bag) */
   .invcard{width:min(720px,100%)}
@@ -133,31 +146,45 @@
   #vnSkip{position:absolute;top:-12px;right:6px;pointer-events:auto;font:inherit;font-size:12px;font-weight:700;color:#fff;background:rgba(8,16,48,.92);border:1.5px solid rgba(255,255,255,.45);border-radius:999px;padding:6px 14px;cursor:pointer}
   #vnSkip em{font-style:normal;opacity:.6;font-weight:400}
   #vn .box{position:relative}
-  @media (max-width:820px){ .pad{display:flex} .hint{display:none} .bar{padding-bottom:108px} #vn{bottom:96px} }
+  @media (max-width:820px){ .pad{display:flex} .hint{display:none} .bar{padding-bottom:124px} #vn{bottom:120px} #talkBtn{display:none} }
 </style>
 </head>
 <body>
 <header>
   <span class="title">Homestead<em>farm · gather · craft</em></span>
-  <span class="stat">coins <b id="coins">0</b></span>
+  <span class="stat">💰 <b id="coins">0</b></span>
   <span class="stat" id="clock">day 1 · morning</span>
-  <button id="expBtn">save file</button>
-  <button id="impBtn">load file</button>
-  <button id="renameBtn">name</button>
-  <button id="snd">sound</button>
-  <button id="new">new game</button>
+  <button id="mapBtn">🗺 Map</button>
+  <button id="questBtn">📋 Quests</button>
+  <button id="achvBtn">🏆 Goals</button>
+  <button id="settingsBtn">⚙ Settings</button>
   <button id="langBtn">中文</button>
   <a href="../">playground</a>
   <input type="file" id="impFile" accept="application/json,.json" style="display:none">
 </header>
+<div class="shop" id="settings"><div class="card">
+  <h2>⚙ Settings</h2>
+  <h3>game</h3>
+  <div class="setrow">
+    <button id="snd">🔊 sound</button>
+    <button id="helpBtn">？ controls</button>
+    <button id="expBtn">💾 save file</button>
+    <button id="impBtn">📂 load file</button>
+    <button id="renameBtn">✏️ rename</button>
+    <button id="new">🔄 new game</button>
+  </div>
+  <label class="setrow" style="cursor:pointer"><input type="checkbox" id="tutToggle" checked> &nbsp;show tutorial hint bar</label>
+  <h3>character art — upload your own PNG (transparent background works best)</h3>
+  <div id="artUploads"></div>
+  <button id="artReset" class="close" style="border-color:rgba(255,140,140,.6)">reset all art to default</button>
+  <button class="close" id="settingsClose">close</button>
+</div></div>
 <main><canvas id="stage"></canvas></main>
 <div class="toolbar">
   <button id="talkBtn">💬 Talk <em>(T)</em></button>
   <button id="eatBtn">🍖 Eat <em>(F)</em></button>
   <button id="bagBtn">🎒 Bag <em>(I)</em></button>
-  <button id="mapBtn">🗺 Map <em>(M)</em></button>
-  <button id="questBtn">📋 Quests</button>
-  <button id="helpBtn">？ Help</button>
+  <button id="rideBtn">🐴 Ride <em>(G)</em></button>
 </div>
 <div class="bar" id="bar"></div>
 <div id="barTip"></div>
@@ -207,10 +234,21 @@
   <div id="questBody"></div>
   <button class="close" id="questClose">close</button>
 </div></div>
+<div class="shop" id="achv"><div class="card">
+  <h2>🏆 Milestones</h2>
+  <div id="achvBody"></div>
+  <button class="close" id="achvClose">close</button>
+</div></div>
 <div class="shop" id="merchant"><div class="card">
   <h2>🐹 Hamu's Trades <span class="c">coins <b id="merchCoins">0</b></span></h2>
+  <h3>buy farm animals (kept in your home pasture)</h3><div id="merchRanch"></div>
   <h3>sell (Hamu pays +25%)</h3><div id="merchSell"></div>
   <button class="close" id="merchClose">close</button>
+</div></div>
+<div class="shop" id="teleport"><div class="card" style="width:min(360px,100%);text-align:center">
+  <h2>🐴 Ride the horse</h2>
+  <div id="teleList"></div>
+  <button class="close" id="teleClose">close</button>
 </div></div>
 <div class="shop" id="nameModal"><div class="card" style="width:min(360px,100%);text-align:center">
   <h2 id="nameTitle">What's your name?</h2>
@@ -242,7 +280,7 @@
   <button id="vnSkip">Skip ⏭ <em>(Del)</em></button>
 </div></div>
 <div class="pad">
-  <div class="dpad"><button class="u" data-dir="u">↑</button><button class="l" data-dir="l">←</button><button class="r" data-dir="r">→</button><button class="d" data-dir="d">↓</button></div>
+  <div class="joy" id="joy"><div class="joynub" id="joynub"></div></div>
   <div class="actcol"><button class="act2" id="talkBtn2">💬</button><button class="act" id="actBtn">use</button></div>
 </div>
 <input id="cheat" maxlength="6" placeholder="·" autocomplete="off" spellcheck="false">
@@ -256,15 +294,41 @@
    emoji images, which are copyrighted. If swapping to bundled emoji art, use an open-licensed set
    (e.g. OpenMoji CC BY-SA, or Twemoji CC-BY 4.0) with attribution — never vendor PNGs. */
 const canvas=document.getElementById("stage"), ctx=canvas.getContext("2d");
-const DPR=Math.min(devicePixelRatio||1,2);
+const DPR=Math.min(devicePixelRatio||1,1.5);   // cap retina scaling — fewer pixels to fill = less battery
 const TILE=44, OCOLS=34, OROWS=24, DAYLEN=360;
 let VW,VH,camX=0,camY=0;
 
 // dur is in seconds; DAYLEN (360) = one in-game day, so the fastest crop takes ~1 day. Sleeping advances growth.
-const CROPS={ carrot:{name:"carrot",cost:4,sell:9,dur:360,food:8,c:"#ff8a3d",leaf:"#3fae5a"},
-  wheat:{name:"wheat",cost:8,sell:20,dur:540,food:6,c:"#f4d35e",leaf:"#9bc34a"},
-  corn:{name:"corn",cost:10,sell:14,dur:720,food:10,c:"#f7d83a",leaf:"#4f9e3f"},
-  pumpkin:{name:"pumpkin",cost:18,sell:55,dur:1080,food:16,c:"#e8702a",leaf:"#3f9d54"} };
+// s = seasons it can be planted (0=spring 1=summer 2=autumn 3=winter); special = seasonal crop (stricter wrong-season message)
+const CROPS={ // common all-season food/money crops (spring–autumn)
+  carrot:{name:"carrot",cost:4,sell:10,dur:360,food:8,c:"#ff8a3d",leaf:"#3fae5a",s:[0,1,2]},
+  potato:{name:"potato",cost:6,sell:12,dur:540,food:9,c:"#caa46a",leaf:"#6aa83f",s:[0,1,2]},
+  wheat:{name:"wheat",cost:8,sell:17,dur:540,food:6,c:"#f4d35e",leaf:"#9bc34a",s:[0,1,2]},
+  pumpkin:{name:"pumpkin",cost:18,sell:42,dur:1080,food:16,c:"#e8702a",leaf:"#3f9d54",s:[0,1,2]},
+  // seasonal food crops
+  strawberry:{name:"strawberry",cost:12,sell:32,dur:720,food:10,c:"#e23a4e",leaf:"#3fae5a",s:[0],special:true},
+  sugar_pea:{name:"sugar pea",cost:8,sell:22,dur:540,food:8,c:"#8fd06a",leaf:"#6aa83f",s:[0],special:true},
+  turnip_flower:{name:"turnip flower",cost:6,sell:18,dur:900,food:8,c:"#f0d24a",leaf:"#7ab84a",s:[0],special:true},
+  tomato:{name:"tomato",cost:10,sell:28,dur:720,food:12,c:"#e2402e",leaf:"#4f9e3f",s:[1],special:true},
+  corn:{name:"corn",cost:10,sell:16,dur:720,food:10,c:"#f7d83a",leaf:"#4f9e3f",s:[1]},
+  watermelon:{name:"watermelon",cost:24,sell:60,dur:1440,food:18,c:"#3fae5a",leaf:"#2f7d3f",s:[1],special:true},
+  sweet_potato:{name:"sweet potato",cost:12,sell:35,dur:900,food:14,c:"#b5612e",leaf:"#7ab84a",s:[2],special:true},
+  apple_seedling:{name:"apple seedling",cost:30,sell:68,dur:1800,food:16,c:"#e2402e",leaf:"#3f9d54",s:[2],special:true},
+  leek:{name:"leek",cost:14,sell:40,dur:1440,food:12,c:"#8fd06a",leaf:"#6aa83f",s:[3],special:true},
+  winter_carrot:{name:"winter carrot",cost:14,sell:45,dur:1440,food:12,c:"#ff8a3d",leaf:"#7a9e6a",s:[3],special:true},
+  // artisan crops (low raw sell — processed at machines for the real profit) — sold by the cat each season
+  flower:{name:"flower",cost:22,sell:12,dur:720,food:2,c:"#ff7ab0",leaf:"#3fae5a",s:[0],special:true,artisan:true},
+  tea:{name:"tea leaf",cost:28,sell:14,dur:900,food:2,c:"#6aa83f",leaf:"#4f8e3f",s:[0],special:true,artisan:true},
+  sun_bloom:{name:"sun bloom",cost:24,sell:13,dur:720,food:2,c:"#ffcf3a",leaf:"#5fae4a",s:[1],special:true,artisan:true},
+  fragrant_herb:{name:"fragrant herb",cost:22,sell:12,dur:540,food:2,c:"#7ad06a",leaf:"#4f9e3f",s:[1],special:true,artisan:true},
+  spice_flower:{name:"spice flower",cost:26,sell:14,dur:720,food:2,c:"#e0762a",leaf:"#7ab84a",s:[2],special:true,artisan:true},
+  amber_leaf:{name:"amber leaf",cost:24,sell:13,dur:720,food:2,c:"#d49030",leaf:"#a06a2a",s:[2],special:true,artisan:true},
+  frost_herb:{name:"frost herb",cost:30,sell:16,dur:1080,food:2,c:"#9fd6e6",leaf:"#7a9e6a",s:[3],special:true,artisan:true},
+  // rare luxury crops (sold by the special merchant) — processed into premium goods
+  sakura_bud:{name:"sakura bud",cost:80,sell:45,dur:1440,food:4,c:"#ffb7d5",leaf:"#3fae5a",s:[0],special:true,rare:true},
+  golden_citrus:{name:"golden citrus",cost:70,sell:40,dur:1440,food:8,c:"#ffd24a",leaf:"#5fae4a",s:[1],special:true,rare:true},
+  moonfruit:{name:"moonfruit",cost:100,sell:55,dur:1800,food:10,c:"#bcd0ff",leaf:"#4f6e9e",s:[2],special:true,rare:true},
+  snow_lotus:{name:"snow lotus",cost:120,sell:70,dur:1800,food:8,c:"#eaf4ff",leaf:"#9fc0d0",s:[3],special:true,rare:true} };
 const CKEYS=Object.keys(CROPS);
 
 // item types: seeds, crops, materials (mat), placeables (place), usables (use)
@@ -272,7 +336,7 @@ const ITEMS={
   seed_carrot:{kind:"seed",crop:"carrot"},seed_wheat:{kind:"seed",crop:"wheat"},seed_corn:{kind:"seed",crop:"corn"},seed_pumpkin:{kind:"seed",crop:"pumpkin"},
   crop_carrot:{kind:"crop",crop:"carrot"},crop_wheat:{kind:"crop",crop:"wheat"},crop_corn:{kind:"crop",crop:"corn"},crop_pumpkin:{kind:"crop",crop:"pumpkin"},
   wood:{kind:"mat",color:"#9c6b3f",name:"wood",sell:2}, stone:{kind:"mat",color:"#9aa3ab",name:"stone",sell:2}, goo:{kind:"mat",color:"#67d98a",name:"goo",sell:1},
-  salve:{kind:"use",color:"#ff8fae",name:"salve"}, torch:{kind:"place",tile:"torch",color:"#ffb24a",name:"torch"},
+  salve:{kind:"use",color:"#ff8fae",name:"salve",heal:2}, elixir:{kind:"use",color:"#ff5f8f",name:"elixir",heal:6}, torch:{kind:"place",tile:"torch",color:"#ffb24a",name:"torch"},
   fence:{kind:"place",tile:"pfence",color:"#7a5a32",name:"fence"}, ppath:{kind:"place",tile:"ppath",color:"#cdab73",name:"stone path"},
   chair:{kind:"place",tile:"chair",color:"#c08b5a",name:"chair",buy:15}, table:{kind:"place",tile:"table",color:"#a9784a",name:"table",buy:22},
   lamp:{kind:"place",tile:"lamp",color:"#ffd27a",name:"lamp",buy:28}, rug:{kind:"place",tile:"rug",color:"#c25b6b",name:"rug",buy:12},
@@ -281,19 +345,59 @@ const ITEMS={
   diamond:{kind:"mat",color:"#9fe6ff",name:"diamond",sell:60}, red_jewel:{kind:"mat",color:"#e8344e",name:"red jewel",sell:45}, green_jewel:{kind:"mat",color:"#3fae5a",name:"green jewel",sell:45},
   fossil:{kind:"mat",color:"#cdbf9c",name:"fossil",sell:35}, jewelry:{kind:"mat",color:"#ffd84a",name:"fine jewelry",sell:150},
   fish:{kind:"mat",color:"#8fc7e8",name:"fish",sell:7}, sand:{kind:"mat",color:"#e9d8a6",name:"sand",sell:1}, glass:{kind:"mat",color:"#bfe6f0",name:"glass",sell:4},
-  rod:{kind:"tool",color:"#b5651d",name:"fishing rod"}, net:{kind:"tool",color:"#dfeae0",name:"fishing net"},
+  rod:{kind:"tool",color:"#b5651d",name:"fishing rod",rodLvl:1}, net:{kind:"tool",color:"#dfeae0",name:"fishing net",netLvl:1},
   lantern:{kind:"place",tile:"lantern",color:"#ffcf6e",name:"lantern"}, goldlamp:{kind:"place",tile:"goldlamp",color:"#ffe08a",name:"gold lamp"},
   mfence:{kind:"place",tile:"mfence",color:"#b9c2cc",name:"metal fence"},
   oil:{kind:"mat",color:"#2e2a22",name:"oil",sell:5}, oillamp:{kind:"place",tile:"oillamp",color:"#ffb347",name:"oil lamp"},
   metal_sword:{kind:"gear",slot:"sword",color:"#cfd6dd",name:"metal sword",bonus:{atk:1}}, metal_armor:{kind:"gear",slot:"armor",color:"#9fb0c2",name:"metal armour",bonus:{maxhp:2}},
   chest:{kind:"place",tile:"chest",color:"#9c6b3f",name:"chest"},
   berry:{kind:"food",color:"#c8466b",name:"berry",food:14}, meat:{kind:"food",color:"#c0603a",name:"meat",food:30},
-  bread:{kind:"food",color:"#d8a24a",name:"bread",food:35,buy:20,buff:{bonus:{regen:2},dur:120},eff:"heals faster for 2 min"}, pie:{kind:"food",color:"#e0913f",name:"berry pie",food:60,buy:40,buff:{bonus:{maxhp:1,regen:2},dur:180},eff:"+1 heart & fast heal, 3 min"}, salad:{kind:"food",color:"#5fae4a",name:"garden salad",food:40},
-  hearty_stew:{kind:"food",color:"#b5612e",name:"hearty stew",food:60,buff:{bonus:{maxhp:2},dur:120}}, power_roast:{kind:"food",color:"#a23b2a",name:"power roast",food:50,buff:{bonus:{atk:1},dur:120}}, swift_salad:{kind:"food",color:"#5fc06a",name:"swift greens",food:40,buff:{bonus:{speed:30},dur:120}},
+  bread:{kind:"food",color:"#d8a24a",name:"bread",food:35,buy:20,buff:{bonus:{regen:1},dur:120},eff:"heals faster for 2 min"}, pie:{kind:"food",color:"#e0913f",name:"berry pie",food:60,buy:40,buff:{bonus:{maxhp:1,regen:2},dur:150},eff:"+1 heart & fast heal, 2.5 min"}, salad:{kind:"food",color:"#5fae4a",name:"garden salad",food:40},
+  hearty_stew:{kind:"food",color:"#b5612e",name:"hearty stew",food:60,buff:{bonus:{maxhp:2},dur:120}}, power_roast:{kind:"food",color:"#a23b2a",name:"power roast",food:50,buff:{bonus:{atk:1},dur:120}}, swift_salad:{kind:"food",color:"#5fc06a",name:"swift greens",food:40,buff:{bonus:{speed:18},dur:120}},
   stove:{kind:"place",tile:"stove",color:"#7d8893",name:"stove"},
   cap:{kind:"gear",slot:"hat",color:"#7aa86b",name:"cloth cap",bonus:{maxhp:1}}, vest:{kind:"gear",slot:"chest",color:"#b9883f",name:"leather vest",bonus:{maxhp:2}},
   legguards:{kind:"gear",slot:"pants",color:"#8a8f98",name:"leg guards",bonus:{maxhp:1}}, boots:{kind:"gear",slot:"shoes",color:"#6b4a2b",name:"swift boots",bonus:{maxhp:1,speed:22}},
-  ring:{kind:"gear",slot:"acc",color:"#ffd84a",name:"healing ring",bonus:{regen:1}}, charm:{kind:"gear",slot:"acc",color:"#c46aff",name:"power charm",bonus:{atk:1}} };
+  ring:{kind:"gear",slot:"acc",color:"#ffd84a",name:"healing ring",bonus:{regen:1}}, charm:{kind:"gear",slot:"acc",color:"#c46aff",name:"power charm",bonus:{atk:1}},
+  steel:{kind:"mat",color:"#8a939c",name:"steel bar",sell:14}, crown:{kind:"mat",color:"#ffe27a",name:"royal crown",sell:300},
+  gold_sword:{kind:"gear",slot:"sword",color:"#ffd84a",name:"golden sword",bonus:{atk:2}}, plate_armor:{kind:"gear",slot:"armor",color:"#aeb9c6",name:"plate armour",bonus:{maxhp:3}},
+  war_helm:{kind:"gear",slot:"hat",color:"#9aa3ab",name:"steel helm",bonus:{maxhp:2}}, crystal_ring:{kind:"gear",slot:"acc",color:"#9fe6ff",name:"crystal ring",bonus:{regen:2}}, war_charm:{kind:"gear",slot:"acc",color:"#e8344e",name:"war charm",bonus:{atk:2}},
+  jerky:{kind:"food",color:"#a65a36",name:"dried jerky",food:42}, fish_stew:{kind:"food",color:"#7fb0c2",name:"fish stew",food:55,buff:{bonus:{regen:2,maxhp:1},dur:150},eff:"+1 heart & fast heal, 2.5 min"},
+  leather_armor:{kind:"gear",slot:"armor",color:"#a9784a",name:"leather armour",bonus:{maxhp:1}}, gold_armor:{kind:"gear",slot:"armor",color:"#ffd84a",name:"golden armour",bonus:{maxhp:4}},
+  diamond_armor:{kind:"gear",slot:"armor",color:"#9fe6ff",name:"diamond armour",bonus:{maxhp:5}}, frost_plate:{kind:"gear",slot:"armor",color:"#bfe6f0",name:"frost plate",bonus:{maxhp:3,regen:1}},
+  diamond_helm:{kind:"gear",slot:"hat",color:"#bfe6f0",name:"diamond helm",bonus:{maxhp:3}}, chain_vest:{kind:"gear",slot:"chest",color:"#9aa3ab",name:"chain vest",bonus:{maxhp:3}},
+  gold_greaves:{kind:"gear",slot:"pants",color:"#ffd84a",name:"gold greaves",bonus:{maxhp:2,speed:12}}, winged_boots:{kind:"gear",slot:"shoes",color:"#dfeae0",name:"winged boots",bonus:{maxhp:1,speed:45}},
+  swift_band:{kind:"gear",slot:"acc",color:"#7fd2ff",name:"swift band",bonus:{speed:30}}, life_pendant:{kind:"gear",slot:"acc",color:"#ff8fae",name:"life pendant",bonus:{maxhp:2}},
+  sage_amulet:{kind:"gear",slot:"acc",color:"#3fae5a",name:"sage amulet",bonus:{regen:2,maxhp:1}}, titan_seal:{kind:"gear",slot:"acc",color:"#c7ccd2",name:"titan seal",bonus:{maxhp:3}},
+  berserk_idol:{kind:"gear",slot:"acc",color:"#e8344e",name:"berserk idol",bonus:{atk:3}},
+  iron_stew:{kind:"food",color:"#8a939c",name:"iron stew",food:60,buff:{bonus:{maxhp:3},dur:150},eff:"+3 hearts for 2.5 min"}, rage_skewer:{kind:"food",color:"#c23a2a",name:"rage skewer",food:50,buff:{bonus:{atk:2},dur:150},eff:"+2 attack for 2.5 min"},
+  mending_broth:{kind:"food",color:"#5fae6a",name:"mending broth",food:55,buff:{bonus:{regen:2},dur:180},eff:"fast heal for 3 min"}, feast_platter:{kind:"food",color:"#d8913f",name:"feast platter",food:70,buff:{bonus:{maxhp:2,atk:1,speed:20},dur:120},eff:"+2 hearts, +1 attack & faster, 2 min"},
+  egg:{kind:"food",color:"#f3e6c0",name:"egg",food:12,sell:6}, milk:{kind:"food",color:"#f4f0e6",name:"milk",food:16,sell:10}, truffle:{kind:"mat",color:"#5a4634",name:"truffle",sell:60},
+  omelette:{kind:"food",color:"#f6cf5a",name:"omelette",food:48}, cheese:{kind:"food",color:"#f0c54a",name:"cheese",food:30,sell:30},
+  // seafood from net traps
+  crab:{kind:"food",color:"#e0613a",name:"crab",food:18,sell:18}, lobster:{kind:"food",color:"#d6452e",name:"lobster",food:26,sell:30}, oyster:{kind:"food",color:"#cdbba0",name:"oyster",food:14,sell:22},
+  urchin:{kind:"food",color:"#5a3a6a",name:"sea urchin",food:16,sell:28}, pearl:{kind:"mat",color:"#eef3f5",name:"pearl",sell:200},
+  pearl_necklace:{kind:"gear",slot:"acc",color:"#eef3f5",name:"pearl necklace",bonus:{maxhp:2,regen:1}},
+  crab_shell:{kind:"mat",color:"#e0613a",name:"crab shell",sell:5}, bone_meal:{kind:"mat",color:"#eae6d8",name:"bone meal",sell:4,buy:12},
+  // more fish (caught with the rod minigame)
+  tropical_fish:{kind:"food",color:"#f0a93a",name:"tropical fish",food:14,sell:14}, pufferfish:{kind:"food",color:"#caa86a",name:"pufferfish",food:12,sell:22},
+  squid:{kind:"food",color:"#d8c0d0",name:"squid",food:18,sell:30}, octopus:{kind:"food",color:"#b0506a",name:"octopus",food:24,sell:42},
+  shark:{kind:"food",color:"#7a8a9a",name:"shark",food:40,sell:95}, shrimp:{kind:"food",color:"#f0a080",name:"shrimp",food:10,sell:12}, eel:{kind:"food",color:"#4a6a4a",name:"eel",food:20,sell:26},
+  // fishing gear tiers + bait
+  silver_rod:{kind:"tool",color:"#c7ccd2",name:"silver rod",rodLvl:2}, gold_rod:{kind:"tool",color:"#ffd84a",name:"golden rod",rodLvl:3},
+  wide_net:{kind:"tool",color:"#cfe6d0",name:"wide net",netLvl:2}, deep_net:{kind:"tool",color:"#9fc0d0",name:"deep net",netLvl:3},
+  bait:{kind:"mat",color:"#9a7a4a",name:"bait",buy:5},
+  cherry_blossom:{kind:"mat",color:"#ffb7d5",name:"cherry blossom",sell:40}, snow:{kind:"mat",color:"#eaf4ff",name:"snow",sell:1},
+  snowman:{kind:"place",tile:"snowman",color:"#ffffff",name:"snowman"},
+  // artisan machines (placeable — load a crop, wait days, collect a luxury product)
+  drying_rack:{kind:"place",tile:"drying_rack",color:"#a9784a",name:"drying rack"}, preserve_pot:{kind:"place",tile:"preserve_pot",color:"#c08b5a",name:"preserve pot"},
+  press_table:{kind:"place",tile:"press_table",color:"#8a939c",name:"press table"}, craft_bench:{kind:"place",tile:"craft_bench",color:"#9c6b3f",name:"craft bench"},
+  perfume_stand:{kind:"place",tile:"perfume_stand",color:"#e8a0c0",name:"perfume stand"},
+  // luxury products (artisan goods)
+  tea_bundle:{kind:"mat",color:"#7aa83f",name:"tea bundle",sell:80}, dried_herb:{kind:"mat",color:"#6aa83f",name:"dried herb",sell:40}, amber_incense:{kind:"mat",color:"#d49030",name:"amber incense",sell:60}, frost_remedy:{kind:"mat",color:"#9fd6e6",name:"frost remedy",sell:110},
+  sweet_preserve:{kind:"mat",color:"#e23a4e",name:"sweet preserve",sell:90}, apple_preserve:{kind:"mat",color:"#e2402e",name:"apple preserve",sell:150}, melon_jam:{kind:"mat",color:"#3fae5a",name:"melon jam",sell:120}, pea_preserve:{kind:"mat",color:"#8fd06a",name:"pea preserve",sell:70},
+  flower_oil:{kind:"mat",color:"#ffcf3a",name:"flower oil",sell:90}, pumpkin_oil:{kind:"mat",color:"#e8702a",name:"pumpkin oil",sell:75}, citrus_extract:{kind:"mat",color:"#ffd24a",name:"citrus extract",sell:130}, flower_sachet:{kind:"mat",color:"#ff7ab0",name:"flower sachet",sell:100}, spice_sachet:{kind:"mat",color:"#e0762a",name:"spice sachet",sell:95},
+  blossom_incense:{kind:"mat",color:"#ffb7d5",name:"cherry blossom incense",sell:165}, perfume:{kind:"mat",color:"#e8a0c0",name:"perfume",sell:220}, sakura_perfume:{kind:"mat",color:"#ffb7d5",name:"sakura perfume",sell:240}, moon_elixir:{kind:"mat",color:"#bcd0ff",name:"moon elixir",sell:260}, snow_essence:{kind:"mat",color:"#eaf4ff",name:"snow essence",sell:240} };
+for(const k of CKEYS){ ITEMS["seed_"+k]={kind:"seed",crop:k}; ITEMS["crop_"+k]={kind:"crop",crop:k}; }   // seed/crop items for every crop (incl. seasonal)
 const FURN=["chair","table","lamp","rug"];
 const CATFOOD=["bread","pie"];   // food the cat sells (≥20c)
 const DESC={ grass:["Grass","till it with use to make soil for planting"], wild:["Wild grass","out here you'll find trees, rocks & slimes"],
@@ -325,13 +429,30 @@ function itemColor(k){ const it=ITEMS[k]; if(it.color)return it.color; return it
 
 /* ===== language (English / 繁體中文) ===== */
 let lang = localStorage.getItem("hs-lang")==="zh" ? "zh" : "en";
-const CROPNAME_ZH={ carrot:"紅蘿蔔", wheat:"小麥", corn:"玉米", pumpkin:"南瓜" };
+const CROPNAME_ZH={ carrot:"紅蘿蔔", potato:"馬鈴薯", wheat:"小麥", corn:"玉米", pumpkin:"南瓜",
+  strawberry:"草莓", sugar_pea:"甜豌豆", turnip_flower:"蕪菁花", tomato:"番茄", watermelon:"西瓜",
+  sweet_potato:"地瓜", apple_seedling:"蘋果苗", leek:"韭蔥", winter_carrot:"冬蘿蔔",
+  flower:"花", tea:"茶葉", sun_bloom:"向陽花", fragrant_herb:"香草", spice_flower:"香料花", amber_leaf:"琥珀葉", frost_herb:"霜草",
+  sakura_bud:"櫻花蕾", golden_citrus:"黃金柑橘", moonfruit:"月光果", snow_lotus:"雪蓮" };
 const NAME_ZH={ wood:"木材", stone:"石頭", goo:"黏液", iron:"鐵礦", gold:"黃金", fish:"魚", sand:"沙", glass:"玻璃", oil:"油", salve:"藥膏",
   torch:"火把", fence:"木柵欄", ppath:"石板路", chair:"椅子", table:"桌子", lamp:"檯燈", rug:"地毯", lantern:"提燈", goldlamp:"黃金燈", mfence:"金屬柵欄",
   oillamp:"油燈", rod:"釣竿", net:"漁網", metal_sword:"金屬劍", metal_armor:"金屬盔甲", chest:"箱子",
   berry:"莓果", meat:"肉", cap:"布帽", vest:"皮背心", legguards:"護腿", boots:"輕快靴", ring:"治療戒指", charm:"力量護符",
   bread:"麵包", pie:"莓果派", salad:"花園沙拉", hearty_stew:"豐盛燉湯", power_roast:"力量烤肉", swift_salad:"迅捷青蔬", stove:"爐灶",
-  coal:"煤炭", silver:"銀", diamond:"鑽石", red_jewel:"紅寶石", green_jewel:"綠寶石", fossil:"化石", jewelry:"珠寶" };
+  coal:"煤炭", silver:"銀", diamond:"鑽石", red_jewel:"紅寶石", green_jewel:"綠寶石", fossil:"化石", jewelry:"珠寶",
+  elixir:"靈藥", steel:"鋼錠", crown:"皇冠", gold_sword:"黃金劍", plate_armor:"板甲", war_helm:"鋼盔", crystal_ring:"水晶戒指", war_charm:"戰爭護符", jerky:"肉乾", fish_stew:"魚湯",
+  leather_armor:"皮甲", gold_armor:"黃金盔甲", diamond_armor:"鑽石盔甲", frost_plate:"冰霜板甲", diamond_helm:"鑽石頭盔", chain_vest:"鎖子甲", gold_greaves:"黃金護腿", winged_boots:"飛翼靴",
+  swift_band:"迅捷手環", life_pendant:"生命吊墜", sage_amulet:"賢者護符", titan_seal:"泰坦印記", berserk_idol:"狂暴神像",
+  iron_stew:"鋼鐵燉湯", rage_skewer:"狂怒串燒", mending_broth:"癒合湯", feast_platter:"盛宴拼盤",
+  egg:"蛋", milk:"牛奶", truffle:"松露", omelette:"煎蛋捲", cheese:"起司",
+  crab:"螃蟹", lobster:"龍蝦", oyster:"生蠔", urchin:"海膽", pearl:"珍珠", pearl_necklace:"珍珠項鍊",
+  crab_shell:"蟹殼", bone_meal:"骨粉",
+  tropical_fish:"熱帶魚", pufferfish:"河豚", squid:"魷魚", octopus:"章魚", shark:"鯊魚", shrimp:"蝦", eel:"鰻魚",
+  silver_rod:"銀釣竿", gold_rod:"黃金釣竿", wide_net:"寬漁網", deep_net:"深海漁網", bait:"魚餌",
+  cherry_blossom:"櫻花", snow:"雪", snowman:"雪人",
+  drying_rack:"乾燥架", preserve_pot:"醃製罐", press_table:"壓榨台", craft_bench:"工藝台", perfume_stand:"香水台",
+  tea_bundle:"茶包", dried_herb:"乾燥香草", amber_incense:"琥珀香", frost_remedy:"霜露藥", sweet_preserve:"甜果醬", apple_preserve:"蘋果醬", melon_jam:"西瓜醬", pea_preserve:"豌豆醬",
+  flower_oil:"花油", pumpkin_oil:"南瓜油", citrus_extract:"柑橘精華", flower_sachet:"花香包", spice_sachet:"香料包", blossom_incense:"櫻花香", perfume:"香水", sakura_perfume:"櫻花香水", moon_elixir:"月光靈液", snow_essence:"雪精華" };
 const DESC_ZH={ grass:["草地","用「使用」翻土成可種植的泥土"], wild:["野草","這裡有樹木、岩石和史萊姆"], soil:["泥土","種下種子、澆水，成熟後採收"],
   tree:["樹木","按「使用」砍伐取得木材"], rock:["岩石","按「使用」開採取得石頭"], iron:["鐵礦石","用「使用」開採取得鐵礦"], gold:["金礦石","用「使用」開採取得黃金"],
   pond:["池塘","用釣竿或漁網釣魚"], river:["河流","清水 — 用釣竿或漁網釣魚"], sea:["海洋","用釣竿或漁網釣魚"], sand:["海灘沙","按「使用」鏟取沙子"],
@@ -386,8 +507,25 @@ const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金�
   "←/→ move · ↑/Space jump · E or ⟳use to slash · dodge the red charge & shots":"←/→ 移動 · ↑/空白鍵 跳躍 · E 或 使用鈕 揮擊 · 閃避紅色衝刺與射擊",
   "fight off the monsters first!":"先擊退怪物！","need a metal sword AND armour!":"需要金屬劍和盔甲！","the road is clear!":"道路暢通了！","defeated… craft better gear & retry":"戰敗了…製作更好的裝備再挑戰","cheat: road unlocked":"密技：道路已解鎖","cheat: sword & armour equipped":"密技：已裝備劍與盔甲",
   "name":"名字","📋 Quests":"📋 任務","📋 Missions":"📋 任務","claim":"領取","claimed":"已領取","reward":"獎勵","more quests coming from the village NPCs soon":"村莊的 NPC 很快會帶來更多任務","Enter your name:":"輸入你的名字：","name set":"名字已設定","Chop 5 trees":"砍 5 棵樹","Harvest 5 crops":"採收 5 個作物","Catch 8 fish":"釣 8 條魚",
-  "What's your name?":"你叫什麼名字？","dungeon":"地城","floor":"樓層","BOSS":"頭目","defeat the floor boss!":"先擊敗本層頭目！","the bottom… nothing deeper":"已到最底層…沒有更深了","checkpoint saved!":"存檔點已記錄！","boss down!":"頭目倒下！",
+  "What's your name?":"你叫什麼名字？","dungeon":"地城","floor":"樓層","BOSS":"頭目","Stone Brute":"石巨魔","Charger":"衝鋒獸","Hexer":"咒術師","Brood Mother":"蟲母","Wraith King":"幽魂王","defeat the floor boss!":"先擊敗本層頭目！","the bottom… nothing deeper":"已到最底層…沒有更深了","checkpoint saved!":"存檔點已記錄！","boss down!":"頭目倒下！",
   "🐹 Hamu's Trades":"🐹 哈姆商行","sell (Hamu pays +25%)":"販售（哈姆多付 25%）",
+  "buy farm animals (kept in your home pasture)":"購買農場動物（飼養在家中牧場）","🐴 Ride the horse":"🐴 騎馬出行","🐴 Ride":"🐴 騎馬",
+  "chicken":"雞","pig":"豬","cow":"乳牛","horse":"馬",
+  "lays an egg each day":"每天下一顆蛋","roots up a truffle each day":"每天拱出一顆松露","gives milk each day":"每天產一份牛奶","unlocks fast-travel (G)":"解鎖快速旅行（G）",
+  "max":"已滿","go":"前往","your farm":"你的農場","village centre":"村莊中心","buy a horse from Hamu first":"先向哈姆買一匹馬","not ready yet":"還沒準備好","delivered to your pasture!":"已送到你的牧場！",
+  "Expand pasture":"擴建牧場","bigger pen — keep more animals":"更大的圍欄 — 飼養更多動物","pasture expanded":"牧場已擴建","pen is full — expand it at the cat":"牧場已滿 — 去貓商店擴建","animals":"動物",
+  "netted":"撈到","the net needs a day to fill":"漁網需要一天才會有收穫","net set — come back tomorrow":"漁網已下 — 明天再來收","select a rod or a net":"先選釣竿或漁網","net picked up":"已收回漁網",
+  "set it in water; collect seafood next day":"放入水中；隔天收取海鮮",
+  "hold to reel — keep the bar on the fish":"按住收線 — 讓綠條對準魚","…it got away":"…牠跑掉了",
+  "basic rod — reel in the catch":"基本釣竿 — 收線釣魚","bigger catch bar, better fish":"更大的綠條、更好的魚","biggest catch bar, best fish":"最大的綠條、最好的魚",
+  "a net for better seafood":"捕撈更好海鮮的漁網","the best net for rare seafood":"捕撈稀有海鮮的最佳漁網","auto-used when fishing for better catches":"釣魚時自動使用，提升收穫",
+  "fight off the monsters first!":"先擊退怪物！","need a metal sword AND armour!":"需要金屬劍和盔甲！","the cat is sitting here":"貓正坐在這裡","pick a seed (cat shop)":"先選種子（貓商店）","no food to eat":"沒有食物可吃","…no bite":"…沒有上鉤","defeated… craft better gear & retry":"戰敗…製作更好的裝備再來",
+  "starving — eat food!":"飢餓 — 快吃東西！","well fed · healing":"吃飽 · 回復中","gather or harvest something to sell":"採集或收成東西才能販售",
+  "growth boosted!":"生長加速！","use it on a growing crop to speed it up":"對生長中的作物使用以加速","the road is clear!":"道路暢通了！",
+  "Road Guardian":"道路守衛","Halt, traveller. I am the Road Guardian.":"止步，旅人。我是道路守衛。","I came to test your reflexes. Dodge my attacks, strike when you can — survive, and the road is yours.":"我為考驗你的反應而來。閃避我的攻擊，找機會還擊 — 活下來，這條路就是你的。","Show me what you've got!":"讓我看看你的本事！",
+  "I also raise farm animals! Buy a chicken, pig, cow or horse and they'll live in the pasture by your home.":"我還養農場動物！買隻雞、豬、乳牛或馬，牠們就會住在你家旁的牧場。",
+  "They make milk, eggs and truffles each day — and a horse lets you fast-travel. A word of advice: a fierce Road Guardian blocks the path between the lands.":"牠們每天產牛奶、蛋和松露 — 而馬能讓你快速旅行。提醒一句：兇猛的道路守衛擋住了通往各地的路。",
+  "They make milk, eggs and truffles each day — and a horse lets you fast-travel. Come trade any time!":"牠們每天產牛奶、蛋和松露 — 而馬能讓你快速旅行。隨時來交易！",
   "Open the road: beat the Road Guardian":"打通道路：擊敗道路守衛","craft a metal sword + metal armour, then fight the boss on the east road":"製作金屬劍與金屬盔甲，再到東邊道路挑戰頭目",
   "Squeak! Hamu's the name — trading's my game. I'll pay top coin for your goods.":"吱！我叫哈姆 — 做買賣是我的本行。你的貨我出好價。",
   "A word of advice: a fierce Road Guardian blocks the path between the lands.":"給你個建議：兇猛的道路守衛擋住了兩地之間的路。",
@@ -403,22 +541,51 @@ const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金�
   "buy food":"購買食物","restores":"恢復","hunger":"飽食","buff!":"增益！","cook":"烹調","cooked":"煮好了","🔥 Kitchen Stove":"🔥 廚房爐灶","cook buff food":"烹調增益食物",
   "+2 hearts for 2 min":"2 分鐘 +2 顆心","+1 attack for 2 min":"2 分鐘 +1 攻擊","faster for 2 min":"2 分鐘 加速",
   "heals faster for 2 min":"2 分鐘 加速回血","+1 heart & fast heal, 3 min":"3 分鐘 +1 心並加速回血",
+  "+1 heart & fast heal, 2.5 min":"2.5 分鐘 +1 心並加速回血","+3 hearts for 2.5 min":"2.5 分鐘 +3 顆心","+2 attack for 2.5 min":"2.5 分鐘 +2 攻擊","fast heal for 3 min":"3 分鐘 加速回血","+2 hearts, +1 attack & faster, 2 min":"2 分鐘 +2 心 +1 攻擊並加速",
   "the village":"村莊","home sweet home":"溫暖的家","slept · new day":"睡了一覺 · 新的一天","farm expanded":"農場已擴建","house upgraded":"房屋已升級","sturdy axe!":"堅固斧頭！","fainted! home safe":"昏倒了！安全回到家",
-  "morning":"早晨","noon":"中午","evening":"傍晚","night":"夜晚","day":"第","indoors":"室內" };
+  "morning":"早晨","noon":"中午","evening":"傍晚","night":"夜晚","day":"第","indoors":"室內",
+  "This crop cannot be planted in this season.":"這種作物不能在這個季節種植。","Wrong season. You cannot plant this crop now.":"季節不對，你現在無法種植這種作物。","Not enough time left this season.":"這個季節剩餘的時間不夠了。",
+  "struck by lightning!":"被閃電擊中！","growth boosted!":"生長加速！","build a snowman":"堆雪人","snow collected":"收集到雪","cherry blossom!":"櫻花！",
+  "Spring":"春季","Summer":"夏季","Autumn":"秋季","Winter":"冬季",
+  "Life Crystal":"生命水晶","+1 permanent heart":"永久 +1 顆心","+1 permanent heart!":"永久 +1 顆心！","permanent heart gained!":"獲得永久生命！","unlocks at 200,000 coins earned":"累計賺取 200,000 金幣後解鎖",
+  "days left":"天後完成","processing…":"製作中…","days":"天","load a crop this machine accepts":"放入這台機器可用的作物","processed at machines for luxury goods":"在機器加工成奢侈品",
+  "🏆 Milestones":"🏆 里程碑","complete":"已完成",
+  "New beginnings":"嶄新的開始","Move into the old family cottage":"搬進老家的小屋","Green thumb":"園藝高手","Harvest 5 crops":"採收 5 個作物","Woodcutter":"伐木工","Chop 20 trees":"砍伐 20 棵樹","Angler":"釣魚高手","Catch 20 fish":"釣到 20 條魚",
+  "Reach the village":"抵達村莊","Meet Hamu across the road":"越過道路認識哈姆","Road cleared":"道路暢通","Beat the Road Guardian":"擊敗道路守衛","First livestock":"第一隻牲畜","Keep an animal in your pasture":"在牧場飼養一隻動物",
+  "Spelunker":"探洞者","Reach dungeon floor 10":"到達地城第 10 層","Heart of the deep":"深淵之心","Reach floor 100 (+1 permanent heart)":"到達第 100 層（永久 +1 心）","Dungeon master":"地城大師","Reach dungeon floor 500":"到達地城第 500 層","To the bottom":"抵達最底","Reach dungeon floor 1000":"到達地城第 1000 層",
+  "First fortune":"第一桶金","Earn 1,000 coins total":"累計賺取 1,000 金幣","Wealthy":"富有","Earn 10,000 coins total":"累計賺取 10,000 金幣","Tycoon":"大亨","Earn 100,000 coins total":"累計賺取 100,000 金幣","Legend":"傳奇","Earn 200,000 coins — unlock late-game items":"累計賺取 200,000 — 解鎖後期物品","Crystal heart":"水晶之心","Buy a Life Crystal":"購買生命水晶" };
 function t(s){ return lang==="zh" && ZH[s]!==undefined ? ZH[s] : s; }
 function descOf(k){ return (lang==="zh"&&DESC_ZH[k])?DESC_ZH[k]:DESC[k]; }
 function useOf(base){ return (lang==="zh"&&USE_ZH[base])?USE_ZH[base]:(USE[base]||""); }
 function howOf(k){ return (lang==="zh"&&HOWTO_ZH[k])?HOWTO_ZH[k]:(HOWTO[k]||"craft it"); }
 function itemName(k){ const it=ITEMS[k];
   if(lang==="zh"){ if(it.kind==="seed")return CROPNAME_ZH[it.crop]+"種子"; if(it.kind==="crop")return CROPNAME_ZH[it.crop]; if(NAME_ZH[k])return NAME_ZH[k]; }
-  if(it.name)return it.name; return (it.kind==="seed"?it.crop+" seed":it.crop); }
+  if(it.kind==="seed")return (CROPS[it.crop]?CROPS[it.crop].name:it.crop)+" seed"; if(it.kind==="crop")return CROPS[it.crop]?CROPS[it.crop].name:it.crop;
+  if(it.name)return it.name; return it.crop; }
 // plain Unicode emoji icons (system-font rendered — see licensing note at top)
-const CROP_EMOJI={ carrot:"🥕", wheat:"🌾", corn:"🌽", pumpkin:"🎃" };
+const CROP_EMOJI={ carrot:"🥕", potato:"🥔", wheat:"🌾", corn:"🌽", pumpkin:"🎃",
+  strawberry:"🍓", sugar_pea:"🫛", turnip_flower:"🌼", tomato:"🍅", watermelon:"🍉",
+  sweet_potato:"🍠", apple_seedling:"🍎", leek:"🥬", winter_carrot:"🥕",
+  flower:"🌷", tea:"🍵", sun_bloom:"🌻", fragrant_herb:"🌿", spice_flower:"💮", amber_leaf:"🍁", frost_herb:"🪻",
+  sakura_bud:"🌸", golden_citrus:"🍋", moonfruit:"🌙", snow_lotus:"🪷" };
 const ICON={ wood:"🪵", stone:"🪨", goo:"🟢", iron:"🔩", gold:"🪙", fish:"🐟", sand:"🏖️", glass:"🔷", oil:"🛢️", salve:"🧪",
   torch:"🔥", fence:"🚧", ppath:"🧱", chair:"🪑", table:"🟫", lamp:"💡", rug:"🟥", lantern:"🏮", goldlamp:"🔆", mfence:"⛓️", oillamp:"🕯️",
   rod:"🎣", net:"🥅", metal_sword:"🗡️", metal_armor:"🛡️", chest:"🧰", berry:"🫐", meat:"🍖", cap:"🧢", vest:"🦺", legguards:"👖", boots:"👢", ring:"💍", charm:"🔮",
   bread:"🍞", pie:"🥧", salad:"🥗", hearty_stew:"🍲", power_roast:"🍗", swift_salad:"🥬", stove:"🔥",
-  coal:"⚫", silver:"🥈", diamond:"💎", red_jewel:"🔴", green_jewel:"💚", fossil:"🦴", jewelry:"📿" };
+  coal:"⚫", silver:"🥈", diamond:"💎", red_jewel:"🔴", green_jewel:"💚", fossil:"🦴", jewelry:"📿",
+  elixir:"🧴", steel:"⚙️", crown:"👑", gold_sword:"⚔️", plate_armor:"🛡️", war_helm:"🪖", crystal_ring:"💠", war_charm:"🧿", jerky:"🥓", fish_stew:"🍛",
+  leather_armor:"🧥", gold_armor:"🥇", diamond_armor:"🔰", frost_plate:"❄️", diamond_helm:"⛑️", chain_vest:"👕", gold_greaves:"🩳", winged_boots:"🥾",
+  swift_band:"💫", life_pendant:"💗", sage_amulet:"🔱", titan_seal:"🏅", berserk_idol:"😡",
+  iron_stew:"🥘", rage_skewer:"🍢", mending_broth:"🍵", feast_platter:"🍱",
+  egg:"🥚", milk:"🥛", truffle:"🍄", omelette:"🍳", cheese:"🧀",
+  crab:"🦀", lobster:"🦞", oyster:"🦪", urchin:"🟣", pearl:"⚪", pearl_necklace:"📿",
+  crab_shell:"🐚", bone_meal:"⚗️",
+  tropical_fish:"🐠", pufferfish:"🐡", squid:"🦑", octopus:"🐙", shark:"🦈", shrimp:"🦐", eel:"🐍",
+  silver_rod:"🎣", gold_rod:"🎣", wide_net:"🥅", deep_net:"🥅", bait:"🪱",
+  cherry_blossom:"🌸", snow:"❄️", snowman:"⛄",
+  drying_rack:"🪵", preserve_pot:"🫙", press_table:"🗜️", craft_bench:"🛠️", perfume_stand:"💐",
+  tea_bundle:"🍵", dried_herb:"🌿", amber_incense:"🟤", frost_remedy:"💠", sweet_preserve:"🍓", apple_preserve:"🍎", melon_jam:"🍉", pea_preserve:"🫛",
+  flower_oil:"🫗", pumpkin_oil:"🟠", citrus_extract:"🍋", flower_sachet:"🌷", spice_sachet:"💮", blossom_incense:"🌸", perfume:"🧴", sakura_perfume:"🌸", moon_elixir:"🌙", snow_essence:"🪷" };
 function itemEmoji(k){ const it=ITEMS[k]; if(!it)return ""; if(it.kind==="seed"||it.kind==="crop")return CROP_EMOJI[it.crop]||""; return ICON[k]||""; }
 // translate static DOM text nodes (snapshots the English original so we can toggle back)
 const _orig=new WeakMap();
@@ -435,6 +602,7 @@ function applyLang(){ localStorage.setItem("hs-lang",lang);
   if(baguiEl.classList.contains("open")){ renderBag(); renderCraftGrid(); renderRecipes(); }
   if(document.getElementById("help").classList.contains("open"))renderHelp();
   if(document.getElementById("quests").classList.contains("open"))renderQuests();
+  if(document.getElementById("achv").classList.contains("open"))renderAchv();
   if(document.getElementById("merchant").classList.contains("open"))renderMerchant(); }
 
 const RECIPES=[
@@ -462,6 +630,40 @@ const RECIPES=[
   {key:"metal_armor", give:"metal_armor", cost:{iron:4,gold:1}, desc:"armour to survive the road boss"},
   {key:"oillamp", give:"oillamp", cost:{oil:1,glass:1}, desc:"a warm lamp fuelled by oil"},
   {key:"axe", once:"axe", cost:{wood:6,stone:3}, desc:"gather faster & hit harder (permanent)"},
+  {key:"elixir", give:"elixir", cost:{goo:3,green_jewel:1}, desc:"restores 6 hearts (use it from your bag)"},
+  {key:"steel", give:"steel", cost:{iron:2,coal:1}, desc:"smelt iron with coal into a steel bar"},
+  {key:"gold_sword", give:"gold_sword", cost:{steel:1,gold:1}, desc:"a sharp golden blade (+2 attack)"},
+  {key:"plate_armor", give:"plate_armor", cost:{steel:2,silver:1}, desc:"heavy plate armour (+3 hearts)"},
+  {key:"war_helm", give:"war_helm", cost:{steel:1}, desc:"a steel helm (+2 hearts)"},
+  {key:"crystal_ring", give:"crystal_ring", cost:{diamond:1,glass:1}, desc:"crystal ring (regen even faster)"},
+  {key:"war_charm", give:"war_charm", cost:{diamond:1,red_jewel:1}, desc:"war charm (+2 attack)"},
+  {key:"jerky", give:"jerky", cost:{meat:2}, desc:"dried meat — filling food"},
+  {key:"fish_stew", give:"fish_stew", cost:{fish:2,crop_carrot:1}, desc:"warming stew — heals faster & +1 heart"},
+  {key:"crown", give:"crown", cost:{jewelry:1,diamond:1,gold:1}, desc:"a royal crown — sells for a fortune"},
+  {key:"leather_armor", give:"leather_armor", cost:{goo:3,wood:2}, desc:"light leather armour (+1 heart)"},
+  {key:"chain_vest", give:"chain_vest", cost:{steel:1,iron:2}, desc:"a chain vest (+3 hearts, chest)"},
+  {key:"gold_armor", give:"gold_armor", cost:{gold:3,steel:1}, desc:"shining golden armour (+4 hearts)"},
+  {key:"frost_plate", give:"frost_plate", cost:{steel:2,green_jewel:1}, desc:"frost plate (+3 hearts & regen)"},
+  {key:"diamond_armor", give:"diamond_armor", cost:{diamond:2,steel:2}, desc:"diamond armour (+5 hearts)"},
+  {key:"diamond_helm", give:"diamond_helm", cost:{diamond:1,steel:1}, desc:"a diamond helm (+3 hearts)"},
+  {key:"gold_greaves", give:"gold_greaves", cost:{gold:1,steel:1}, desc:"gold greaves (+2 hearts, faster)"},
+  {key:"winged_boots", give:"winged_boots", cost:{silver:1,glass:1}, desc:"winged boots (+1 heart, much faster)"},
+  {key:"swift_band", give:"swift_band", cost:{silver:1,glass:1}, desc:"swift band (much faster)"},
+  {key:"life_pendant", give:"life_pendant", cost:{gold:1,fossil:1}, desc:"life pendant (+2 hearts)"},
+  {key:"sage_amulet", give:"sage_amulet", cost:{jewelry:1,green_jewel:1}, desc:"sage amulet (+1 heart & regen)"},
+  {key:"titan_seal", give:"titan_seal", cost:{diamond:1,silver:2}, desc:"titan seal (+3 hearts)"},
+  {key:"berserk_idol", give:"berserk_idol", cost:{diamond:1,red_jewel:1,fossil:1}, desc:"berserk idol (+3 attack)"},
+  {key:"omelette", give:"omelette", cost:{egg:2}, desc:"fluffy omelette — filling food"},
+  {key:"cheese", give:"cheese", cost:{milk:2}, desc:"creamy cheese — food & sells well"},
+  {key:"pearl_necklace", give:"pearl_necklace", cost:{pearl:1,gold:1}, desc:"a beautiful pearl necklace (+2 hearts & regen)"},
+  {key:"bone_meal", give:"bone_meal", cost:{crab_shell:2}, desc:"grind crab shells into bone meal (speeds crops)"},
+  {key:"bone_meal_f", give:"bone_meal", cost:{fossil:1}, desc:"grind a fossil into bone meal (speeds crops)"},
+  {key:"snowman", give:"snowman", cost:{snow:3}, desc:"build a snowman to place (winter)"},
+  {key:"drying_rack", give:"drying_rack", cost:{wood:5,stone:3,iron:1}, desc:"dries herbs & leaves into goods (1 day)"},
+  {key:"preserve_pot", give:"preserve_pot", cost:{wood:4,stone:4,iron:1}, desc:"preserves fruit into jams (2 days)"},
+  {key:"press_table", give:"press_table", cost:{iron:3,glass:2,oil:1}, desc:"presses blooms & citrus into oils (2-3 days)"},
+  {key:"craft_bench", give:"craft_bench", cost:{iron:4,glass:1,oil:1}, desc:"crafts sachets & incense (2-3 days)"},
+  {key:"perfume_stand", give:"perfume_stand", cost:{steel:2,glass:2,red_jewel:1}, desc:"distills luxury perfumes (4-5 days)"},
 ];
 
 const FR0=4,FC0=4; let farmFR1=15, farmFC1=18, houseLvl=0, farmLvl=0, hasAxe=false;
@@ -470,16 +672,19 @@ let catX=0, catY=0, npcX=0, npcY=0;
 const player={x:0,y:0,dir:"d",fx:0,fy:1,moving:false,hp:5,maxHp:5,inv:0,kx:0,ky:0,swing:0,hunger:100,maxHunger:100,regenT:0,starveT:0};
 const equip={sword:null,armor:null,hat:null,chest:null,pants:null,shoes:null,acc1:null,acc2:null};
 const mobs=[]; const fx=[]; let spawnT=0;
-let coins=25, clock=0, selSlot=0, outX, outY, metCat=false, metFisher=false, mapOpen=false, bossDefeated=false, seenIntro=false, catIntroPending=false, playerName="You", louieQuest=0, metHamu=false;
+let coins=40, clock=0, selSlot=0, outX, outY, metCat=false, metFisher=false, mapOpen=false, bossDefeated=false, seenIntro=false, catIntroPending=false, playerName="You", louieQuest=0, metHamu=false;
+let totalEarned=0, _lastCoins=40, lifeCrystals=0;   // total coins ever earned (gates late-game), purchased permanent hearts
+function lateUnlocked(){ return totalEarned>=200000; }
+function dungeonHearts(){ return Math.min(5, Math.floor((dungMax||1)/100)); }   // +1 permanent heart per 100 dungeon floors, cap +5
 const stats={trees:0,crops:0,fish:0}; const claimed={};   // mission progress + claimed quests
 const hasSword=()=>!!equip.sword, hasArmor=()=>!!equip.armor;
 function gearBonus(){ const b={atk:0,maxhp:0,regen:0,speed:0}; for(const sn in equip){ const k=equip[sn]; if(k&&ITEMS[k].bonus)for(const s in ITEMS[k].bonus)b[s]+=ITEMS[k].bonus[s]; } return b; }
 let activeBuff=null;   // {bonus,until,key} from eating buff food cooked at a stove
 function buffBonus(){ return (activeBuff&&now()<activeBuff.until)?activeBuff.bonus:{}; }
 function totalBonus(){ const g=gearBonus(),f=buffBonus(),o={atk:0,maxhp:0,regen:0,speed:0}; for(const s in o)o[s]=(g[s]||0)+(f[s]||0); return o; }
-function recalcMax(){ player.maxHp=5+totalBonus().maxhp; if(player.hp>player.maxHp)player.hp=player.maxHp; }
+function recalcMax(){ player.maxHp=5+dungeonHearts()+lifeCrystals+totalBonus().maxhp; if(player.hp>player.maxHp)player.hp=player.maxHp; }   // base 5 + dungeon(≤5) + crystals(≤3) + gear/buff
 function itemFitsSlot(key,sn){ const it=ITEMS[key]; if(!it||it.kind!=="gear")return false; return (sn==="acc1"||sn==="acc2")?it.slot==="acc":it.slot===sn; }
-function spendHunger(n){ player.hunger=Math.max(0,player.hunger-n); }
+function spendHunger(n){ player.hunger=Math.max(0,player.hunger-n*0.25); }   // actions cost ~1/4 of before (till/plant≈0.25, chop/mine≈0.5, attack≈0.37) — gameplay shouldn't starve you
 function tooHungry(){ if(player.hunger<=0){ SND.no(); float(player.x,player.y-24,"too hungry — eat first!","#ff8f8f"); return true; } return false; }
 function eatFood(){ let i=(bag[selSlot]&&isFood(bag[selSlot].key))?selSlot:bag.findIndex(s=>s&&isFood(s.key));
   if(i<0){ float(player.x,player.y-24,"no food to eat","#cfe0ff"); return; } const s=bag[i],it=ITEMS[s.key],fv=foodVal(s.key),bf=it.buff;
@@ -498,11 +703,11 @@ const ROAD_R=OROWS-4;
 const VCOLS=46, VROWS=34;
 const VROAD_R=9, RIVER_C=14, SEA_C0=39, SAND_C=38, NPC_R=6, NPC_C=36, CAVE_R=4, CAVE_C=6;
 
-const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor","chest","stove","dwall","cave","gem"]);
+const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor","chest","stove","dwall","cave","gem","trough","snowman","drying_rack","preserve_pot","press_table","craft_bench","perfume_stand"]);
 const CHESTN=18;
 const WATER=new Set(["pond","river","sea"]);
 // player-placed tiles that can be removed (hold use) — maps the tile back to the item you get
-const TILE2ITEM={ pfence:"fence", mfence:"mfence", chair:"chair", table:"table", lamp:"lamp", rug:"rug", torch:"torch", lantern:"lantern", goldlamp:"goldlamp", oillamp:"oillamp", ppath:"ppath", stove:"stove" };
+const TILE2ITEM={ pfence:"fence", mfence:"mfence", chair:"chair", table:"table", lamp:"lamp", rug:"rug", torch:"torch", lantern:"lantern", goldlamp:"goldlamp", oillamp:"oillamp", ppath:"ppath", stove:"stove", snowman:"snowman", drying_rack:"drying_rack", preserve_pot:"preserve_pot", press_table:"press_table", craft_bench:"craft_bench", perfume_stand:"perfume_stand" };
 const BREAKABLE=new Set(Object.keys(TILE2ITEM));   // NOT the farm "fence" (only expand that via the cat)
 const FARMLAND=new Set(["grass","soil","path","ppath"]);
 const PLACEABLE_ON=new Set(["grass","wild","path","ppath","floor","rug","road"]);
@@ -517,7 +722,64 @@ const VNPCS=[
   {id:"hamu", c:26,r:24, name:"Hamu", face:"🐹", col:"#f49ac6", role:"merchant", ears:"round"},
   {id:"louie", c:11,r:27, name:"Louie", face:"🐱", col:"#5aa0e6", role:"quest", ears:"cat"},
   {id:"david", c:20,r:23, name:"David", face:"🐶", col:"#e0913f", role:"chat", ears:"flop",
-    lines:["Woof! Welcome to the village, friend!","Pelle fishes the sea, Hamu trades, Louie's got a job for you.","I'll guard the town — go explore!"]} ];
+    lines:["Woof! Welcome to the village, friend!","Pelle fishes the sea, Hamu trades, Louie's got a job for you.","Hamu's stall sells farm animals now — go grab a chicken!"]} ];
+
+/* ---- ranch: animals you buy from Hamu and keep in the home pasture ---- */
+const PEN_R0=4, PEN_C0=23, PEN_C1=31;       // fenced pasture on the home map (upper-right); bottom row grows with penLvl
+let penLvl=0;                                          // 0..3 — upgraded at the cat
+function penR1(){ return 12+penLvl*2; }               // pen bottom row (taller pen each level)
+function penCap(){ return [3,5,7,9][penLvl]||3; }     // how many animals you can keep
+const inPen=(r,c)=>r>=PEN_R0&&r<=penR1()&&c>=PEN_C0&&c<=PEN_C1;
+function carvePen(g){ if(!g)return; const R1=penR1(), pgate=Math.floor((PEN_C0+PEN_C1)/2);
+  for(let r=PEN_R0;r<=R1;r++)for(let c=PEN_C0;c<=PEN_C1;c++){ if(!g[r]||!g[r][c])continue; g[r][c].crop=null;
+    g[r][c].type=(r===PEN_R0||r===R1||c===PEN_C0||c===PEN_C1)?"fence":"grass"; }
+  for(let r=PEN_R0+1;r<=PEN_R0+2;r++)for(let c=PEN_C0+1;c<=PEN_C0+3;c++) if(g[r]&&g[r][c]) g[r][c].type="house";   // barn shelter (top-left)
+  for(let r=PEN_R0+1;r<=PEN_R0+2;r++) if(g[r]&&g[r][PEN_C1-2]) g[r][PEN_C1-2].type="trough";   // water trough (top-right) — not fishable
+  if(g[R1]&&g[R1][pgate]) g[R1][pgate].type="path"; if(g[R1]&&g[R1][pgate+1]) g[R1][pgate+1].type="path"; }   // gate to walk in
+const ANIMALS={
+  chicken:{name:"chicken", face:"🐔", col:"#f0e6cf", price:60,  limit:5, produce:"egg",     big:false, desc:"lays an egg each day"},
+  pig:    {name:"pig",     face:"🐷", col:"#f3a6c0", price:160, limit:5, produce:"truffle", big:false, desc:"roots up a truffle each day"},
+  cow:    {name:"cow",     face:"🐮", col:"#efe7d4", price:280, limit:5, produce:"milk",    big:true,  desc:"gives milk each day"},
+  horse:  {name:"horse",   face:"🐴", col:"#b07a4a", price:10000, limit:1, produce:null,    big:true,  desc:"prestige mount — unlocks fast-travel (G)"} };
+const animals=[];   // {kind,x,y,t,tx,ty,wt,claimedDay} — persisted
+function curDay(){ return 1+Math.floor(clock/DAYLEN); }
+/* ---- calendar & weather ---- */
+const SEASONS=["Spring","Summer","Autumn","Winter"], SEASON_ZH=["春","夏","秋","冬"];
+function totalDays(){ return Math.floor(clock/DAYLEN); }
+function seasonIdx(){ return Math.floor(totalDays()/28)%4; }
+function dayOfSeason(){ return totalDays()%28+1; }     // 1..28
+function yearNum(){ return Math.floor(totalDays()/112)+1; }
+function dayPhase(){ return (clock%DAYLEN)/DAYLEN; }
+function clockHour(){ const h=Math.floor(6+dayPhase()*24)%24; return ((h%12)||12)+(h<12?" AM":" PM"); }   // hour only, day starts at 6 AM
+let weather="sunny", weatherDay=-1;
+const WEATHER_OPTS=[ [["sunny",70],["lrain",30]], [["sunny",55],["rain",30],["thunder",15]], [["sunny",100]], [["snow",85],["cloudy",15]] ];   // per season
+const WEATHER_LABEL={sunny:"Sunny",lrain:"Light rain",rain:"Rainy",thunder:"Thunderstorm",snow:"Snowy",cloudy:"Cloudy"};
+const WEATHER_ICON={sunny:"☀️",lrain:"🌦️",rain:"🌧️",thunder:"⛈️",snow:"🌨️",cloudy:"☁️"};
+function rollWeather(){ const o=WEATHER_OPTS[seasonIdx()]; let tot=o.reduce((s,x)=>s+x[1],0),r=Math.random()*tot; for(const[w,wt]of o){ if((r-=wt)<0)return w; } return "sunny"; }
+function isRainy(){ return weather==="lrain"||weather==="rain"||weather==="thunder"; }
+function cropAllowed(crop){ const C=CROPS[crop]; return C&&C.s&&C.s.includes(seasonIdx()); }
+function isBlossom(r,c){ return seasonIdx()===0 && ((r*7+c*13)%9===0); }   // rare blossom trees in spring (deterministic so they look stable)
+let lightT=6;   // lightning-strike timer (summer thunder)
+function newMorning(){ const first=weatherDay<0; weatherDay=curDay(); weather=rollWeather(); const rainy=isRainy(), sn=seasonIdx();
+  if(gridHome)for(const row of gridHome)for(const tt of row){ const cr=tt.crop; if(!cr||cr.grow>=1)continue;   // ripe crops survive; growing ones are weather-checked
+    if(rainy)cr.wet=true;
+    const C=CROPS[cr.type];
+    if(C&&C.s&&!C.s.includes(sn)){ tt.crop=null; continue; }   // out-of-season crop withers at the season turn
+    if(sn===1&&!cr.wet){ tt.crop=null; continue; }             // summer: a crop left unwatered (no rain) dies
+    cr.wet=false; }                                            // reset — must be watered or rained on again today
+  if(weather==="thunder"||weather==="snow"){ for(const g of [gridHome,gridVillage]){ if(!g)continue; for(const row of g)for(const tt of row){ if(tt.mach&&Math.random()<0.13)delete tt.mach; } } }   // storms/snow can ruin an outdoor machine's batch
+  if(!first){ bannerMsg=(lang==="zh"?SEASON_ZH[sn]+" "+(WEATHER_ICON[weather]||""):SEASONS[sn]+" · "+(WEATHER_LABEL[weather]||weather)); bannerUntil=now()+3; } }
+function ranchCount(kind){ let n=0; for(const a of animals)if(a.kind===kind)n++; return n; }
+function animalReady(a){ return ANIMALS[a.kind].produce && curDay()>a.claimedDay; }
+function hasHorse(){ return animals.some(a=>a.kind==="horse"); }
+function penSpot(){ const R1=penR1(); return {x:(PEN_C0+1+Math.random()*(PEN_C1-PEN_C0-2))*TILE+TILE/2, y:(PEN_R0+3+Math.random()*Math.max(1,R1-PEN_R0-4))*TILE+TILE/2}; }   // roam below the barn
+function addAnimal(kind){ const p=penSpot(); animals.push({kind,x:p.x,y:p.y,t:Math.random()*9,tx:null,ty:null,wt:0,claimedDay:curDay(),bornDay:curDay()}); }
+function animalAge(a){ return curDay()-(a.bornDay||curDay()); }
+function collectAnimal(a){ const A=ANIMALS[a.kind]; const n=animalAge(a)>=30?2:1;   // long-kept animals (30+ days) give double
+  gainItem(A.produce,n,a.x,a.y); a.claimedDay=curDay(); SND.coin(); burst(a.x,a.y-10,"#fff7c0",10); float(a.x,a.y-24,(n>1?"×2 ":"")+itemName(A.produce),"#cdffd0"); save(); }
+function updateAnimals(dt){ for(const a of animals){ a.t+=dt; a.wt-=dt;
+  if(a.tx==null||a.wt<=0||Math.hypot(a.tx-a.x,a.ty-a.y)<6){ const p=penSpot(); a.tx=p.x; a.ty=p.y; a.wt=2.5+Math.random()*3.5; }
+  const dx=a.tx-a.x,dy=a.ty-a.y,d=Math.hypot(dx,dy)||1, sp=(a.kind==="horse"?34:22)*dt; a.x+=dx/d*sp; a.y+=dy/d*sp; } }
 
 /* ---- inventory ---- */
 function addItem(key,n=1){ for(const s of bag){ if(s&&s.key===key){ s.count+=n; renderBar(); return true; } }
@@ -537,6 +799,7 @@ function buildOut(){ const g=[]; for(let r=0;r<OROWS;r++){ const row=[]; for(let
   rebuildFence(g);
   for(let r=1;r<OROWS-1;r++)for(let c=1;c<OCOLS-1;c++){ if(!inFarm(r,c)&&g[r][c].type==="wild"){ const x=Math.random();
     if(x<0.10)g[r][c].type="tree"; else if(x<0.14)g[r][c].type="rock"; else if(x<0.16)g[r][c].type="iron"; else if(x<0.166)g[r][c].type="gold"; } }
+  carvePen(g);   // animal shelter: fenced pasture (right of the farm) with a barn + water trough
   const gate=Math.floor((FC0+farmFC1)/2);
   for(let r=farmFR1+1;r<=ROAD_R;r++) g[r][gate].type="road";       // road south from the farm gate
   for(let c=gate;c<OCOLS;c++) g[ROAD_R][c].type="road";            // then east, out to the village
@@ -558,6 +821,9 @@ function buildVillage(){ const g=[]; for(let r=0;r<VROWS;r++){ const row=[]; for
   block(31,15,3,3,"house"); set(31,16,"hdoor");
   block(18,27,3,3,"shop"); set(20,28,"hdoor");                                    // market shops (east of street)
   block(31,27,3,3,"shop"); set(31,28,"hdoor");
+  // Hamu's ranch stall + a little pen of animals beside it (so players see he sells livestock)
+  block(21,25,2,2,"shop"); set(22,25,"hdoor");
+  for(let r=23;r<=26;r++)for(let c=28;c<=31;c++){ set(r,c,(r===23||r===26||c===28||c===31)?"fence":"path"); }
   block(31,21,3,3,"house"); set(31,22,"hdoor");                                   // mayor's house, south
   // roads & paved square (carved after buildings so they stay clear)
   for(let c=0;c<=24;c++) set(VROAD_R,c,"road"); set(VROAD_R,RIVER_C,"road");      // entry road from the left + bridge
@@ -569,9 +835,10 @@ function buildVillage(){ const g=[]; for(let r=0;r<VROWS;r++){ const row=[]; for
   [[23,18],[23,30],[29,18],[29,30]].forEach(([r,c])=>{ if(g[r][c].type==="path")set(r,c,"lamp"); });  // street lamps
   // clear ground by the fisher on the beach
   set(NPC_R,NPC_C,"wild"); set(NPC_R,NPC_C-1,"path");
-  // dungeon entrance (a cave) in the north-west, with clear ground around it
-  for(let r=CAVE_R-1;r<=CAVE_R+1;r++)for(let c=CAVE_C-1;c<=CAVE_C+1;c++) set(r,c,"wild");
-  set(CAVE_R,CAVE_C,"cave"); set(CAVE_R+1,CAVE_C,"path");
+  // dungeon entrance (a cave) in the north-west, with a rocky clearing around it
+  for(let r=CAVE_R-1;r<=CAVE_R+2;r++)for(let c=CAVE_C-2;c<=CAVE_C+2;c++) set(r,c,"wild");
+  set(CAVE_R,CAVE_C,"cave"); set(CAVE_R+1,CAVE_C,"path"); set(CAVE_R+2,CAVE_C,"path");
+  [[CAVE_R-1,CAVE_C-1],[CAVE_R-1,CAVE_C+1],[CAVE_R,CAVE_C-2],[CAVE_R,CAVE_C+2],[CAVE_R+1,CAVE_C-1],[CAVE_R+1,CAVE_C+1]].forEach(([r,c])=>set(r,c,"rock"));   // rocks frame the cave
   // fence ring around the town (only on open ground, so roads/river/buildings stay as gates)
   for(let c=7;c<=35;c++){ if(g[20]&&g[20][c].type==="wild")set(20,c,"fence"); if(g[32]&&g[32][c].type==="wild")set(32,c,"fence"); }
   for(let r=20;r<=32;r++){ if(g[r][7]&&g[r][7].type==="wild")set(r,7,"fence"); if(g[r][36]&&g[r][36].type==="wild")set(r,36,"fence"); }
@@ -591,15 +858,15 @@ function buildDungeon(fl){ const g=[]; for(let r=0;r<DR;r++){ const row=[]; for(
   if(fl%50===0) g[2][3].type="elevator";             // elevator checkpoint every 50
   dungBoss = (fl%10===0);                             // boss floor every 10
   return g; }
-function gotoDungeon(){ gridDung=buildDungeon(dungFloor); setArea("dungeon"); setScene("out"); mobs.length=0; spawnT=0; hover=null;
+function gotoDungeon(){ gridDung=buildDungeon(dungFloor); setArea("dungeon"); setScene("out"); mobs.length=0; shots.length=0; spawnT=0; hover=null;
   player.x=2.5*TILE; player.y=2.5*TILE; player.dir="d";player.fx=0;player.fy=1; transCD=0.4; if(dungBoss)spawnBoss(); save(); }
 function enterDungeon(){ dungFloor=(dungMax>=50)?Math.floor(dungMax/50)*50:1; dungBoss=false; gotoDungeon();
   float(player.x,player.y-26,t("dungeon")+" · "+t("floor")+" "+dungFloor,"#cdb0ff"); }
 function descend(){ if(dungBoss&&mobs.some(m=>m.boss)){ SND.no(); float(player.x,player.y-22,t("defeat the floor boss!"),"#ff8f8f"); return; }
   if(dungFloor>=1000){ float(player.x,player.y-22,t("the bottom… nothing deeper"),"#cdb0ff"); return; }
-  dungFloor++; if(dungFloor>dungMax)dungMax=dungFloor; gotoDungeon(); SND.door();
+  dungFloor++; if(dungFloor>dungMax){ const ph=dungeonHearts(); dungMax=dungFloor; if(dungeonHearts()>ph){ recalcMax(); player.hp=player.maxHp; float(player.x,player.y-30,"permanent heart gained!","#ff5b78"); } } gotoDungeon(); SND.door();
   float(player.x,player.y-26,t("floor")+" "+dungFloor,"#cdb0ff"); }
-function leaveDungeon(){ dungFloor=0; setArea("village"); setScene("out"); player.x=(CAVE_C+1)*TILE+TILE/2; player.y=CAVE_R*TILE+TILE/2; player.dir="d";player.fx=0;player.fy=1; transCD=0.6; mobs.length=0; save(); }
+function leaveDungeon(){ dungFloor=0; setArea("village"); setScene("out"); player.x=(CAVE_C+1)*TILE+TILE/2; player.y=CAVE_R*TILE+TILE/2; player.dir="d";player.fx=0;player.fy=1; transCD=0.6; mobs.length=0; shots.length=0; save(); }
 // glowing beacon for the stairs/exit, with an edge-arrow when off-screen (so you can always find them in the dark)
 function dungBeacon(wx,wy,col,glyph){ const sx=wx-camX,sy=wy-camY;
   if(sx>6&&sx<VW-6&&sy>6&&sy<VH-6){ ctx.globalCompositeOperation="lighter"; const g=ctx.createRadialGradient(sx,sy,3,sx,sy,42); g.addColorStop(0,col);g.addColorStop(1,"rgba(0,0,0,0)"); ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,42,0,7);ctx.fill(); ctx.globalCompositeOperation="source-over";
@@ -615,23 +882,47 @@ function buildIn(){ const w=9+houseLvl*2, h=7+houseLvl; const g=[];
   return {g,w,h}; }
 function setScene(s){ scene=s; if(s==="out"){G=gridOut;GR=gridOut.length;GC=gridOut[0].length;} else {const io=buildIn();gridIn=io.g;G=gridIn;GR=io.h;GC=io.w;} GW=GC*TILE; GH=GR*TILE; }
 
-function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false;bossDefeated=false; area="home"; gridHome=buildOut(); gridVillage=buildVillage(); setArea("home"); coins=25; clock=0;
+function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false;bossDefeated=false; penLvl=0; area="home"; gridHome=buildOut(); gridVillage=buildVillage(); setArea("home"); coins=40; clock=0;
   for(let i=0;i<bag.length;i++)bag[i]=null; bag[0]={key:"seed_carrot",count:6}; bag[1]={key:"seed_wheat",count:2}; selSlot=0;
-  for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; catIntroPending=false; playerName="You"; louieQuest=0; metHamu=false; dungFloor=0; dungMax=1; stats.trees=0;stats.crops=0;stats.fish=0; for(const k in claimed)delete claimed[k]; recalcMax();
+  for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; catIntroPending=false; playerName="You"; louieQuest=0; metHamu=false; dungFloor=0; dungMax=1; stats.trees=0;stats.crops=0;stats.fish=0; animals.length=0; penLvl=0; weather="sunny"; weatherDay=-1; totalEarned=0; lifeCrystals=0; _lastCoins=40; for(const k in claimed)delete claimed[k]; recalcMax();
   setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2+TILE; player.hp=player.maxHp;player.inv=0; mobs.length=0; save(); renderBar(); syncUI(); }
+function stripOil(g){ if(!g)return; for(const row of g)for(const t of row){ if(t&&t.type==="oil")t.type="wild"; } }
+function patchVillage(g){ if(!g||!g[21]||!g[21][25]||g[21][25].type==="shop")return;   // add Hamu's stall + animal pen to older saved villages
+  const set=(r,c,tp)=>{ if(g[r]&&g[r][c])g[r][c].type=tp; };
+  for(let r=21;r<=22;r++)for(let c=25;c<=26;c++) set(r,c,"shop"); set(22,25,"hdoor");
+  for(let r=23;r<=26;r++)for(let c=28;c<=31;c++) set(r,c,(r===23||r===26||c===28||c===31)?"fence":"path"); }
+// compact save: a plain tile (no crop/chest/mining state) becomes just its type string instead of {type,crop:null,…}
+function packGrid(g){ return g.map(row=>row.map(t=>(t.crop||t.store||t.hits||t.boost||t.net||t.mach)?t:t.type)); }
+// artisan machines: each accepts certain crops -> a luxury product after N in-game days
+const MACHINE_IN={
+  drying_rack:{ crop_tea:["tea_bundle",1], crop_fragrant_herb:["dried_herb",1], crop_amber_leaf:["amber_incense",2], crop_frost_herb:["frost_remedy",2] },
+  preserve_pot:{ crop_strawberry:["sweet_preserve",2], crop_apple_seedling:["apple_preserve",2], crop_watermelon:["melon_jam",2], crop_sugar_pea:["pea_preserve",1] },
+  press_table:{ crop_sun_bloom:["flower_oil",2], crop_golden_citrus:["citrus_extract",3], crop_pumpkin:["pumpkin_oil",2] },
+  craft_bench:{ crop_flower:["flower_sachet",2], crop_spice_flower:["spice_sachet",2], cherry_blossom:["blossom_incense",3] },
+  perfume_stand:{ crop_sun_bloom:["perfume",4], crop_sakura_bud:["sakura_perfume",4], crop_moonfruit:["moon_elixir",5], crop_snow_lotus:["snow_essence",5] } };
+function useMachine(tt,cx,cy){ const recipes=MACHINE_IN[tt.type];
+  if(tt.mach){ if(curDay()>=tt.mach.done){ gainItem(tt.mach.out,1,cx,cy); SND.coin(); burst(cx,cy-8,"#ffe9b0",10); float(cx,cy-16,(lang==="zh"?"取出 ":"collected ")+itemName(tt.mach.out),"#cdffd0"); delete tt.mach; save(); }
+      else { SND.no(); float(cx,cy-12,(tt.mach.done-curDay())+" "+t("days left"),"#cfe6ff"); } return; }
+  const sel=bag[selSlot];
+  if(sel&&recipes[sel.key]){ const out=recipes[sel.key][0], days=(seasonIdx()===3?Math.ceil(recipes[sel.key][1]*1.25):recipes[sel.key][1]);   // winter: outdoor machines run at 80% speed
+    removeItem(sel.key,1); tt.mach={out,done:curDay()+days}; SND.craft(); burst(cx,cy,"#ffe9b0",6); float(cx,cy-12,t("processing…")+" "+days+" "+t("days"),"#bfe6f0"); save(); return; }
+  SND.no(); float(cx,cy-12,t("load a crop this machine accepts"),"#cfe6ff"); }
+function unpackGrid(p){ return p.map(row=>row.map(c=>typeof c==="string"?{type:c,crop:null}:c)); }
 function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); const home=s&&(s.home||s.gridOut); if(home&&home.length===OROWS){
     farmFR1=s.farmFR1||15;farmFC1=s.farmFC1||18;houseLvl=s.houseLvl||0;farmLvl=s.farmLvl||0;hasAxe=!!s.hasAxe;
-    gridHome=home; gridVillage=(s.village&&s.village.length===VROWS&&s.village[0].length===VCOLS)?s.village:buildVillage(); coins=s.coins; clock=s.clock||0;
+    gridHome=unpackGrid(home); gridVillage=(s.village&&s.village.length===VROWS&&s.village[0].length===VCOLS)?unpackGrid(s.village):buildVillage(); coins=s.coins; clock=s.clock||0;
+    stripOil(gridHome); stripOil(gridVillage); patchVillage(gridVillage);   // clean oil + add Hamu's stall to older saves (keeps all progress)
     for(let i=0;i<bag.length;i++)bag[i]=s.bag&&s.bag[i]?s.bag[i]:null; selSlot=s.selSlot||0;
     catX=(doorC=FC0+2,(FC0+4)*TILE+TILE/2); catY=(doorR=FR0+3,(FR0+4)*TILE+TILE/2); setVillageMeta();
     metCat=!!s.metCat; metFisher=!!s.metFisher; bossDefeated=!!s.bossDefeated; seenIntro=!!s.seenIntro; catIntroPending=!!s.catIntroPending;
-    playerName=s.playerName||"You"; louieQuest=s.louieQuest||0; metHamu=!!s.metHamu; dungMax=s.dungMax||1; dungFloor=0; if(s.stats)Object.assign(stats,s.stats); if(s.claimed)Object.assign(claimed,s.claimed);
+    playerName=s.playerName||"You"; louieQuest=s.louieQuest||0; metHamu=!!s.metHamu; dungMax=s.dungMax||1; dungFloor=0; penLvl=s.penLvl||0; carvePen(gridHome); weather=s.weather||"sunny"; weatherDay=(typeof s.weatherDay==="number")?s.weatherDay:-1; totalEarned=s.totalEarned||0; lifeCrystals=s.lifeCrystals||0; _lastCoins=coins; if(s.stats)Object.assign(stats,s.stats); if(s.claimed)Object.assign(claimed,s.claimed);
+    animals.length=0; if(Array.isArray(s.animals))for(const a of s.animals){ if(ANIMALS[a.kind])animals.push(a); }
     for(const sn in equip)equip[sn]=(s.equip&&s.equip[sn]&&ITEMS[s.equip[sn]])?s.equip[sn]:null; recalcMax();
     player.hunger=(typeof s.hunger==="number")?s.hunger:player.maxHunger; player.regenT=0;player.starveT=0;
     area=(s.area==="village")?"village":"home"; setArea(area);
     setScene("out"); player.x=s.px;player.y=s.py;player.hp=s.hp??player.maxHp; return true; } }catch(e){} return false; }
 function save(){ const inD=area==="dungeon"; const sArea=inD?"village":area, sx=inD?(CAVE_C+1)*TILE+TILE/2:(scene==="out"?player.x:outX), sy=inD?CAVE_R*TILE+TILE/2:(scene==="out"?player.y:outY);
-  localStorage.setItem("homestead4", JSON.stringify({v:5,area:sArea,home:gridHome,village:gridVillage,coins,clock,px:sx,py:sy,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger,playerName,louieQuest,metHamu,dungMax,stats,claimed})); }
+  localStorage.setItem("homestead4", JSON.stringify({v:5,area:sArea,home:packGrid(gridHome),village:packGrid(gridVillage),coins,clock,px:sx,py:sy,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger,playerName,louieQuest,metHamu,dungMax,stats,claimed,animals,penLvl,weather,weatherDay,totalEarned,lifeCrystals})); }
 function syncUI(){ document.getElementById("coins").textContent=coins; }
 
 function resize(){ const rect=document.querySelector("main").getBoundingClientRect();
@@ -654,16 +945,42 @@ const SND={ step(){tone("sine",150,110,0.06,0.05);},till(){tone("triangle",240,1
   chop(){tone("square",200,120,0.08,0.14);},mine(){tone("square",380,200,0.07,0.12);},place(){tone("sine",500,700,0.07,0.12);},craft(){tone("sine",600,900,0.12,0.14);setTimeout(()=>tone("sine",900,1200,0.1,0.12),80);},
   hurt(){tone("sawtooth",200,90,0.18,0.2);},heal(){tone("sine",520,880,0.2,0.16);},door(){tone("sine",300,500,0.12,0.12);},meow(){tone("sine",700,500,0.12,0.1);setTimeout(()=>tone("sine",520,640,0.1,0.08),90);},no(){tone("sawtooth",170,120,0.1,0.12);} };
 
-function float(x,y,text,col){ fx.push({kind:"text",x,y,text:t(text),col,life:1}); }
+let bannerMsg="", bannerUntil=0;
+function float(x,y,text,col){ const tx=t(text); fx.push({kind:"text",x,y,text:tx,col,life:1});
+  if(!/^[+\-]?[\d.]/.test(tx)){ bannerMsg=tx; bannerUntil=now()+2.6; } }   // also show real notices as a big banner (skips +coins/-hp popups)
 function burst(x,y,col,n){ for(let i=0;i<n;i++){const a=Math.random()*7,s=1+Math.random()*2.6;fx.push({kind:"p",x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1.4,col,life:1});} }
 
 /* ---- monsters ---- */
-const DUNG_COLS=["#67d98a","#6aa0ff","#c46aff","#ff7a6a","#ffd24a"];
+const MOBKINDS={
+  slime:    {col:"#67d98a", hp:3, r:13, spd:52, dmg:1, drop:"goo"},
+  bat:      {col:"#9a6cff", hp:2, r:11, spd:82, dmg:1, drop:"goo", fly:true},
+  boar:     {col:"#b07a4a", hp:7, r:16, spd:38, dmg:2, drop:"meat"},
+  frostling:{col:"#7fd2ff", hp:4, r:13, spd:62, dmg:1, drop:"goo"},
+  shade:    {col:"#5a4a7a", hp:5, r:13, spd:70, dmg:1, drop:"goo", fly:true},
+  crab:     {col:"#e0613a", hp:4, r:13, spd:40, dmg:1, drop:"crab_shell"},
+  bear:     {col:"#6b4a2b", hp:14, r:18, spd:46, dmg:2, drop:"meat"} };
+function pickKind(){ if(area==="dungeon"){ const pool=["slime","bat","boar","frostling","shade","crab"]; return pool[Math.random()*Math.min(pool.length,2+Math.floor(dungFloor/8))|0]; }
+  if(area==="home"&&seasonIdx()===2&&Math.random()<0.12)return "bear";   // autumn: bears rarely appear
+  const pool=isNight()?["slime","bat","bat","boar","shade","crab"]:["slime","slime","bat","boar","crab"]; return pool[Math.random()*pool.length|0]; }
 function spawnMob(){ const RW=gridOut.length, CW=gridOut[0].length; for(let i=0;i<30;i++){ const c=1+(Math.random()*(CW-2)|0), r=1+(Math.random()*(RW-2)|0);
   if(inFarm(r,c)||OBST.has(gridOut[r][c].type))continue; const x=c*TILE+TILE/2,y=r*TILE+TILE/2,pd=Math.hypot(x-player.x,y-player.y); if(pd<170||pd>520)continue;
-  const hp=area==="dungeon"?3+Math.floor(dungFloor/2):3, col=area==="dungeon"?DUNG_COLS[Math.min(4,Math.floor(dungFloor/12))]:"#67d98a";
-  mobs.push({x,y,hp,maxHp:hp,r:13,flash:0,kx:0,ky:0,t:Math.random()*9,col}); return; } }
-function spawnBoss(){ const hp=18+dungFloor*2; mobs.push({x:(DC*TILE)/2,y:(DR*TILE)/2,hp,maxHp:hp,r:24,flash:0,kx:0,ky:0,t:0,boss:true,col:"#d23a7a"}); }
+  const k=pickKind(), K=MOBKINDS[k], hp=K.hp+(area==="dungeon"?Math.floor(dungFloor/2):0);
+  mobs.push({x,y,hp,maxHp:hp,r:K.r,flash:0,kx:0,ky:0,t:Math.random()*9,col:K.col,kind:k,spd:K.spd,dmg:K.dmg,drop:K.drop,fly:K.fly}); return; } }
+const BOSSES=[
+  {name:"Stone Brute", col:"#9aa3ab", r:27, beh:"chase",  hpm:1.2},
+  {name:"Charger",     col:"#e07a2a", r:23, beh:"charge", hpm:0.9},
+  {name:"Hexer",       col:"#9a5af0", r:22, beh:"shoot",  hpm:0.8},
+  {name:"Brood Mother",col:"#2aa0a0", r:25, beh:"summon", hpm:1.0},
+  {name:"Wraith King", col:"#d23a7a", r:26, beh:"blink",  hpm:1.0} ];
+let shots=[];   // dungeon boss projectiles
+function spawnBoss(){ const B=BOSSES[(Math.floor(dungFloor/10)-1+50*BOSSES.length)%BOSSES.length]; const hp=Math.round((18+dungFloor*2)*B.hpm);
+  mobs.push({x:(DC*TILE)/2,y:(DR*TILE)/2,hp,maxHp:hp,r:B.r,flash:0,kx:0,ky:0,t:0,boss:true,beh:B.beh,name:B.name,col:B.col,cd:2.2,dash:0,cvx:0,cvy:0}); }
+function bossBehave(mb,ux,uy,d,dt){ mb.cd-=dt;
+  if(mb.beh==="charge"){ if(mb.dash>0){ mb.dash-=dt; moveMob(mb,mb.cvx*dt,mb.cvy*dt,12); } else { moveMob(mb,ux*42*dt,uy*42*dt,12); if(mb.cd<=0){ mb.flash=0.35; mb.cvx=ux*360; mb.cvy=uy*360; mb.dash=0.7; mb.cd=2.6; } } }
+  else if(mb.beh==="shoot"){ const w=d<200?-1:(d>340?1:0); moveMob(mb,ux*w*46*dt,uy*w*46*dt,12); if(mb.cd<=0){ mb.flash=0.18; for(let k=-1;k<=1;k++){const a=Math.atan2(uy,ux)+k*0.25; shots.push({x:mb.x,y:mb.y,vx:Math.cos(a)*250,vy:Math.sin(a)*250,t:3.4});} mb.cd=1.6; } }
+  else if(mb.beh==="summon"){ moveMob(mb,ux*30*dt,uy*30*dt,12); if(mb.cd<=0&&mobs.filter(m=>!m.boss).length<8){ spawnMob(); mb.flash=0.2; mb.cd=3.6; } }
+  else if(mb.beh==="blink"){ moveMob(mb,ux*48*dt,uy*48*dt,12); if(mb.cd<=0){ mb.flash=0.3; mb.x=player.x-ux*60; mb.y=player.y-uy*60; mb.cd=2.8; } }
+  else { moveMob(mb,ux*62*dt,uy*62*dt,12); } }   // chase (brute)
 
 /* ---- interaction ---- */
 function facedCell(){ let c=Math.floor((player.x+player.fx*TILE)/TILE), r=Math.floor((player.y+player.fy*TILE)/TILE);
@@ -672,7 +989,7 @@ function tryAttack(){ const range=TILE*1.6,dmg=(hasAxe?2:1)+totalBonus().atk; le
   if(player.hunger<=0){ if(mobs.some(m=>Math.hypot(m.x-player.x,m.y-player.y)<TILE*1.7)){ tooHungry(); return true; } return false; }
   for(const m of mobs){ const dx=m.x-player.x,dy=m.y-player.y,fwd=dx*player.fx+dy*player.fy,lat=Math.abs(dx*player.fy-dy*player.fx),dd=Math.hypot(dx,dy);
     if(dd<range&&(fwd>-10||dd<TILE*0.9)&&lat<TILE*1.1){ m.hp-=dmg;m.flash=0.18;const d=dd||1;m.kx=dx/d*7;m.ky=dy/d*7;hit=true;SND.hit();
-      if(m.hp<=0){ let drop=3+(Math.random()*5|0); gainItem("goo",1,m.x,m.y); if(Math.random()<0.3)gainItem("meat",1,m.x,m.y); if(Math.random()<0.18)gainItem("oil",1,m.x,m.y);
+      if(m.hp<=0){ let drop=3+(Math.random()*5|0); gainItem(m.drop||"goo",1,m.x,m.y); if(Math.random()<0.3)gainItem("meat",1,m.x,m.y); if(Math.random()<0.18)gainItem("oil",1,m.x,m.y);
         if(area==="dungeon"){ drop+=Math.floor(dungFloor/2); if(m.boss){ drop+=50+dungFloor*3; gainItem("diamond",1,m.x,m.y); float(m.x,m.y-44,t("boss down!"),"#ffd24a"); } else if(Math.random()<0.12+dungFloor*0.004)gainItem(Math.random()<0.5?"silver":"fossil",1,m.x,m.y); }
         coins+=drop; float(m.x,m.y-30,"+"+drop+"c","#ffe27a"); burst(m.x,m.y,m.boss?"#ff9ad0":"#7be0a0",m.boss?22:12); syncUI(); } } }
   if(hit)spendHunger(1.5);
@@ -686,6 +1003,11 @@ function talkInteract(){ if(scene!=="out"){ return; }
   float(player.x,player.y-22,"no one to talk to here","#cfe0ff"); }
 function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.18;
   if(scene==="in"){ const f=facedCell(); if(!f)return; const t=gridIn[f.r][f.c]; if(t.type==="bed")sleep(); else if(t.type==="mat")exitHouse(); else if(t.type==="stove")openStove(); return; }
+  // pasture animals: collect their daily produce, or hop on the horse to fast-travel
+  if(area==="home"){ for(const a of animals){ if(Math.hypot(a.x-player.x,a.y-player.y)<TILE*1.5){
+    if(a.kind==="horse"){ openTeleport(); return; }
+    if(animalReady(a)){ collectAnimal(a); return; }
+    SND.no(); float(a.x,a.y-22,t("not ready yet"),"#cfe6ff"); return; } } }
   // exterior — use is for working the land/fighting; talking is on its own button
   SND.swing();
   if(tryAttack()){ save(); return; }
@@ -694,6 +1016,7 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.
   if(t.type==="door"){ enterHouse(); return; }
   if(t.type==="chest"){ openChest(f.r,f.c); return; }
   if(t.type==="stove"){ openStove(); return; }
+  if(MACHINE_IN[t.type]){ useMachine(t,cx,cy); return; }
   if(t.type==="cave"){ enterDungeon(); return; }
   if(t.type==="stairs"){ descend(); return; }
   if(t.type==="exitup"){ leaveDungeon(); return; }
@@ -702,8 +1025,13 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.
       gainItem(r<0.18?"diamond":r<0.45?(Math.random()<0.5?"red_jewel":"green_jewel"):r<0.7?"fossil":"silver",1,cx,cy); if(dep>=20&&Math.random()<0.2)gainItem("diamond",1,cx,cy); t.type="dfloor"; t.hits=0; } save(); return; }
   // place crafted item
   if(sel&&ITEMS[sel.key].kind==="place"&&PLACEABLE_ON.has(t.type)&&!t.crop&&!inFarmHouseConflict(f)){ t.type=ITEMS[sel.key].tile; if(t.type==="chest")t.store=new Array(CHESTN).fill(null); removeItem(sel.key,1); SND.place(); burst(cx,cy,itemColor(sel.key),5); save(); return; }
-  // fishing with a rod or net
-  if(sel&&ITEMS[sel.key].kind==="tool"&&WATER.has(t.type)){ fishAt(cx,cy,sel.key); save(); return; }
+  // water: collect from a placed net, set a new net, or rod-fish (works on ANY water tile)
+  if(WATER.has(t.type)){
+    if(t.net){ if(curDay()>t.net.day){ const sf=rollSeafood(t.net.lvl||1); gainItem(sf,1,cx,cy); addItem(t.net.key||"net",1); delete t.net; SND.water(); burst(cx,cy-6,"#bfe6f0",8); float(cx,cy-14,t("netted")+" "+itemName(sf),"#bfe6f0"); }
+        else { SND.no(); float(cx,cy-12,t("the net needs a day to fill"),"#cfe6ff"); } save(); return; }
+    if(sel&&isNet(sel.key)){ t.net={day:curDay(),lvl:ITEMS[sel.key].netLvl||1,key:sel.key}; removeItem(sel.key,1); SND.water(); burst(cx,cy,"#dfeae0",5); float(cx,cy-12,t("net set — come back tomorrow"),"#bfe6f0"); save(); return; }
+    if(sel&&isRod(sel.key)){ startFishing(cx,cy,sel.key); return; }
+    SND.no(); float(cx,cy-10,t("select a rod or a net"),"#cfe6ff"); return; }
   // scoop sand from the beach
   if(t.type==="sand"){ SND.mine(); burst(cx,cy,"#e9d8a6",6); gainItem("sand",1,cx,cy); save(); return; }
   // scoop oil from a seep
@@ -711,35 +1039,73 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.
   // mine ores
   if(t.type==="iron"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||IRONHITS())-1; SND.mine(); burst(cx,cy-6,"#c4ccd4",6); if(t.hits<=0){ gainItem("iron",1,cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
   if(t.type==="gold"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||GOLDHITS())-1; SND.mine(); burst(cx,cy-6,"#ffd84a",6); if(t.hits<=0){ gainItem("gold",1,cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
+  // winter: scoop snow off the ground (use it to build a snowman)
+  if(seasonIdx()===3&&t.type==="wild"){ SND.water(); burst(cx,cy,"#eaf4ff",7); gainItem("snow",1,cx,cy); save(); return; }
   // gather
-  if(t.type==="tree"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||TREEHITS())-1; SND.chop(); burst(cx,cy-10,"#3a9b50",6); if(t.hits<=0){ gainItem("wood",1+(Math.random()<.5?1:0),cx,cy); if(Math.random()<0.25)gainItem("berry",1,cx,cy); stats.trees++; t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
+  if(t.type==="tree"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||TREEHITS())-1; SND.chop(); burst(cx,cy-10,isBlossom(f.r,f.c)?"#ffc1dd":"#3a9b50",6); if(t.hits<=0){ gainItem("wood",1+(Math.random()<.5?1:0),cx,cy); if(Math.random()<0.25)gainItem("berry",1,cx,cy); if(isBlossom(f.r,f.c)){ gainItem("cherry_blossom",1,cx,cy); float(cx,cy-16,"cherry blossom!","#ffb7d5"); } stats.trees++; t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
   if(t.type==="rock"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||ROCKHITS())-1; SND.mine(); burst(cx,cy-6,"#b7c0c8",6); if(t.hits<=0){ gainItem("stone",1+(Math.random()<.5?1:0),cx,cy); if(Math.random()<0.22)gainItem("coal",1,cx,cy); if(Math.random()<0.08)gainItem("silver",1,cx,cy); t.type=inFarm(f.r,f.c)?"grass":"wild"; t.hits=0; } save(); return; }
   // farm (inside fence)
   if(inFarm(f.r,f.c)&&FARMLAND.has(t.type)){
     if(area==="home"&&f.r===Math.floor(catY/TILE)&&f.c===Math.floor(catX/TILE)){ SND.no(); float(cx,cy-10,"the cat is sitting here","#ffd9a8"); return; }
     if(t.type==="grass"||t.type==="path"||t.type==="ppath"){ if(tooHungry())return; spendHunger(1); t.type="soil"; SND.till(); burst(cx,cy,"#6b4a2b",5); }
     else if(t.type==="soil"){
-      if(!t.crop){ if(sel&&ITEMS[sel.key].kind==="seed"){ if(tooHungry())return; spendHunger(1); const crop=ITEMS[sel.key].crop; t.crop={type:crop,grow:0,boost:0}; removeItem(sel.key,1); SND.plant(); burst(cx,cy,CROPS[crop].leaf,4); } else { SND.no(); float(cx,cy-10,"pick a seed (cat shop)","#ffd9a8"); } }
+      if(!t.crop){ if(sel&&ITEMS[sel.key].kind==="seed"){ const crop=ITEMS[sel.key].crop, C=CROPS[crop];
+          if(!cropAllowed(crop)){ SND.no(); float(cx,cy-10, C.special?"Wrong season. You cannot plant this crop now.":"This crop cannot be planted in this season.","#ffd9a8"); return; }
+          if(Math.ceil(C.dur/DAYLEN) > 29-dayOfSeason()){ SND.no(); float(cx,cy-10,"Not enough time left this season.","#ffd9a8"); return; }
+          if(tooHungry())return; spendHunger(1); t.crop={type:crop,grow:0,boost:0,wet:isRainy()}; removeItem(sel.key,1); SND.plant(); burst(cx,cy,C.leaf,4); }
+        else { SND.no(); float(cx,cy-10,"pick a seed (cat shop)","#ffd9a8"); } }
       else if(t.crop.grow>=1){ const crop=t.crop.type; t.crop=null; SND.harvest(); burst(cx,cy-12,CROPS[crop].c,12); gainItem("crop_"+crop,1,cx,cy); stats.crops++; }
-      else { t.crop.boost=now()+4; SND.water(); for(let i=0;i<7;i++){const a=-Math.PI/2+(Math.random()-.5)*1.3,s=1+Math.random()*1.8;fx.push({kind:"p",x:cx,y:cy-4,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col:"#8fd0ff",life:1});} }
+      else if(sel&&sel.key==="bone_meal"){ t.crop.grow=Math.min(1,t.crop.grow+0.4); removeItem("bone_meal",1); SND.plant(); burst(cx,cy-8,"#eae6d8",12); float(cx,cy-14,"growth boosted!","#dfe8b0"); }
+      else { t.crop.boost=now()+4; t.crop.wet=true; SND.water(); for(let i=0;i<7;i++){const a=-Math.PI/2+(Math.random()-.5)*1.3,s=1+Math.random()*1.8;fx.push({kind:"p",x:cx,y:cy-4,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col:"#8fd0ff",life:1});} }
     } save(); return;
   }
   // use a salve
-  if(sel&&ITEMS[sel.key].kind==="use"&&sel.key==="salve"&&player.hp<player.maxHp){ player.hp=Math.min(player.maxHp,player.hp+2); removeItem("salve",1); SND.heal(); float(player.x,player.y-24,"+2♥","#ff8fae"); save(); }
+  if(sel&&ITEMS[sel.key].kind==="use"&&ITEMS[sel.key].heal&&player.hp<player.maxHp){ const h=ITEMS[sel.key].heal; player.hp=Math.min(player.maxHp,player.hp+h); removeItem(sel.key,1); SND.heal(); float(player.x,player.y-24,"+"+h+"♥","#ff8fae"); save(); }
 }
 function inFarmHouseConflict(f){ const t=gridOut[f.r][f.c]; return false; }
 function nearThreat(){ return scene==="out"&&mobs.some(m=>Math.hypot(m.x-player.x,m.y-player.y)<TILE*3); }
 function blockTalk(){ SND.no(); float(player.x,player.y-24,"fight off the monsters first!","#ff8f8f"); }
-function fishAt(x,y,tool){ SND.water(); let got=tool==="net"?2:1; if(tool==="net"&&Math.random()<0.5)got+=1; if(tool==="rod"&&Math.random()<0.35)got=0;
-  if(got>0){ gainItem("fish",got,x,y); stats.fish+=got; burst(x,y-6,"#8fc7e8",7); } else { float(x,y-10,"…no bite","#cfe6ff"); } }
+function isRod(k){ return !!(ITEMS[k]&&ITEMS[k].rodLvl); }
+function isNet(k){ return !!(ITEMS[k]&&ITEMS[k].netLvl); }
+// ---- Stardew-style fishing minigame ----
+let fishing=null;
+function rollFish(lvl,baited){ const lucky=Math.random()<(0.07*lvl+(baited?0.12:0));   // premium catch chance from better rod/bait
+  const pool=lucky?[{k:"shark",w:4},{k:"octopus",w:8},{k:"squid",w:10},{k:"eel",w:10},{k:"pufferfish",w:12}]
+                  :[{k:"fish",w:30},{k:"shrimp",w:18},{k:"tropical_fish",w:16},{k:"pufferfish",w:12},{k:"eel",w:8},{k:"squid",w:6},{k:"octopus",w:3},{k:"shark",w:1}];
+  let tot=pool.reduce((s,p)=>s+p.w,0),r=Math.random()*tot; for(const p of pool){ if((r-=p.w)<0)return p.k; } return "fish"; }
+function startFishing(x,y,rodKey){ const lvl=ITEMS[rodKey].rodLvl||1, baited=countItem("bait")>0; if(baited)removeItem("bait",1);
+  fishing={x,y,lvl,baited,fishY:0.5,fishTarget:0.5,ft:0,barY:0.72,barV:0,barH:0.1+0.028*(lvl-1)+(baited?0.05:0),prog:0.34,hold:false,t:0}; SND.water(); }
+function updateFishing(dt){ const F=fishing;
+  F.ft-=dt; if(F.ft<=0){ F.fishTarget=0.05+Math.random()*0.9; F.ft=0.35+Math.random()*0.85; }
+  F.fishY+=(F.fishTarget-F.fishY)*5*dt;
+  F.barV+=(F.hold?-2.6:1.9)*dt; F.barV*=0.92; F.barY+=F.barV*dt;
+  if(F.barY<F.barH){F.barY=F.barH;F.barV=0;} if(F.barY>1-F.barH){F.barY=1-F.barH;F.barV=0;}
+  const over=Math.abs(F.fishY-F.barY)<F.barH; F.prog+=(over?0.42:-0.34)*dt;
+  if(F.prog>=1){ const k=rollFish(F.lvl,F.baited); gainItem(k,1,F.x,F.y); stats.fish++; burst(F.x,F.y-6,"#8fc7e8",12); float(F.x,F.y-14,(lang==="zh"?"釣到 ":"caught ")+itemName(k)+"!","#bfe6f0"); SND.harvest(); fishing=null; save(); return; }
+  if(F.prog<=0){ float(F.x,F.y-10,"…it got away","#cfe6ff"); SND.no(); fishing=null; } }
+function drawFishing(){ const F=fishing, bw=28, top=64, h=Math.max(160,Math.min(VH-210,340)), bx=VW-44;
+  ctx.fillStyle="rgba(8,14,40,.5)"; ctx.fillRect(0,0,VW,VH);
+  ctx.fillStyle="rgba(10,30,60,.92)"; ctx.beginPath();ctx.roundRect(bx-bw/2-6,top-8,bw+12,h+16,12);ctx.fill();
+  ctx.fillStyle="rgba(30,80,140,.55)"; ctx.beginPath();ctx.roundRect(bx-bw/2,top,bw,h,8);ctx.fill();
+  const over=Math.abs(F.fishY-F.barY)<F.barH, cyT=top+(F.barY-F.barH)*h, cyH=2*F.barH*h;
+  ctx.fillStyle=over?"rgba(120,235,140,.9)":"rgba(120,190,255,.55)"; ctx.beginPath();ctx.roundRect(bx-bw/2+3,cyT,bw-6,cyH,7);ctx.fill();
+  ctx.font="19px serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("🐟",bx,top+F.fishY*h);ctx.textBaseline="alphabetic";
+  const px=bx-bw/2-20; ctx.fillStyle="rgba(0,0,0,.45)";ctx.beginPath();ctx.roundRect(px,top,11,h,5);ctx.fill();
+  ctx.fillStyle="#ffd24a";ctx.beginPath();ctx.roundRect(px,top+h*(1-F.prog),11,h*F.prog,5);ctx.fill();
+  ctx.fillStyle="#fff";ctx.font="800 13px Helvetica,Arial";ctx.textAlign="center";ctx.fillText(t("hold to reel — keep the bar on the fish"),VW/2,38); }
+// net-trap catch: better nets shift toward rarer seafood; pearl is the rarest prize
+function rollSeafood(lvl){ lvl=lvl||1; const r=Math.random()-(lvl-1)*0.06;
+  return r<0.02?"pearl":r<0.08?"octopus":r<0.16?"squid":r<0.27?"urchin":r<0.42?"oyster":r<0.58?"lobster":r<0.76?"crab":"shrimp"; }
 // long-press to break a player-built fence (NOT the farm fence)
 let holdUse=false, holdStart=0, holdBroke=false;
 function startHold(){ if(holdUse)return; holdUse=true; holdStart=now(); holdBroke=false; }
 function endHold(){ holdUse=false; holdBroke=false; }
-function holdTarget(){ if(scene!=="out"||!holdUse)return null; const f=facedCell(); if(!f)return null; const t=gridOut[f.r][f.c]; return BREAKABLE.has(t.type)?f:null; }
+function holdTarget(){ if(scene!=="out"||!holdUse)return null; const f=facedCell(); if(!f)return null; const tt=gridOut[f.r][f.c]; return (BREAKABLE.has(tt.type)||(WATER.has(tt.type)&&tt.net))?f:null; }
 function updateHold(){ const f=holdTarget(); if(!f){ return; } const prog=(now()-holdStart)/1.2;
-  if(prog>=1&&!holdBroke){ holdBroke=true; const t=gridOut[f.r][f.c]; const give=TILE2ITEM[t.type]||"wood"; t.type=inFarm(f.r,f.c)?"grass":"wild";
-    SND.chop(); burst(f.c*TILE+TILE/2,f.r*TILE+TILE/2,"#d9c19a",8); gainItem(give,1,f.c*TILE+TILE/2,f.r*TILE+TILE/2); save(); } }
+  if(prog>=1&&!holdBroke){ holdBroke=true; const tt=gridOut[f.r][f.c], cx=f.c*TILE+TILE/2, cy=f.r*TILE+TILE/2;
+    if(tt.net){ addItem(tt.net.key||"net",1); delete tt.net; SND.chop(); burst(cx,cy,"#dfeae0",8); float(cx,cy-12,"net picked up","#bfe6f0"); save(); return; }
+    const give=TILE2ITEM[tt.type]||"wood"; tt.type=inFarm(f.r,f.c)?"grass":"wild";
+    SND.chop(); burst(cx,cy,"#d9c19a",8); gainItem(give,1,cx,cy); save(); } }
 function gotoArea(a){ setArea(a); setScene("out"); SND.door(); transCD=0.6; mobs.length=0; hover=null;
   if(a==="village"){ player.x=1*TILE+TILE/2; player.y=VROAD_R*TILE+TILE/2; player.dir="r";player.fx=1;player.fy=0; }
   else { player.x=(OCOLS-2)*TILE+TILE/2; player.y=ROAD_R*TILE+TILE/2; player.dir="l";player.fx=-1;player.fy=0; }
@@ -748,11 +1114,16 @@ function gotoArea(a){ setArea(a); setScene("out"); SND.door(); transCD=0.6; mobs
 /* ---- road boss: side-view mini-fight (needs metal sword + armour) ---- */
 const boss={};
 function tryBoss(){ if(!hasSword()||!hasArmor()){ SND.no(); float(player.x,player.y-26,"need a metal sword AND armour!","#ff8f8f"); player.x-=TILE*1.3; transCD=0.9; return; }
-  scene="boss"; SND.door(); bossInit(); }
+  const B={who:"boss",name:"Road Guardian",face:"👹",col:"#8a3a6a"};
+  startDialog([
+    {...B,text:"Halt, traveller. I am the Road Guardian."},
+    {...B,text:"I came to test your reflexes. Dodge my attacks, strike when you can — survive, and the road is yours."},
+    {...B,text:"Show me what you've got!"}
+  ], ()=>{ scene="boss"; SND.door(); bossInit(); }); }
 function bossInit(){ document.body.classList.add("inboss"); const GY=VH-50;
   boss.gy=GY; boss.px=80; boss.py=GY; boss.pvx=0; boss.pvy=0; boss.pg=true; boss.coyote=0; boss.pdir=1; boss.atk=0; boss.pinv=0;
   boss.php=player.maxHp; boss.pmax=player.maxHp; boss.flash=0;
-  boss.bx=VW-130; boss.by=GY; boss.bhp=14; boss.bmax=14; boss.t=0; boss.cd=1.6; boss.st="idle"; boss.tele=0; boss.cv=0; boss.ct=0;
+  boss.bx=VW-130; boss.by=GY; boss.bhp=24; boss.bmax=24; boss.t=0; boss.cd=1.6; boss.st="idle"; boss.tele=0; boss.cv=0; boss.ct=0;
   boss.atkType=""; boss.markX=boss.px; boss.slamUp=false; boss.slamT=0; boss.proj=[]; boss.end=0; boss.win=false; boss.bflash=0; }
 function bossJump(){ if(scene==="boss"&&(boss.pg||boss.coyote>0)){ boss.pvy=-470; boss.pg=false; boss.coyote=0; SND.swing(); } }
 function bossAttack(){ if(scene!=="boss"||boss.atk>0||boss.end)return; boss.atk=0.24; SND.hit();
@@ -772,13 +1143,15 @@ function updateBoss(dt){ const GY=boss.gy, ph=boss.bhp<=boss.bmax/2;
   if(boss.end){ boss.end-=dt; if(boss.end<=0)finishBoss(boss.win); return; }
   // ---- boss AI ----
   if(boss.st==="idle"){ boss.bx+=((VW*0.66)-boss.bx)*1.6*dt; boss.by+=(GY-boss.by)*6*dt; boss.cd-=dt;
-    if(boss.cd<=0){ boss.atkType=["charge","spread","dive","slam"][Math.floor(Math.random()*4)]; boss.st="warn"; boss.tele=ph?0.6:0.85; if(boss.atkType==="dive")boss.markX=boss.px; } }
+    if(boss.cd<=0){ boss.atkType=["charge","spread","dive","slam","rain"][Math.floor(Math.random()*5)]; boss.st="warn"; boss.tele=ph?0.55:0.8; if(boss.atkType==="dive")boss.markX=boss.px; } }
   else if(boss.st==="warn"){ boss.tele-=dt;
     if(boss.atkType==="dive"){ boss.by+=((GY-110)-boss.by)*5*dt; boss.markX+=(boss.px-boss.markX)*2.4*dt; }
     if(boss.atkType==="slam"){ boss.bx+=(boss.px-boss.bx)*3*dt; boss.by+=((GY-120)-boss.by)*5*dt; }
+    if(boss.atkType==="rain"){ boss.bx+=((VW*0.5)-boss.bx)*3*dt; boss.by+=((GY-160)-boss.by)*5*dt; }
     if(boss.tele<=0){ if(boss.atkType==="charge"){ boss.st="charge"; boss.cv=(boss.px<boss.bx?-1:1)*(ph?500:430); boss.ct=1.0; }
       else if(boss.atkType==="spread"){ bossFire(); boss.st="idle"; boss.cd=ph?0.8:1.15; }
       else if(boss.atkType==="dive"){ boss.st="dive"; boss.divetx=boss.markX; }
+      else if(boss.atkType==="rain"){ const n=ph?7:5; for(let i=0;i<n;i++){ boss.proj.push({x:30+Math.random()*(VW-60),y:-20-Math.random()*60,vx:0,vy:ph?380:320,t:3.4,rain:1}); } SND.swing(); boss.st="idle"; boss.cd=ph?0.7:1.0; }
       else { boss.st="slam"; boss.slamUp=true; boss.slamT=0; } } }
   else if(boss.st==="charge"){ boss.bx+=boss.cv*dt; boss.by+=(GY-boss.by)*8*dt; boss.ct-=dt; if(boss.bx<60||boss.bx>VW-60||boss.ct<=0){ boss.st="idle"; boss.cd=ph?0.9:1.3; } }
   else if(boss.st==="dive"){ boss.bx+=(boss.divetx-boss.bx)*7*dt; boss.by+=900*dt; if(boss.by>=GY){ boss.by=GY; boss.st="idle"; boss.cd=ph?0.9:1.2; } }
@@ -786,6 +1159,7 @@ function updateBoss(dt){ const GY=boss.gy, ph=boss.bhp<=boss.bmax/2;
     else { boss.by+=1100*dt; if(boss.by>=GY){ boss.by=GY; boss.proj.push({x:boss.bx,y:GY-6,vx:-300,vy:0,t:2.2,wave:1}); boss.proj.push({x:boss.bx,y:GY-6,vx:300,vy:0,t:2.2,wave:1}); SND.hit(); boss.st="idle"; boss.cd=ph?0.9:1.25; } } }
   // ---- projectiles ----
   for(const p of boss.proj){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.t-=dt;
+    if(p.rain&&p.y>GY+8)p.t=0;   // falling shards burst on the ground
     if(p.wave){ if(boss.py>GY-30&&Math.abs(p.x-boss.px)<18)bhitPlayer(1,p); }
     else if(Math.abs(p.x-boss.px)<15&&Math.abs(p.y-(boss.py-22))<24)bhitPlayer(1,p); }
   boss.proj=boss.proj.filter(p=>p.t>0&&p.x>-40&&p.x<VW+40);
@@ -801,7 +1175,8 @@ function drawBoss(){ ctx.fillStyle="#1a1030"; ctx.fillRect(0,0,VW,VH);
     if(boss.atkType==="charge"){ ctx.fillStyle=`rgba(255,70,70,${fl})`; ctx.fillRect(0,boss.gy-44,VW,56); }
     else if(boss.atkType==="spread"){ ctx.strokeStyle=`rgba(255,160,60,${fl})`;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(boss.bx,boss.by-24);ctx.lineTo(boss.px,boss.py-22);ctx.stroke(); }
     else if(boss.atkType==="dive"){ ctx.strokeStyle=`rgba(255,70,70,${fl})`;ctx.lineWidth=3;const mx=boss.markX;ctx.beginPath();ctx.moveTo(mx-13,boss.gy);ctx.lineTo(mx+13,boss.gy+10);ctx.moveTo(mx+13,boss.gy);ctx.lineTo(mx-13,boss.gy+10);ctx.stroke(); }
-    else if(boss.atkType==="slam"){ ctx.fillStyle=`rgba(180,90,255,${fl})`; ctx.fillRect(0,boss.gy-6,VW,18); } }
+    else if(boss.atkType==="slam"){ ctx.fillStyle=`rgba(180,90,255,${fl})`; ctx.fillRect(0,boss.gy-6,VW,18); }
+    else if(boss.atkType==="rain"){ ctx.fillStyle=`rgba(120,90,255,${fl})`; ctx.fillRect(0,0,VW,22); for(let i=0;i<6;i++){const rx=(i+0.5)*VW/6;ctx.strokeStyle=`rgba(160,120,255,${fl})`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(rx,0);ctx.lineTo(rx,boss.gy);ctx.stroke();} } }
   if(boss.st==="dive"){ ctx.fillStyle="rgba(255,70,70,.4)";ctx.beginPath();ctx.ellipse(boss.divetx,boss.gy+6,18,5,0,0,7);ctx.fill(); }
   for(const p of boss.proj){ if(p.wave){ ctx.fillStyle="#b46aff";ctx.beginPath();ctx.moveTo(p.x-14,boss.gy+10);ctx.lineTo(p.x,boss.gy-18);ctx.lineTo(p.x+14,boss.gy+10);ctx.closePath();ctx.fill(); }
     else { ctx.fillStyle="rgba(255,200,120,.5)";ctx.beginPath();ctx.arc(p.x,p.y,11,0,7);ctx.fill();ctx.fillStyle="#ff7a3a";ctx.beginPath();ctx.arc(p.x,p.y,6,0,7);ctx.fill(); } }
@@ -831,7 +1206,7 @@ function sleep(){ const ph=(clock%DAYLEN)/DAYLEN, skip=(1-ph)*DAYLEN; clock+=ski
   player.hp=player.maxHp; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; SND.heal(); float(player.x,player.y-26,"slept · a new day · crops grew","#fff"); save(); }
 function hurt(dmg,fx0,fy0){ if(player.inv>0||scene!=="out"||dialogOpen)return; player.hp-=dmg; player.inv=1.2; SND.hurt();
   const dx=player.x-fx0,dy=player.y-fy0,d=Math.hypot(dx,dy)||1; player.kx=dx/d*8;player.ky=dy/d*8; fx.push({kind:"flash",life:1});
-  if(player.hp<=0){ player.x=doorC*TILE+TILE/2;player.y=(doorR+1)*TILE+TILE/2;player.hp=player.maxHp;player.inv=2;mobs.length=0; float(player.x,player.y-30,"fainted! home safe","#fff"); } save(); }
+  if(player.hp<=0){ faint(); } save(); }   // death (combat only — starvation can't kill) respawns at the farm
 
 /* ---- input ---- */
 const keys={}; let running=false,lastTapDir="",lastTapT=-1;
@@ -840,33 +1215,57 @@ function anyMove(){ return keys.u||keys.d||keys.l||keys.r; }
 addEventListener("keydown",e=>{ const k=e.key.toLowerCase();
   if(document.activeElement&&(document.activeElement.id==="cheat"||document.activeElement.id==="nameInput"))return;
   if(scene==="boss"){ if(["arrowup","w"," "].includes(k))bossJump(); else if(["arrowleft","a"].includes(k))keys.l=1; else if(["arrowright","d"].includes(k))keys.r=1; else if(k==="e")bossAttack(); e.preventDefault(); return; }
-  if(dialogOpen){ if(k==="e"||k===" "||k==="enter")advanceDialog(); else if(k==="delete"||k==="escape")skipDialog(); e.preventDefault(); return; }
+  if(dialogOpen){ if(k==="e"||k===" "||k==="enter")advanceDialog(); else if(k==="delete"||k==="backspace"||k==="escape")skipDialog(); e.preventDefault(); return; }
+  if(fishing){ if(k==="e"||k===" ")fishing.hold=true; e.preventDefault(); return; }   // hold space/E to reel
   if(["arrowup","w"].includes(k)){if(!e.repeat)dirTap("u");keys.u=1;e.preventDefault();} else if(["arrowdown","s"].includes(k)){if(!e.repeat)dirTap("d");keys.d=1;e.preventDefault();}
   else if(["arrowleft","a"].includes(k)){if(!e.repeat)dirTap("l");keys.l=1;e.preventDefault();} else if(["arrowright","d"].includes(k)){if(!e.repeat)dirTap("r");keys.r=1;e.preventDefault();}
   else if(k==="e"||k===" "){ e.preventDefault(); if(e.repeat)return; audio(); startHold(); interact(); }
   else if(k==="t"){ e.preventDefault(); if(e.repeat)return; audio(); talkInteract(); }
   else if(k==="m"){ e.preventDefault(); mapOpen=!mapOpen; }
+  else if(k==="g"){ e.preventDefault(); if(e.repeat)return; audio(); openTeleport(); }
   else if(k==="f"){ e.preventDefault(); if(e.repeat)return; audio(); eatFood(); }
   else if(k==="i"||k==="tab"||k==="b"){ e.preventDefault(); baguiEl.classList.contains("open")?closeBag():openBag(); }
   else if(k==="escape"){ if(baguiEl.classList.contains("open"))closeBag(); if(chestEl.classList.contains("open"))closeChest(); document.querySelectorAll(".shop.open").forEach(s=>s.classList.remove("open")); }
   else if(/^[0-9]$/.test(k)){ selSlot=(k==="0")?9:(+k-1); renderBar(); } });
 addEventListener("keyup",e=>{ const k=e.key.toLowerCase();
   if(["arrowup","w"].includes(k))keys.u=0; else if(["arrowdown","s"].includes(k))keys.d=0; else if(["arrowleft","a"].includes(k))keys.l=0; else if(["arrowright","d"].includes(k))keys.r=0;
-  else if(k==="e"||k===" ")endHold(); if(!anyMove())running=false; });
-document.querySelectorAll(".dpad button").forEach(b=>{ const d=b.dataset.dir;const on=e=>{e.preventDefault();dirTap(d);keys[d]=1;},off=e=>{e.preventDefault();keys[d]=0;if(!anyMove())running=false;};
-  b.addEventListener("pointerdown",on);b.addEventListener("pointerup",off);b.addEventListener("pointerleave",off);b.addEventListener("pointercancel",off); });
+  else if(k==="e"||k===" "){ endHold(); if(fishing)fishing.hold=false; } if(!anyMove())running=false; });
+/* ---- virtual joystick (push to the edge to run) ---- */
+const joy=document.getElementById("joy"), joynub=document.getElementById("joynub"); let joyId=null;
+function joySet(dx,dy){ const R=42, d=Math.hypot(dx,dy)||0.0001; let cx=dx,cy=dy; if(d>R){cx=dx/d*R;cy=dy/d*R;}
+  joynub.style.transform="translate("+cx+"px,"+cy+"px)";
+  const dz=12; keys.l=dx<-dz?1:0; keys.r=dx>dz?1:0; keys.u=dy<-dz?1:0; keys.d=dy>dz?1:0;
+  running=(d>R*0.72)&&anyMove(); joy.classList.toggle("run",running); }
+function joyReset(){ joynub.style.transform="translate(0,0)"; keys.l=keys.r=keys.u=keys.d=0; running=false; joy.classList.remove("run"); joyId=null; }
+function joyAt(e){ const r=joy.getBoundingClientRect(); joySet(e.clientX-(r.left+r.width/2), e.clientY-(r.top+r.height/2)); }
+joy.addEventListener("pointerdown",e=>{ e.preventDefault(); audio(); joyId=e.pointerId; try{joy.setPointerCapture(e.pointerId);}catch(_){} joyAt(e); });
+joy.addEventListener("pointermove",e=>{ if(e.pointerId!==joyId)return; e.preventDefault(); joyAt(e); });
+const joyEnd=e=>{ if(joyId!==null&&e.pointerId!==joyId)return; e.preventDefault(); joyReset(); };
+joy.addEventListener("pointerup",joyEnd); joy.addEventListener("pointercancel",joyEnd);
+// block iOS pinch / double-tap zoom that can leave the page stuck enlarged
+["gesturestart","gesturechange","gestureend"].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault()));
+document.addEventListener("dblclick",e=>e.preventDefault(),{passive:false});
+// tap an animal directly to collect its product (or mount the horse)
+addEventListener("pointerup",()=>{ if(fishing)fishing.hold=false; });   // release reel anywhere
+canvas.addEventListener("pointerdown",e=>{ if(fishing){fishing.hold=true;return;} if(scene!=="out"||area!=="home"||dialogOpen||document.querySelector(".shop.open"))return;
+  const r=canvas.getBoundingClientRect(); const wx=(e.clientX-r.left)*(VW/r.width)+camX, wy=(e.clientY-r.top)*(VH/r.height)+camY;
+  for(const a of animals){ if(Math.hypot(a.x-wx,a.y-wy)<26){ audio(); if(a.kind==="horse"){ openTeleport(); return; }
+    if(animalReady(a)) collectAnimal(a); else { SND.no(); float(a.x,a.y-22,"not ready yet","#cfe6ff"); } return; } } });
 const actBtn=document.getElementById("actBtn");
-actBtn.addEventListener("pointerdown",e=>{e.preventDefault();audio();if(dialogOpen){advanceDialog();return;}startHold();interact();});
-actBtn.addEventListener("pointerup",e=>{e.preventDefault();endHold();});
+actBtn.addEventListener("pointerdown",e=>{e.preventDefault();audio();if(fishing){fishing.hold=true;return;}if(dialogOpen){advanceDialog();return;}startHold();interact();});
+actBtn.addEventListener("pointerup",e=>{e.preventDefault();if(fishing){fishing.hold=false;return;}endHold();});
 actBtn.addEventListener("pointerleave",()=>endHold()); actBtn.addEventListener("pointercancel",()=>endHold());
 document.getElementById("talkBtn").addEventListener("click",()=>{audio();talkInteract();});
 document.getElementById("talkBtn2").addEventListener("pointerdown",e=>{e.preventDefault();audio();if(dialogOpen){advanceDialog();return;}talkInteract();});
 document.getElementById("mapBtn").addEventListener("click",()=>{mapOpen=!mapOpen;});
+document.getElementById("rideBtn").addEventListener("click",()=>{audio();openTeleport();});
 document.getElementById("eatBtn").addEventListener("click",()=>{audio();eatFood();});
 const cheatEl=document.getElementById("cheat");
 cheatEl.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ const v=cheatEl.value.trim();
   if(v==="111"){ bossDefeated=true; save(); if(scene==="boss")finishBoss(true); else float(player.x,player.y-26,"cheat: road unlocked","#ffe27a"); }
   else if(v==="000"){ equip.sword="metal_sword"; equip.armor="metal_armor"; recalcMax(); renderBar(); float(player.x,player.y-26,"cheat: sword & armour equipped","#ffe27a"); save(); }
+  else if(v==="333"){ if(!hasHorse())addAnimal("horse"); float(player.x,player.y-26,"cheat: horse delivered","#ffe27a"); save(); }
+  else if(v==="$$$"){ coins+=10000; SND.coin(); syncUI(); float(player.x,player.y-26,"cheat: +10000 coins","#ffe27a"); save(); }
   cheatEl.value=""; cheatEl.blur(); } });
 
 /* ---- physics ---- */
@@ -885,7 +1284,8 @@ function respawnRes(type){ const RW=gridOut.length,CW=gridOut[0].length;
     if(t.type==="wild"&&!inFarm(r,c)){ const x=c*TILE+TILE/2,y=r*TILE+TILE/2; if(Math.hypot(x-player.x,y-player.y)<TILE*3)continue; t.type=type; t.hits=0; return true; } }
   return false; }
 function update(dt){ if(scene==="boss"){ updateBoss(dt); return; }
-  if(dialogOpen){ player.moving=false; return; }   // freeze the world while chatting
+  if(fishing){ updateFishing(dt); player.moving=false; return; }   // freeze the world during the fishing minigame
+  if(dialogOpen||document.querySelector(".shop.open")){ player.moving=false; keys.l=keys.r=keys.u=keys.d=0; return; }   // freeze the world (no monster attacks) while a menu/bag/dialogue is open
   if(transCD>0)transCD-=dt;
   let vx=0,vy=0; if(keys.l)vx-=1;if(keys.r)vx+=1;if(keys.u)vy-=1;if(keys.d)vy+=1; player.moving=!!(vx||vy);
   if(!player.moving)running=false; const sp=(running?224:132)*dt;
@@ -898,22 +1298,28 @@ function update(dt){ if(scene==="boss"){ updateBoss(dt); return; }
   const pr=Math.floor(player.y/TILE),pc=Math.floor(player.x/TILE); const here=(pr>=0&&pc>=0&&pr<GR&&pc<GC)?G[pr][pc].type:"";
   if(transCD<=0){ if(scene==="out"&&here==="door")enterHouse(); else if(scene==="in"&&here==="mat")exitHouse();
     else if(scene==="out"&&here==="road"){ if(area==="home"&&pc>=OCOLS-1){ if(bossDefeated)gotoArea("village"); else tryBoss(); } else if(area==="village"&&pc<=0)gotoArea("home"); } }
-  if(scene==="out"){ for(let r=0;r<gridOut.length;r++)for(let c=0;c<gridOut[0].length;c++){ const cr=gridOut[r][c].crop; if(cr&&cr.grow<1){ const C=CROPS[cr.type];const s=(now()<cr.boost?2.4:1); cr.grow=Math.min(1,cr.grow+dt/C.dur*s); } }
+  if(scene==="out"){ const seasonGrow=(seasonIdx()===0||seasonIdx()===2)?1.25:1;   // spring & autumn grow a bit faster
+    for(let r=0;r<gridOut.length;r++)for(let c=0;c<gridOut[0].length;c++){ const cr=gridOut[r][c].crop; if(cr&&cr.grow<1){ const C=CROPS[cr.type];const s=(now()<cr.boost?2.4:1)*seasonGrow; cr.grow=Math.min(1,cr.grow+dt/C.dur*s); } }
     const outside=!inFarm(pr,pc); const target=area==="dungeon"?Math.min(3+Math.floor(dungFloor/5),12):(isNight()?12:(outside?8:4));
     if(area==="village")mobs.length=0;   // the town is a safe zone — no monsters
     spawnT-=dt; if(area!=="village"&&spawnT<=0&&mobs.filter(m=>!m.boss).length<target){spawnMob();spawnT=area==="dungeon"?1.6:(isNight()?1.4:2.2);}
     for(const mb of mobs){ mb.t+=dt;mb.flash=Math.max(0,mb.flash-dt);const dx=player.x-mb.x,dy=player.y-mb.y,d=Math.hypot(dx,dy)||1;
-      let mx=0,my=0; if(d<180){mx=dx/d;my=dy/d;}else{mx=Math.cos(mb.t*0.7);my=Math.sin(mb.t*0.9);}
-      const ms=(d<180?52:26)*dt; moveMob(mb,mx*ms+mb.kx,my*ms+mb.ky,11); mb.kx*=0.8;mb.ky*=0.8; if(d<mb.r+11)hurt(1,mb.x,mb.y); }
+      if(mb.boss){ bossBehave(mb,dx/d,dy/d,d,dt); if(d<mb.r+11)hurt(2,mb.x,mb.y); continue; }   // bosses have their own AI + hit harder
+      const sp=mb.spd||52; let mx=0,my=0; if(d<190){mx=dx/d;my=dy/d; if(mb.fly){const s=Math.sin(mb.t*6)*0.6;mx+=-dy/d*s;my+=dx/d*s;}}else{mx=Math.cos(mb.t*0.7);my=Math.sin(mb.t*0.9);}
+      const ms=(d<190?sp:sp*0.5)*dt; moveMob(mb,mx*ms+mb.kx,my*ms+mb.ky,mb.r); mb.kx*=0.8;mb.ky*=0.8; if(d<mb.r+11)hurt(mb.dmg||1,mb.x,mb.y); }
+    for(let i=shots.length-1;i>=0;i--){ const s=shots[i]; s.x+=s.vx*dt;s.y+=s.vy*dt;s.t-=dt; if(Math.hypot(s.x-player.x,s.y-player.y)<15){hurt(1,s.x,s.y);s.t=0;} if(s.t<=0)shots.splice(i,1); }
+    if(area==="home")updateAnimals(dt);
     if(area!=="dungeon"){
     treeT-=dt; if(treeT<=0){ treeT=26+Math.random()*20; if(countTiles("tree")<60)respawnRes("tree"); }
     rockT-=dt; if(rockT<=0){ rockT=65+Math.random()*35; if(countTiles("rock")<40)respawnRes("rock"); } }
     // hunger, regen & starvation
     if(activeBuff&&now()>=activeBuff.until){ activeBuff=null; recalcMax(); }
-    player.hunger=Math.max(0,player.hunger-dt*0.45); const gb=totalBonus();
+    player.hunger=Math.max(0,player.hunger-dt*((seasonIdx()===3&&weather==="snow")?0.08:0.06)); const gb=totalBonus();   // gentle idle drain (0.06/s; snowy winter 0.08)
     if(player.hunger>=50){ player.regenT+=dt*(1+gb.regen); if(player.regenT>=6){ player.regenT=0; if(player.hp<player.maxHp)player.hp++; } } else player.regenT=0;
-    if(player.hunger<=0){ player.starveT+=dt; if(player.starveT>=6){ player.starveT=0; if(player.hp>0){ player.hp--; SND.hurt(); if(player.hp<=0)faint(); } } } else player.starveT=0;
+    if(player.hunger<=0){ player.starveT+=dt; if(player.starveT>=12){ player.starveT=0; if(player.hp>1){ player.hp--; SND.hurt(); } } } else player.starveT=0;   // starvation: 1 heart / 12s, never kills (no respawn)
     clock+=dt;
+    if(curDay()!==weatherDay)newMorning();
+    if(weather==="thunder"&&area!=="dungeon"){ lightT-=dt; if(lightT<=0){ lightT=5+Math.random()*7; fx.push({kind:"flash",col:"#fff",life:0.5}); SND.hit&&SND.hit(); hurt(2,player.x,player.y); float(player.x,player.y-30,"struck by lightning!","#ffe27a"); } }
   } else mobs.length=0;
   for(let i=fx.length-1;i>=0;i--){const p=fx[i];p.life-=dt*(p.kind==="text"?1.1:p.kind==="flash"?2.2:1.7);if(p.kind==="text")p.y-=dt*24;else if(p.kind==="p"){p.x+=p.vx;p.y+=p.vy;p.vy+=0.18;}if(p.life<=0)fx.splice(i,1);}
   updateCamera();
@@ -937,7 +1343,7 @@ function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE|
   else if(t.type==="pond"){ ctx.fillStyle="#4a8fd6";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="rgba(255,255,255,.18)";ctx.fillRect(x+8,y+10+Math.sin(now()*2+c)*2,14,3); }
   else if(t.type==="house"){ ctx.fillStyle="#efe9df";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#d9b08c";ctx.fillRect(x,y,TILE,6);ctx.strokeStyle="rgba(0,0,0,.07)";ctx.strokeRect(x+.5,y+.5,TILE-1,TILE-1); }
   else if(t.type==="door"){ ctx.fillStyle="#efe9df";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#7a4a22";ctx.fillRect(x+TILE/2-9,y+8,18,TILE-8);ctx.fillStyle="#ffd23b";ctx.fillRect(x+TILE/2+4,y+TILE/2,3,3); }
-  else if(t.type==="tree"){ ctx.fillStyle="#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#6b4a2b";ctx.fillRect(x+TILE/2-3,y+TILE-16,6,12);ctx.fillStyle="#2f7d3f";ctx.beginPath();ctx.arc(x+TILE/2,y+TILE-20,13,0,7);ctx.fill();ctx.fillStyle="#3a9b50";ctx.beginPath();ctx.arc(x+TILE/2-5,y+TILE-24,8,0,7);ctx.fill(); }
+  else if(t.type==="tree"){ const bl=isBlossom(r,c); ctx.fillStyle="#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#6b4a2b";ctx.fillRect(x+TILE/2-3,y+TILE-16,6,12);ctx.fillStyle=bl?"#f29ec4":"#2f7d3f";ctx.beginPath();ctx.arc(x+TILE/2,y+TILE-20,13,0,7);ctx.fill();ctx.fillStyle=bl?"#ffc1dd":"#3a9b50";ctx.beginPath();ctx.arc(x+TILE/2-5,y+TILE-24,8,0,7);ctx.fill(); if(bl){ctx.fillStyle="#fff0f6";ctx.beginPath();ctx.arc(x+TILE/2+5,y+TILE-26,2,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+TILE/2-2,y+TILE-16,2,0,7);ctx.fill();} }
   else if(t.type==="rock"){ ctx.fillStyle="#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#9aa3ab";ctx.beginPath();ctx.ellipse(x+TILE/2,y+TILE/2+4,13,10,0,0,7);ctx.fill();ctx.fillStyle="#b7c0c8";ctx.beginPath();ctx.ellipse(x+TILE/2-3,y+TILE/2,6,4,0,0,7);ctx.fill(); }
   else if(t.type==="torch"){ ctx.fillStyle="#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#6b4a2b";ctx.fillRect(x+TILE/2-2,y+16,4,TILE-18);const fl=2*Math.sin(now()*8+c);ctx.fillStyle="#ffb24a";ctx.beginPath();ctx.ellipse(x+TILE/2,y+14,5,8+fl,0,0,7);ctx.fill();ctx.fillStyle="#ffe27a";ctx.beginPath();ctx.ellipse(x+TILE/2,y+15,2.5,4+fl,0,0,7);ctx.fill(); }
   else if(t.type==="wall"){ ctx.fillStyle="#7a5230";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="rgba(0,0,0,.12)";ctx.fillRect(x,y+TILE-8,TILE,8);ctx.strokeStyle="rgba(0,0,0,.15)";ctx.strokeRect(x+.5,y+.5,TILE-1,TILE-1); }
@@ -950,6 +1356,10 @@ function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE|
   else if(t.type==="lamp"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#6b4a2b";ctx.fillRect(x+TILE/2-2,y+18,4,TILE-20);const gl=0.5+0.3*Math.sin(now()*4+c);ctx.fillStyle="rgba(255,210,122,"+gl+")";ctx.beginPath();ctx.moveTo(x+TILE/2-9,y+18);ctx.lineTo(x+TILE/2+9,y+18);ctx.lineTo(x+TILE/2+6,y+7);ctx.lineTo(x+TILE/2-6,y+7);ctx.fill(); }
   else if(t.type==="road"){ ctx.fillStyle="rgba(0,0,0,.07)";ctx.fillRect(x+2,y+2,TILE-4,TILE-4);ctx.fillStyle="rgba(255,255,255,.16)";ctx.fillRect(x+TILE/2-7,y+TILE/2-2,14,4); }
   else if(t.type==="river"||t.type==="pond"||t.type==="sea"){ const dk=t.type==="sea"?"#2f6fb0":t.type==="river"?"#4a8fd6":"#4a8fd6";ctx.fillStyle=dk;ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="rgba(255,255,255,.16)";ctx.fillRect(x+8,y+10+Math.sin(now()*2+c)*2,14,3);ctx.fillRect(x+22,y+26+Math.cos(now()*2+r)*2,10,3); }
+  if(t.net){ ctx.strokeStyle="rgba(240,248,255,.65)";ctx.lineWidth=1.4;   // net trap overlay (sits on the water tile)
+    for(let i=0;i<4;i++){const o=6+i*10;ctx.beginPath();ctx.moveTo(x+6,y+o);ctx.lineTo(x+TILE-6,y+o-4);ctx.stroke();ctx.beginPath();ctx.moveTo(x+o,y+6);ctx.lineTo(x+o-4,y+TILE-6);ctx.stroke();}
+    ctx.fillStyle="#ff7a4a";ctx.beginPath();ctx.arc(x+TILE-11,y+11,4,0,7);ctx.fill();   // buoy
+    if(curDay()>t.net.day){ ctx.font="14px serif";ctx.textAlign="center";ctx.textBaseline="alphabetic";ctx.fillText("🐟",x+TILE/2,y-1+Math.sin(now()*4+c)*2); } }
   else if(t.type==="sand"){ ctx.fillStyle="#e6d8a8";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="rgba(0,0,0,.06)";ctx.fillRect(x+9,y+12,3,3);ctx.fillRect(x+26,y+24,3,3);ctx.fillRect(x+16,y+30,3,3); }
   else if(t.type==="iron"){ ctx.fillStyle="#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#8b939b";ctx.beginPath();ctx.ellipse(x+TILE/2,y+TILE/2+4,13,10,0,0,7);ctx.fill();ctx.fillStyle="#c4ccd4";ctx.beginPath();ctx.ellipse(x+TILE/2-2,y+TILE/2,5,4,0,0,7);ctx.fill();ctx.fillStyle="#e7ebef";ctx.fillRect(x+TILE/2+3,y+TILE/2-3,3,3); }
   else if(t.type==="gold"){ ctx.fillStyle="#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#9aa3ab";ctx.beginPath();ctx.ellipse(x+TILE/2,y+TILE/2+4,13,10,0,0,7);ctx.fill();ctx.fillStyle="#ffd84a";ctx.beginPath();ctx.ellipse(x+TILE/2-2,y+TILE/2,5,4,0,0,7);ctx.fill();ctx.fillStyle="#fff2b0";ctx.fillRect(x+TILE/2+2,y+TILE/2-3,3,3);ctx.fillRect(x+TILE/2-6,y+TILE/2+2,2,2); }
@@ -971,8 +1381,29 @@ function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE|
     // smoke puffs so it stands out
     ctx.fillStyle="rgba(255,255,255,.25)";ctx.beginPath();ctx.arc(x+TILE/2+(Math.sin(now()*2+c)*4),y-2-((now()*8+c*7)%14),3,0,7);ctx.fill();
     if(scene==="in"||Math.hypot(player.x-(c*TILE+TILE/2),player.y-(r*TILE+TILE/2))<TILE*2.2){ ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 10px Helvetica";ctx.textAlign="center";ctx.fillText((lang==="zh"?"烹調":"cook")+" ▸ use",x+TILE/2,y-6); } }
-  else if(t.type==="cave"){ ctx.fillStyle="#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#5b5360";ctx.beginPath();ctx.ellipse(x+TILE/2,y+TILE-12,16,13,0,0,7);ctx.fill();ctx.fillStyle="#100c18";ctx.beginPath();ctx.ellipse(x+TILE/2,y+TILE-10,11,9,0,0,7);ctx.fill();
-    if(Math.hypot(player.x-(c*TILE+TILE/2),player.y-(r*TILE+TILE/2))<TILE*2){ ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText((lang==="zh"?"地城":"dungeon")+" ▸ use",x+TILE/2,y-6); } }
+  else if(t.type==="cave"){ ctx.fillStyle="#5a9e4e";ctx.fillRect(x,y,TILE,TILE);const cxm=x+TILE/2;
+    ctx.fillStyle="#6b6470";ctx.beginPath();ctx.moveTo(x+1,y+TILE);ctx.quadraticCurveTo(cxm,y-4,x+TILE-1,y+TILE);ctx.closePath();ctx.fill();   // rocky mound
+    ctx.fillStyle="#534c5c";ctx.beginPath();ctx.moveTo(x+5,y+TILE);ctx.quadraticCurveTo(cxm,y+5,x+TILE-5,y+TILE);ctx.closePath();ctx.fill();
+    ctx.fillStyle="#0a0712";ctx.beginPath();ctx.moveTo(cxm-10,y+TILE);ctx.quadraticCurveTo(cxm,y+15,cxm+10,y+TILE);ctx.closePath();ctx.fill();   // dark mouth
+    const fl=2*Math.sin(now()*8+c);[-15,15].forEach(o=>{ ctx.fillStyle="#6b4a2b";ctx.fillRect(cxm+o-1,y+TILE-17,3,13);ctx.fillStyle="#ffb24a";ctx.beginPath();ctx.ellipse(cxm+o,y+TILE-18,3,5+fl,0,0,7);ctx.fill();ctx.fillStyle="#ffe9a8";ctx.beginPath();ctx.arc(cxm+o,y+TILE-18,1.6,0,7);ctx.fill(); });   // flanking torches
+    const near=Math.hypot(player.x-(c*TILE+TILE/2),player.y-(r*TILE+TILE/2))<TILE*3, gl=0.55+0.4*Math.abs(Math.sin(now()*3));
+    ctx.fillStyle="rgba(18,8,38,.85)";ctx.beginPath();ctx.roundRect(cxm-34,y-30,68,19,7);ctx.fill();ctx.strokeStyle="rgba(180,120,255,"+gl+")";ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle="#d9c2ff";ctx.font="700 10px Helvetica,Arial";ctx.textAlign="center";ctx.fillText("⛏ "+(lang==="zh"?"地城":"DUNGEON"),cxm,y-17);
+    if(near){ ctx.fillStyle="rgba(255,255,255,.9)";ctx.font="700 9px Helvetica";ctx.fillText("▸ use",cxm,y-4); } }
+  else if(MACHINE_IN[t.type]){ ctx.fillStyle=scene==="in"?"#caa46a":"#7ec850";ctx.fillRect(x,y,TILE,TILE);   // artisan machine
+    ctx.fillStyle=ITEMS[t.type].color;ctx.beginPath();ctx.roundRect(x+5,y+9,TILE-10,TILE-13,5);ctx.fill();
+    ctx.font="18px serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(ICON[t.type]||"⚙️",x+TILE/2,y+TILE/2+3);ctx.textBaseline="alphabetic";
+    if(t.mach){ if(curDay()>=t.mach.done){ ctx.font="13px serif";ctx.textAlign="center";ctx.fillText("✨",x+TILE-9,y+9+Math.sin(now()*4)*1.5); }
+      else { ctx.fillStyle="rgba(0,0,0,.45)";ctx.fillRect(x+5,y+TILE-7,TILE-10,4); ctx.fillStyle="#ffd24a"; const dl=t.mach.done-curDay(); ctx.font="700 9px Helvetica";ctx.textAlign="center";ctx.fillText(dl+"d",x+TILE-8,y+TILE-3);
+        const wob=2+Math.sin(now()*5)*1; ctx.fillStyle="rgba(255,233,176,.6)";ctx.beginPath();ctx.arc(x+8,y+7,wob,0,7);ctx.fill(); } } }
+  else if(t.type==="snowman"){ ctx.fillStyle=scene==="in"?"#caa46a":"#cfe6e0";ctx.fillRect(x,y,TILE,TILE);
+    ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(x+TILE/2,y+TILE-12,9,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+TILE/2,y+TILE-24,6.5,0,7);ctx.fill();
+    ctx.fillStyle="#22303f";ctx.beginPath();ctx.arc(x+TILE/2-2.5,y+TILE-25,1.2,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+TILE/2+2.5,y+TILE-25,1.2,0,7);ctx.fill();
+    ctx.fillStyle="#ff8a3d";ctx.fillRect(x+TILE/2-1,y+TILE-23,5,1.6); }
+  else if(t.type==="trough"){ ctx.fillStyle="#7ec850";ctx.fillRect(x,y,TILE,TILE);   // grass under the trough
+    ctx.fillStyle="#6b4a2b";ctx.beginPath();ctx.roundRect(x+4,y+12,TILE-8,TILE-18,4);ctx.fill();   // wooden trough
+    ctx.fillStyle="#4a8fd6";ctx.fillRect(x+7,y+15,TILE-14,TILE-25);   // water
+    ctx.fillStyle="rgba(255,255,255,.3)";ctx.fillRect(x+9,y+17+Math.sin(now()*2+c)*1,9,2); }
   else if(t.type==="dwall"){ ctx.fillStyle="#241f2e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#322a3e";ctx.fillRect(x+2,y+2,TILE-4,TILE-6);ctx.fillStyle="rgba(0,0,0,.3)";ctx.fillRect(x,y+TILE-5,TILE,5); }
   else if(t.type==="dfloor"){ ctx.fillStyle="#3a3444";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="rgba(0,0,0,.12)";if((r+c)%2)ctx.fillRect(x,y,TILE,TILE); }
   else if(t.type==="stairs"){ ctx.fillStyle="#3a3444";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#1a1622";for(let k=0;k<4;k++)ctx.fillRect(x+5+k*4,y+8+k*7,TILE-10-k*8,6);
@@ -989,15 +1420,24 @@ function drawCrop(x,by,cr){ const C=CROPS[cr.type],ratio=Math.min(1,cr.grow),rip
   else if(ratio>0.45){ctx.fillStyle=shade(C.c,0.8);ctx.beginPath();ctx.arc(x,by-h,3,0,7);ctx.fill();} }
 function drawMob(mb){ const x=mb.x-camX,y=mb.y-camY,bob=Math.abs(Math.sin(mb.t*5))*3;
   ctx.fillStyle="rgba(0,0,0,0.2)";ctx.beginPath();ctx.ellipse(x,y+10,12,5,0,0,7);ctx.fill();
+  if(mb.fly){ ctx.fillStyle=mb.flash>0?"#fff":(mb.col||"#9a6cff"); const wf=2+Math.abs(Math.sin(mb.t*16))*4; ctx.beginPath();ctx.ellipse(x-mb.r,y-1-bob*0.4,8,wf,0.5,0,7);ctx.fill(); ctx.beginPath();ctx.ellipse(x+mb.r,y-1-bob*0.4,8,wf,-0.5,0,7);ctx.fill(); }
   ctx.fillStyle=mb.flash>0?"#fff":(mb.col||"#67d98a");ctx.beginPath();ctx.ellipse(x,y+2-bob*0.4,mb.r,mb.r-bob*0.3,0,0,7);ctx.fill();
+  if(mb.kind==="bear"){ ctx.fillStyle=mb.flash>0?"#fff":(mb.col||"#6b4a2b");   // round bear ears + snout
+    ctx.beginPath();ctx.arc(x-mb.r*0.6,y-mb.r*0.7-bob*0.4,5,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+mb.r*0.6,y-mb.r*0.7-bob*0.4,5,0,7);ctx.fill();
+    ctx.fillStyle="#caa46a";ctx.beginPath();ctx.ellipse(x,y+6-bob*0.4,6,4,0,0,7);ctx.fill(); }
+  if(mb.kind==="crab"){ const sh=Math.sin(mb.t*11)*0.4, col=mb.flash>0?"#fff":(mb.col||"#e0613a");   // shaking crab claws
+    [-1,1].forEach(s=>{ ctx.save(); ctx.translate(x+s*(mb.r-1), y+1-bob*0.4); ctx.scale(s,1); ctx.rotate(0.4+sh);
+      ctx.fillStyle=col; ctx.beginPath();ctx.ellipse(6,0,6,4.5,0,0,7);ctx.fill();
+      ctx.beginPath();ctx.moveTo(9,-5);ctx.lineTo(18,-4);ctx.lineTo(13,0);ctx.lineTo(18,4);ctx.lineTo(9,5);ctx.closePath();ctx.fill();
+      ctx.fillStyle="rgba(0,0,0,.28)";ctx.beginPath();ctx.moveTo(13,0);ctx.lineTo(18,-4);ctx.lineTo(18,4);ctx.closePath();ctx.fill();
+      ctx.restore(); });
+    ctx.strokeStyle=col;ctx.lineWidth=1.5;[-1,1].forEach(s=>{ for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(x+s*(mb.r-4),y+4-bob*0.4+i*2);ctx.lineTo(x+s*(mb.r+4),y+6-bob*0.4+i*3);ctx.stroke();} }); }
   ctx.fillStyle="rgba(255,255,255,.4)";ctx.beginPath();ctx.ellipse(x-4,y-3-bob*0.4,3,2,0,0,7);ctx.fill();
   ctx.fillStyle="#22303f";ctx.beginPath();ctx.arc(x-4,y+1-bob*0.4,1.6,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+4,y+1-bob*0.4,1.6,0,7);ctx.fill();
   if(mb.hp<mb.maxHp){ctx.fillStyle="rgba(0,0,0,.4)";ctx.fillRect(x-12,y-mb.r-6,24,3);ctx.fillStyle="#ff6a6a";ctx.fillRect(x-12,y-mb.r-6,24*mb.hp/mb.maxHp,3);} }
 function drawCat(){ const x=catX-camX,y=catY-camY,bob=Math.sin(now()*2)*1.5;
   ctx.fillStyle="rgba(0,0,0,.2)";ctx.beginPath();ctx.ellipse(x,y+11,11,4,0,0,7);ctx.fill();
-  const cimg=WORLD.cat;
-  if(cimg){ const h=58,w=h*(cimg.width/cimg.height||1); ctx.drawImage(cimg,x-w/2,y+13-h,w,h); }
-  else {
+  if(!drawSprite(artPick("cat"), x, y+13, 44, false)){
   ctx.fillStyle="#f3a64b"; // body
   ctx.beginPath();ctx.ellipse(x,y+4+bob,10,8,0,0,7);ctx.fill();
   ctx.beginPath();ctx.arc(x,y-6+bob,8,0,7);ctx.fill(); // head
@@ -1012,9 +1452,7 @@ function drawCat(){ const x=catX-camX,y=catY-camY,bob=Math.sin(now()*2)*1.5;
 }
 function drawNpc(){ const x=npcX-camX,y=npcY-camY,bob=Math.sin(now()*2)*1.4;
   ctx.fillStyle="rgba(0,0,0,.2)";ctx.beginPath();ctx.ellipse(x,y+12,10,4,0,0,7);ctx.fill();
-  const fimg=WORLD.fisher;
-  if(fimg){ const h=58,w=h*(fimg.width/fimg.height||1); ctx.drawImage(fimg,x-w/2,y+13-h,w,h); }
-  else {   // Pelle is a frog (animal NPCs only)
+  if(!drawSprite(artPick("fisher"), x, y+13, 44, false)){   // Pelle is a frog (animal NPCs only)
   ctx.fillStyle="#5aa84a";ctx.beginPath();ctx.ellipse(x,y+3+bob,10,8,0,0,7);ctx.fill();        // body
   ctx.beginPath();ctx.arc(x,y-6+bob,7.5,0,7);ctx.fill();                                        // head
   ctx.fillStyle="#7cc85f";ctx.beginPath();ctx.arc(x-5,y-12+bob,3.6,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+5,y-12+bob,3.6,0,7);ctx.fill();  // eye bumps
@@ -1033,19 +1471,38 @@ function drawVillager(v){ const x=v.x-camX,y=v.y-camY,bob=Math.sin(now()*2+v.c)*
   if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.7){ ctx.fillStyle="rgba(255,255,255,.9)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText(lang==="zh"?t(v.name)+" ▸ 對話":v.name+" ▸ use",x,y-20+bob); } }
 function drawCritter(n){ const x=n.x-camX,y=n.y-camY,bob=Math.sin(now()*3+n.c)*1.5;
   ctx.fillStyle="rgba(0,0,0,.22)";ctx.beginPath();ctx.ellipse(x,y+11,10,4,0,0,7);ctx.fill();
+  if(!drawSprite(artPick(n.id), x, y+12, 42, false)){
   ctx.fillStyle=n.col;ctx.beginPath();ctx.ellipse(x,y+3+bob,9,8,0,0,7);ctx.fill();   // body
   ctx.beginPath();ctx.arc(x,y-6+bob,7,0,7);ctx.fill();                                 // head
   if(n.ears==="cat"){ ctx.beginPath();ctx.moveTo(x-6,y-10+bob);ctx.lineTo(x-2,y-15+bob);ctx.lineTo(x,y-9+bob);ctx.fill();ctx.beginPath();ctx.moveTo(x+6,y-10+bob);ctx.lineTo(x+2,y-15+bob);ctx.lineTo(x,y-9+bob);ctx.fill(); }
   else if(n.ears==="flop"){ ctx.beginPath();ctx.ellipse(x-7,y-6+bob,3,6,0.4,0,7);ctx.fill();ctx.beginPath();ctx.ellipse(x+7,y-6+bob,3,6,-0.4,0,7);ctx.fill(); }
   else { ctx.beginPath();ctx.arc(x-6,y-11+bob,3.2,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+6,y-11+bob,3.2,0,7);ctx.fill(); }   // round (hamster)
   ctx.fillStyle="#22303f";ctx.beginPath();ctx.arc(x-3,y-6+bob,1.4,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+3,y-6+bob,1.4,0,7);ctx.fill();
-  ctx.fillStyle="#ffb3c0";ctx.beginPath();ctx.arc(x,y-3+bob,1.3,0,7);ctx.fill();
+  ctx.fillStyle="#ffb3c0";ctx.beginPath();ctx.arc(x,y-3+bob,1.3,0,7);ctx.fill(); }
   if(Math.hypot(n.x-player.x,n.y-player.y)<TILE*1.8){ ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText((lang==="zh"?t(n.name)+" ▸ 對話":n.name+" ▸ use"),x,y-19+bob); } }
+function drawAnimal(a){ const x=a.x-camX,y=a.y-camY,A=ANIMALS[a.kind],bob=Math.sin(now()*3+a.x*0.05)*1.6,big=A.big;
+  ctx.fillStyle="rgba(0,0,0,.22)";ctx.beginPath();ctx.ellipse(x,y+13,big?15:11,5,0,0,7);ctx.fill();
+  ctx.fillStyle=A.col;ctx.beginPath();ctx.ellipse(x,y+5+bob,big?15:11,big?11:9,0,0,7);ctx.fill();   // body
+  ctx.textAlign="center";ctx.textBaseline="middle";ctx.font=(big?"24px":"19px")+" serif";ctx.fillText(A.face,x,y-5+bob);ctx.textBaseline="alphabetic";
+  if(animalReady(a)){ const py=y-28+bob+Math.sin(now()*4)*2, pulse=0.5+0.5*Math.abs(Math.sin(now()*4));   // shining produce-ready bubble — tap/press to collect
+    const g=ctx.createRadialGradient(x,py,1,x,py,16); g.addColorStop(0,"rgba(255,247,180,"+(0.55+pulse*0.4)+")"); g.addColorStop(1,"rgba(255,247,180,0)");
+    ctx.fillStyle=g; ctx.beginPath();ctx.arc(x,py,16,0,7);ctx.fill();
+    ctx.font="16px serif";ctx.textAlign="center";ctx.fillText(itemEmoji(A.produce),x,py+5);
+    ctx.fillStyle="rgba(255,255,255,"+pulse+")";ctx.font="11px serif";ctx.fillText("✨",x+11,py-7); }
+  if(Math.hypot(a.x-player.x,a.y-player.y)<TILE*1.5){ ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 11px Helvetica";
+    const lbl=a.kind==="horse"?(lang==="zh"?"騎乘 ▸ 使用":"ride ▸ use"):(animalReady(a)?(lang==="zh"?"收集 ▸ 使用":"collect ▸ use"):t(A.name)); ctx.fillText(lbl,x,y-32+bob); } }
+const VDECOR=[{kind:"chicken",c:29,r:24},{kind:"pig",c:30,r:24},{kind:"cow",c:29,r:25}];   // decorative animals in Hamu's village pen
+function drawDecorAnimal(va){ const x=va.c*TILE+TILE/2-camX, y=va.r*TILE+TILE/2-camY, A=ANIMALS[va.kind], bob=Math.sin(now()*3+va.c)*1.5, big=A.big;
+  ctx.fillStyle="rgba(0,0,0,.22)";ctx.beginPath();ctx.ellipse(x,y+12,big?13:10,4,0,0,7);ctx.fill();
+  ctx.fillStyle=A.col;ctx.beginPath();ctx.ellipse(x,y+5+bob,big?13:10,big?10:8,0,0,7);ctx.fill();
+  ctx.textAlign="center";ctx.textBaseline="middle";ctx.font=(big?"21px":"17px")+" serif";ctx.fillText(A.face,x,y-4+bob);ctx.textBaseline="alphabetic"; }
 function drawPlayer(){ const x=player.x-camX,y=player.y-camY,bob=player.moving?Math.sin(now()*10)*1.5:0,blink=player.inv>0&&Math.floor(now()*12)%2===0;if(blink)ctx.globalAlpha=0.45;
   ctx.fillStyle="rgba(0,0,0,0.2)";ctx.beginPath();ctx.ellipse(x,y+12,11,5,0,0,7);ctx.fill();
   if(player.swing>0){ctx.strokeStyle="rgba(255,255,255,.85)";ctx.lineWidth=4;ctx.lineCap="round";const a=Math.atan2(player.fy,player.fx);ctx.beginPath();ctx.arc(x+player.fx*8,y+player.fy*8,18,a-0.9,a+0.9);ctx.stroke();}
-  const pimg=WORLD.player;
-  if(pimg){ const h=54,w=h*(pimg.width/pimg.height||1); ctx.save(); if(player.dir==="l"){ctx.translate(x,0);ctx.scale(-1,1);ctx.translate(-x,0);} ctx.drawImage(pimg,x-w/2,y+15-h,w,h); ctx.restore(); ctx.globalAlpha=1; return; }
+  let pimg=artPick("player");
+  const walk=WALKART.length?WALKART:WORLDWALK;   // uploaded frames, else the art/player-walkN.png set
+  if(player.moving&&walk.length){ const wf=walk[Math.floor(now()*8)%walk.length]; if(imgReady(wf))pimg=wf; }   // cycle walk frames (smoother with more frames)
+  if(drawSprite(pimg, x, y+15, 56, player.dir==="l")){ ctx.globalAlpha=1; return; }
   ctx.fillStyle="#2f6dd0";ctx.beginPath();ctx.roundRect(x-8,y-4+bob,16,16,5);ctx.fill();
   ctx.fillStyle="#ffd9a8";ctx.beginPath();ctx.arc(x,y-10+bob,8,0,7);ctx.fill();
   ctx.fillStyle="#7a4a22";ctx.beginPath();ctx.arc(x,y-13+bob,8.5,Math.PI,2*Math.PI);ctx.fill();
@@ -1071,13 +1528,23 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
     const gather=scene==="out"&&(tt==="tree"||tt==="rock"||tt==="iron"||tt==="gold"||tt==="sand"||tt==="oil"||(WATER.has(tt)&&fsel&&ITEMS[fsel.key].kind==="tool")); const inr=scene==="in"&&["bed","mat","stove"].includes(tt);
     if(farm||gather||inr){ ctx.strokeStyle="rgba(255,255,255,0.7)";ctx.lineWidth=2;ctx.strokeRect(f.c*TILE-camX+2,f.r*TILE-camY+2,TILE-4,TILE-4); } }
   const ents=[...(scene==="out"?mobs.map(m=>({y:m.y,d:()=>drawMob(m)})):[]),{y:player.y,d:drawPlayer}];
-  if(scene==="out"&&area==="home"){ ents.push({y:catY,d:drawCat}); if(!bossDefeated)ents.push({y:ROAD_R*TILE+TILE/2,d:drawGuardian}); }
-  if(scene==="out"&&area==="village"){ ents.push({y:npcY,d:drawNpc}); villagers.forEach(v=>ents.push({y:v.y,d:()=>drawVillager(v)})); VNPCS.forEach(n=>ents.push({y:n.y,d:()=>drawCritter(n)})); }
+  if(scene==="out"&&area==="home"){ ents.push({y:catY,d:drawCat}); animals.forEach(a=>ents.push({y:a.y,d:()=>drawAnimal(a)})); if(!bossDefeated)ents.push({y:ROAD_R*TILE+TILE/2,d:drawGuardian}); }
+  if(scene==="out"&&area==="village"){ ents.push({y:npcY,d:drawNpc}); villagers.forEach(v=>ents.push({y:v.y,d:()=>drawVillager(v)})); VNPCS.forEach(n=>ents.push({y:n.y,d:()=>drawCritter(n)})); VDECOR.forEach(va=>ents.push({y:va.r*TILE+TILE/2,d:()=>drawDecorAnimal(va)})); }
   ents.sort((a,b)=>a.y-b.y); ents.forEach(e=>e.d());
+  for(const s of shots){ const sx=s.x-camX,sy=s.y-camY; ctx.fillStyle="#c46aff";ctx.beginPath();ctx.arc(sx,sy,5,0,7);ctx.fill(); ctx.fillStyle="rgba(255,255,255,.6)";ctx.beginPath();ctx.arc(sx-1,sy-1,2,0,7);ctx.fill(); }
   if(holdUse&&scene==="out"){ const hf=facedCell(); if(hf&&BREAKABLE.has(G[hf.r][hf.c].type)){ const prog=Math.min(1,(now()-holdStart)/1.2),hx=hf.c*TILE-camX+TILE/2,hy=hf.r*TILE-camY+TILE/2;
     ctx.strokeStyle="rgba(0,0,0,.4)";ctx.lineWidth=3;ctx.beginPath();ctx.arc(hx,hy,15,0,7);ctx.stroke();
     ctx.strokeStyle="#ffd23b";ctx.beginPath();ctx.arc(hx,hy,15,-Math.PI/2,-Math.PI/2+prog*2*Math.PI);ctx.stroke(); } }
-  for(const p of fx){ if(p.kind==="flash"){ctx.fillStyle=`rgba(255,40,40,${p.life*0.3})`;ctx.fillRect(0,0,VW,VH);continue;}ctx.globalAlpha=Math.max(0,p.life);if(p.kind==="text"){ctx.fillStyle=p.col;ctx.font="700 14px Helvetica,Arial";ctx.textAlign="center";ctx.fillText(p.text,p.x-camX,p.y-camY);}else{ctx.fillStyle=p.col;ctx.fillRect(p.x-camX-2,p.y-camY-2,4,4);}ctx.globalAlpha=1; }
+  for(const p of fx){ if(p.kind==="flash"){ctx.fillStyle=`rgba(255,40,40,${p.life*0.3})`;ctx.fillRect(0,0,VW,VH);continue;}ctx.globalAlpha=Math.max(0,p.life);if(p.kind==="text"){ctx.font="800 16px Helvetica,Arial";ctx.textAlign="center";ctx.lineWidth=3.5;ctx.strokeStyle="rgba(0,0,0,.7)";ctx.strokeText(p.text,p.x-camX,p.y-camY);ctx.fillStyle=p.col;ctx.fillText(p.text,p.x-camX,p.y-camY);}else{ctx.fillStyle=p.col;ctx.fillRect(p.x-camX-2,p.y-camY-2,4,4);}ctx.globalAlpha=1; }
+  if(scene==="out"&&area!=="dungeon"){   // seasonal colour wash + weather
+    const tn=[[180,200,80,0.10],[255,225,120,0.05],[210,150,40,0.15],[220,235,255,0.24]][seasonIdx()];
+    ctx.fillStyle=`rgba(${tn[0]},${tn[1]},${tn[2]},${tn[3]})`; ctx.fillRect(0,0,VW,VH);
+    if(isRainy()){ ctx.fillStyle=weather==="thunder"?"rgba(14,20,40,0.44)":weather==="rain"?"rgba(26,36,62,0.34)":"rgba(40,52,80,0.22)"; ctx.fillRect(0,0,VW,VH); }   // darken so rain reads clearly
+    else if(weather==="cloudy"){ ctx.fillStyle="rgba(46,52,68,0.2)"; ctx.fillRect(0,0,VW,VH); }
+    if(isRainy()){ const cnt=weather==="lrain"?40:weather==="rain"?80:120; ctx.strokeStyle="rgba(200,220,245,.6)";ctx.lineWidth=1.4;
+      for(let i=0;i<cnt;i++){ const sx=(i*131)%VW, sy=((now()*640+i*167)%(VH+40))-20; ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx-4,sy+12);ctx.stroke(); } }
+    if(weather==="snow"){ ctx.fillStyle="rgba(255,255,255,.9)";
+      for(let i=0;i<70;i++){ const sx=((i*97)+Math.sin(now()*1.4+i)*16)%VW, sy=((now()*70+i*113)%(VH+20))-10; ctx.beginPath();ctx.arc((sx+VW)%VW,sy,1.8,0,7);ctx.fill(); } } }
   if(scene==="out"){ const ph=(clock%DAYLEN)/DAYLEN,n=ph<0.5?0:Math.sin((ph-0.5)*2*Math.PI); if(n>0.01){ ctx.fillStyle=`rgba(12,16,50,${n*0.55})`;ctx.fillRect(0,0,VW,VH);
     // torch light cut-throughs
     ctx.globalCompositeOperation="lighter";
@@ -1086,10 +1553,10 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
   // dungeon: dark, lit by a glow around the player
   if(area==="dungeon"){ ctx.fillStyle="rgba(6,4,16,.62)";ctx.fillRect(0,0,VW,VH); ctx.globalCompositeOperation="lighter";
     const px=player.x-camX,py=player.y-camY,g=ctx.createRadialGradient(px,py,10,px,py,150); g.addColorStop(0,"rgba(120,90,160,.55)");g.addColorStop(1,"rgba(120,90,160,0)"); ctx.fillStyle=g;ctx.beginPath();ctx.arc(px,py,150,0,7);ctx.fill(); ctx.globalCompositeOperation="source-over";
-    const bossLeft=dungBoss&&mobs.some(m=>m.boss);
+    const bossMob=mobs.find(m=>m.boss), bossLeft=dungBoss&&!!bossMob;
     dungBeacon((dungExit[1]+0.5)*TILE,(dungExit[0]+0.5)*TILE,"rgba(140,210,255,.9)","▲");
     dungBeacon((dungStairs[1]+0.5)*TILE,(dungStairs[0]+0.5)*TILE,bossLeft?"rgba(255,90,90,.9)":"rgba(255,210,120,.95)","▼");
-    ctx.fillStyle="#cdb0ff";ctx.font="800 14px Helvetica,Arial";ctx.textAlign="right";ctx.fillText("⛏ "+t("floor")+" "+dungFloor+(bossLeft?" — "+t("BOSS"):""),VW-12,VH-12); }
+    ctx.fillStyle="#cdb0ff";ctx.font="800 14px Helvetica,Arial";ctx.textAlign="right";ctx.fillText("⛏ "+t("floor")+" "+dungFloor+(bossLeft?" — "+t("BOSS")+": "+t(bossMob.name):""),VW-12,VH-12); }
   // ---- icon HUD (Minecraft/Stardew style): a row of hearts + a row of food ----
   const R=11, SP=25, X0=24, YH=26, YF=YH+30, NF=10, step=player.maxHunger/NF;
   for(let i=0;i<player.maxHp;i++) heartIcon(X0+i*SP,YH,R,i<player.hp);
@@ -1099,6 +1566,13 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
   if(player.hunger<=0){ ctx.font="800 14px Helvetica,Arial"; ctx.fillStyle="rgba(0,0,0,.55)";ctx.fillText(t("starving — eat food!"),15,YF+27); ctx.fillStyle="#ff8f8f"; ctx.fillText(t("starving — eat food!"),14,YF+26); }
   else if(player.hunger>=50&&player.hp<player.maxHp){ ctx.font="700 13px Helvetica,Arial"; ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillText(t("well fed · healing"),15,YF+27); ctx.fillStyle="#8ef0a0"; ctx.fillText(t("well fed · healing"),14,YF+26); }
   if(mapOpen) drawMinimap();
+  if(fishing) drawFishing();
+  if(bannerMsg&&now()<bannerUntil){ const a=Math.min(1,(bannerUntil-now())/0.5);   // prominent centred notice
+    ctx.globalAlpha=a; ctx.font="800 17px Helvetica,Arial"; ctx.textAlign="center"; ctx.textBaseline="middle";
+    const w=Math.min(VW-20,ctx.measureText(bannerMsg).width+30), bx=VW/2, by=34;
+    ctx.fillStyle="rgba(8,14,40,.85)"; ctx.beginPath(); ctx.roundRect(bx-w/2,by-17,w,34,17); ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,.35)"; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle="#fff"; ctx.fillText(bannerMsg,bx,by+1); ctx.globalAlpha=1; ctx.textBaseline="alphabetic"; }
 }
 function drawMinimap(){ const rows=GR,cols=GC,cw=Math.max(1,Math.min(160/cols,160/rows)),W=cw*cols,H=cw*rows,ox=VW-W-12,oy=12;
   ctx.fillStyle="rgba(8,16,48,.85)"; ctx.fillRect(ox-5,oy-5,W+10,H+10); ctx.strokeStyle="rgba(255,255,255,.45)"; ctx.lineWidth=1; ctx.strokeRect(ox-5,oy-5,W+10,H+10);
@@ -1110,9 +1584,18 @@ function drawMinimap(){ const rows=GR,cols=GC,cw=Math.max(1,Math.min(160/cols,16
   ctx.fillStyle="rgba(255,255,255,.6)"; ctx.font="700 9px Helvetica"; ctx.textAlign="left"; ctx.fillText((area==="village"?"VILLAGE":"HOMESTEAD")+(scene==="in"?" · indoors":""),ox-2,oy+H+13); }
 let hover=null; // kept for compatibility; map name-tooltips were removed (names show on hover in the hotbar & bag instead)
 let lastT=0;
-function frame(ts){ const nw=ts/1000,dt=lastT?Math.min(0.05,nw-lastT):0;lastT=nw; update(dt); draw();
-  const ph=(clock%DAYLEN)/DAYLEN,day=1+Math.floor(clock/DAYLEN),part=ph<0.25?"morning":ph<0.5?"noon":ph<0.72?"evening":"night";
-  document.getElementById("clock").textContent=(scene==="in"?t("indoors")+" · ":"")+(lang==="zh"?`${t("day")} ${day} 天 · ${t(part)}`:`day ${day} · ${part}`); requestAnimationFrame(frame); }
+let frameAcc=0; const FRAME_MIN=1/40;   // cap ~40fps (saves battery vs uncapped 60+); dt-based so motion stays correct
+function frame(ts){   // browsers already pause rAF in a truly-hidden tab, so no manual hidden-guard (it can wrongly blank the canvas)
+  const nw=ts/1000; const raw=lastT?nw-lastT:0; lastT=nw; frameAcc+=raw;
+  if(frameAcc<FRAME_MIN){ requestAnimationFrame(frame); return; }   // throttle: skip this frame until enough time has passed
+  const dt=Math.min(0.05,frameAcc); frameAcc=0; update(dt); draw();
+  if(coins>_lastCoins)totalEarned+=coins-_lastCoins; _lastCoins=coins;   // accrue total-earned (gates late-game unlocks)
+  const ph=(clock%DAYLEN)/DAYLEN,sn=seasonIdx(),part=ph<0.25?"morning":ph<0.5?"noon":ph<0.72?"evening":"night";
+  const ind=scene==="in"?t("indoors")+" · ":"";
+  document.getElementById("clock").textContent= ind + (lang==="zh"
+      ? `${WEATHER_ICON[weather]} ${SEASON_ZH[sn]} ${dayOfSeason()}日, ${clockHour()} · 第${yearNum()}年`
+      : `${WEATHER_ICON[weather]} ${SEASONS[sn]} ${dayOfSeason()}, ${clockHour()} · Y${yearNum()}`);
+  requestAnimationFrame(frame); }
 
 /* ---- hotbar ---- */
 const barEl=document.getElementById("bar");
@@ -1130,12 +1613,14 @@ function renderBar(){ barEl.innerHTML=""; hideBarTip();
 
 /* ---- shop / craft ---- */
 const shopEl=document.getElementById("shop");
-function shopSellables(){ return [...CKEYS.map(k=>"crop_"+k),"wood","stone","goo","coal","silver","diamond","red_jewel","green_jewel","fossil","jewelry"].filter(k=>countItem(k)>0); }
+function shopSellables(){ return [...CKEYS.map(k=>"crop_"+k),"wood","stone","goo","coal","silver","diamond","red_jewel","green_jewel","fossil","jewelry","cherry_blossom","snow"].filter(k=>countItem(k)>0); }
 function sellStack(k){ const n=countItem(k); if(n<=0)return; const v=k.startsWith("crop_")?CROPS[k.slice(5)].sell:ITEMS[k].sell; coins+=v*n; removeItem(k,n); SND.coin(); }
 function openShop(){ renderShop(); shopEl.classList.add("open"); }
 function renderShop(){ document.getElementById("shopCoins").textContent=coins;
-  document.getElementById("buyList").innerHTML=CKEYS.map(k=>{ const C=CROPS[k];
-    return `<div class="item">${iconSpan("seed_"+k)}<div><b>${itemName("seed_"+k)}</b><span>${t("grows into a")} ${C.sell}c ${t("crop")}</span></div><button data-buy="${k}" ${coins<C.cost?"disabled":""}>${C.cost}c</button></div>`; }).join("");
+  document.getElementById("buyList").innerHTML=`<div class="item"><div><span>${(lang==="zh"?SEASON_ZH[seasonIdx()]+"季 種子":SEASONS[seasonIdx()]+" seeds")}</span></div></div>`
+    +CKEYS.filter(k=>cropAllowed(k)&&!CROPS[k].rare).map(k=>{ const C=CROPS[k];
+    return `<div class="item">${iconSpan("seed_"+k)}<div><b>${itemName("seed_"+k)}</b><span>${t("grows into a")} ${C.sell}c ${t("crop")}</span></div><button data-buy="${k}" ${coins<C.cost?"disabled":""}>${C.cost}c</button></div>`; }).join("")
+    +`<div class="item">${iconSpan("bone_meal")}<div><b>${itemName("bone_meal")}</b><span>${t("use it on a growing crop to speed it up")}</span></div><button data-buybm="1" ${coins<ITEMS.bone_meal.buy?"disabled":""}>${ITEMS.bone_meal.buy}c</button></div>`;
   document.getElementById("foodList").innerHTML=CATFOOD.map(k=>{ const it=ITEMS[k];
     return `<div class="item">${iconSpan(k)}<div><b>${itemName(k)}</b><span>${t("restores")} ${it.food} ${t("hunger")}${it.eff?" · ✨"+t(it.eff):""}</span></div><button data-buyfd="${k}" ${coins<it.buy?"disabled":""}>${it.buy}c</button></div>`; }).join("");
   document.getElementById("furnList").innerHTML=FURN.map(k=>{ const it=ITEMS[k];
@@ -1145,19 +1630,26 @@ function renderShop(){ document.getElementById("shopCoins").textContent=coins;
     const v=k.startsWith("crop_")?CROPS[k.slice(5)].sell:ITEMS[k].sell, n=countItem(k);
     return `<div class="item">${iconSpan(k)}<div><b>${itemName(k)} ×${n}</b><span>${v}c ${t("each")}</span></div><button data-sell="${k}">${t("sell")}</button><button data-sellall="${k}">${t("all")}</button></div>`; }).join("")
     +(sellables.length?`<div class="item"><div><b>${t("Sell everything")}</b></div><button data-sellall="__shopall">${t("sell all")}</button></div>`:"");
-  const fcost=160*(farmLvl+1)*(farmLvl+1),hcost=220*(houseLvl+1)*(houseLvl+1);
+  const fcost=160*(farmLvl+1)*(farmLvl+1),hcost=220*(houseLvl+1)*(houseLvl+1),pcost=140*(penLvl+1);
   document.getElementById("upList").innerHTML=
     `<div class="item"><div><b>${t("Expand farm")} (lv${farmLvl})</b><span>${t("more land inside the fence")}</span></div><button data-up="farm" ${farmLvl>=4||coins<fcost?"disabled":""}>${farmLvl>=4?t("max"):fcost+"c"}</button></div>`+
-    `<div class="item"><div><b>${t("Bigger house")} (lv${houseLvl})</b><span>${t("a roomier home inside")}</span></div><button data-up="house" ${houseLvl>=3||coins<hcost?"disabled":""}>${houseLvl>=3?t("max"):hcost+"c"}</button></div>`;
+    `<div class="item"><div><b>${t("Bigger house")} (lv${houseLvl})</b><span>${t("a roomier home inside")}</span></div><button data-up="house" ${houseLvl>=3||coins<hcost?"disabled":""}>${houseLvl>=3?t("max"):hcost+"c"}</button></div>`+
+    `<div class="item"><div><b>${t("Expand pasture")} (lv${penLvl})</b><span>${t("bigger pen — keep more animals")} (${penCap()}${penLvl<3?"→"+[3,5,7,9][penLvl+1]:""})</span></div><button data-up="pen" ${penLvl>=3||coins<pcost?"disabled":""}>${penLvl>=3?t("max"):pcost+"c"}</button></div>`
+    +(lateUnlocked()
+      ? `<div class="item">💖<div><b>${t("Life Crystal")} (${lifeCrystals}/3)</b><span>${t("+1 permanent heart")}</span></div><button data-up="crystal" ${lifeCrystals>=3||coins<22000?"disabled":""}>${lifeCrystals>=3?t("max"):"22000c"}</button></div>`
+      : `<div class="item"><div><b>🔒 ${t("Life Crystal")}</b><span>${t("unlocks at 200,000 coins earned")} (${Math.floor(totalEarned).toLocaleString()}/200,000)</span></div></div>`);
 }
 shopEl.addEventListener("click",e=>{ const d=e.target.dataset||{};
   if(d.buy){ const C=CROPS[d.buy]; if(coins>=C.cost&&addItem("seed_"+d.buy,1)){coins-=C.cost;SND.coin();} }
   else if(d.buyf){ const it=ITEMS[d.buyf]; if(coins>=it.buy&&addItem(d.buyf,1)){coins-=it.buy;SND.coin();} }
   else if(d.buyfd){ const it=ITEMS[d.buyfd]; if(coins>=it.buy&&addItem(d.buyfd,1)){coins-=it.buy;SND.coin();} }
+  else if(d.buybm){ const it=ITEMS.bone_meal; if(coins>=it.buy&&addItem("bone_meal",1)){coins-=it.buy;SND.coin();} }
   else if(d.sell){ const k=d.sell; if(countItem(k)>0){ const v=k.startsWith("crop_")?CROPS[k.slice(5)].sell:ITEMS[k].sell; coins+=v; removeItem(k,1); SND.coin(); } }
   else if(d.sellall){ if(d.sellall==="__shopall")shopSellables().forEach(sellStack); else sellStack(d.sellall); }
   else if(d.up==="farm"){ const cost=160*(farmLvl+1)*(farmLvl+1); if(farmLvl<4&&coins>=cost){coins-=cost;expandFarm();SND.coin();} }
   else if(d.up==="house"){ const cost=220*(houseLvl+1)*(houseLvl+1); if(houseLvl<3&&coins>=cost){coins-=cost;houseLvl++;SND.coin();float(player.x,player.y-20,"house upgraded","#fff");} }
+  else if(d.up==="pen"){ const cost=140*(penLvl+1); if(penLvl<3&&coins>=cost){coins-=cost;penLvl++;carvePen(gridHome);SND.coin();float(player.x,player.y-20,"pasture expanded","#cdffd0");} }
+  else if(d.up==="crystal"){ if(lateUnlocked()&&lifeCrystals<3&&coins>=22000){ coins-=22000; lifeCrystals++; recalcMax(); player.hp=player.maxHp; SND.coin(); float(player.x,player.y-20,"+1 permanent heart!","#ff5b78"); } }
   syncUI(); save(); renderShop();
 });
 document.getElementById("shopClose").addEventListener("click",()=>shopEl.classList.remove("open"));
@@ -1266,7 +1758,11 @@ const stoveEl=document.getElementById("stove");
 const STOVE_RECIPES=[
   {give:"hearty_stew", cost:{meat:1,crop_carrot:1,crop_corn:1}, eff:"+2 hearts for 2 min"},
   {give:"power_roast", cost:{meat:2}, eff:"+1 attack for 2 min"},
-  {give:"swift_salad", cost:{crop_carrot:2,berry:1}, eff:"faster for 2 min"} ];
+  {give:"swift_salad", cost:{crop_carrot:2,berry:1}, eff:"faster for 2 min"},
+  {give:"iron_stew", cost:{meat:2,crop_pumpkin:1}, eff:"+3 hearts for 2.5 min"},
+  {give:"rage_skewer", cost:{meat:1,fish:1}, eff:"+2 attack for 2.5 min"},
+  {give:"mending_broth", cost:{fish:2,berry:2}, eff:"fast heal for 3 min"},
+  {give:"feast_platter", cost:{meat:3,crop_corn:1,crop_pumpkin:1}, eff:"+2 hearts, +1 attack & faster, 2 min"} ];
 function openStove(){ renderStove(); stoveEl.classList.add("open"); }
 function renderStove(){ document.getElementById("stoveList").innerHTML=STOVE_RECIPES.map((R,i)=>{ const cs=Object.entries(R.cost).map(([m,n])=>`${n} ${itemName(m)}`).join(" + ");
     const can=Object.entries(R.cost).every(([m,n])=>countItem(m)>=n);
@@ -1283,8 +1779,8 @@ function renderHelp(){ const tiles=["grass","soil","tree","rock","iron","gold","
   const items=["seed_carrot","crop_carrot","wood","stone","goo","iron","gold","crop_corn","oil","fish","sand","glass","salve","rod","net","torch","fence","mfence","ppath","lantern","goldlamp","oillamp","chair","table","lamp","rug"];
   // [action, keyboard, touch]
   const controls=[
-    ["Move","W A S D / Arrow keys","D-pad (bottom-left)"],
-    ["Run","double-tap a direction","double-tap a D-pad arrow"],
+    ["Move","W A S D / Arrow keys","joystick (bottom-left)"],
+    ["Run","double-tap a direction","push the joystick to the edge"],
     ["Use / act (till, plant, water, harvest, chop, mine, fish, fight, place)","E or Space","round “use” button"],
     ["Remove something you placed","hold use ~1.5s","hold the “use” button"],
     ["Talk to cat / fisher / villager","T","💬 button"],
@@ -1292,6 +1788,7 @@ function renderHelp(){ const tiles=["grass","soil","tree","rock","iron","gold","
     ["Pick hotbar item","number keys 1–0","tap a hotbar slot"],
     ["Bag & crafting","I (or B / Tab)","🎒 Bag button"],
     ["Map","M","🗺 Map button"],
+    ["Fast-travel (needs a horse)","G","🐴 Ride button"],
     ["Advance dialogue","Space / E / Enter","tap the dialogue box"],
     ["Close a menu","Esc","✕ / tap outside"],
     ["Sound · New game · Save/Load file","top buttons","top buttons"]];
@@ -1303,8 +1800,9 @@ function renderHelp(){ const tiles=["grass","soil","tree","rock","iron","gold","
     "Beat the road <b>boss</b> (needs a metal sword + armour) to reach the village. Cheat: the tiny box in the bottom-right corner — type <b>111</b> + Enter to skip it.",
     "Watch your <b>hunger</b> bar — chopping, mining, fighting and time all drain it. Eat <b>berries</b> (from trees) or <b>meat</b> (from slimes) with <b>F</b>. Well-fed you slowly heal; starving costs hearts. <b>Sleep</b> in bed to restore everything.",
     "Open the bag to <b>equip</b> a sword, armour, hat, chest, pants, shoes and 2 accessories — gear adds hearts, attack and speed. Pick up a piece, then click its equipment slot.",
-    "Use <b>save file</b> to download your progress and <b>load file</b> to bring it back on any device."];
-  const controlsZH=[["移動","W A S D / 方向鍵","D-pad（左下）"],["衝刺","連按兩下同方向","連按兩下 D-pad 方向"],["使用 / 動作（翻土、種植、澆水、採收、砍伐、開採、釣魚、戰鬥、放置）","E 或 空白鍵","圓形「使用」鈕"],["拆除你放置的東西","長按使用約 1.5 秒","長按「使用」鈕"],["與貓 / 漁夫 / 村民對話","T","💬 鈕"],["進食","F","🍖 進食鈕"],["選快捷欄物品","數字鍵 1–0","點快捷欄格子"],["背包與製作","I（或 B / Tab）","🎒 背包鈕"],["地圖","M","🗺 地圖鈕"],["推進對話","空白鍵 / E / Enter","點對話框"],["關閉選單","Esc","✕ / 點外面"],["音效 · 新遊戲 · 儲存/載入","上方按鈕","上方按鈕"]];
+    "Use <b>save file</b> to download your progress and <b>load file</b> to bring it back on any device.",
+    "Visit <b>Hamu</b> in the village to buy <b>farm animals</b> — chicken, pig, cow (up to 5 each) and a horse. They live in the <b>fenced pasture</b> by your home and give an <b>egg / truffle / milk</b> each day; walk up and press <b>use</b> to collect. Buy a <b>horse</b> to fast-travel with <b>G</b> / 🐴 Ride."];
+  const controlsZH=[["移動","W A S D / 方向鍵","搖桿（左下）"],["衝刺","連按兩下同方向","把搖桿推到邊緣"],["使用 / 動作（翻土、種植、澆水、採收、砍伐、開採、釣魚、戰鬥、放置）","E 或 空白鍵","圓形「使用」鈕"],["拆除你放置的東西","長按使用約 1.5 秒","長按「使用」鈕"],["與貓 / 漁夫 / 村民對話","T","💬 鈕"],["進食","F","🍖 進食鈕"],["選快捷欄物品","數字鍵 1–0","點快捷欄格子"],["背包與製作","I（或 B / Tab）","🎒 背包鈕"],["地圖","M","🗺 地圖鈕"],["快速旅行（需要馬）","G","🐴 騎馬鈕"],["推進對話","空白鍵 / E / Enter","點對話框"],["關閉選單","Esc","✕ / 點外面"],["音效 · 新遊戲 · 儲存/載入","上方按鈕","上方按鈕"]];
   const tipsZH=["走到面對的格子按使用來動作。<b>連按兩下</b>方向可<b>衝刺</b>。",
     "對話是<b>獨立</b>按鈕（T / 💬），所以 使用/E 可在 NPC 旁邊耕作採集。怪物攻擊你時不能對話。",
     "<b>你放置的任何東西</b> — 柵欄、椅子、桌子、檯燈、地毯、火把、道路 — <b>長按</b>使用約 1.5 秒即可收回背包。<b>農場圍欄</b>不能拆（在貓商店擴建）。",
@@ -1313,7 +1811,8 @@ function renderHelp(){ const tiles=["grass","soil","tree","rock","iron","gold","
     "打敗道路<b>頭目</b>（需金屬劍+盔甲）才能前往村莊。密技：右下角的小框，輸入 <b>111</b> + Enter 可跳過。",
     "注意<b>飢餓</b>條 — 砍伐、開採、戰鬥和時間都會消耗它。用 <b>F</b> 吃<b>莓果</b>（樹）或<b>肉</b>（史萊姆）。吃飽會慢慢回血，飢餓會扣心。在床上<b>睡覺</b>可回復全部狀態。",
     "打開背包<b>裝備</b>劍、盔甲、帽子、上衣、褲子、鞋子和 2 個飾品 — 裝備增加生命、攻擊與速度。先拿起裝備，再點對應的裝備格。",
-    "用<b>儲存</b>下載進度，用<b>載入</b>在任何裝置帶回。"];
+    "用<b>儲存</b>下載進度，用<b>載入</b>在任何裝置帶回。",
+    "到村莊找<b>哈姆</b>購買<b>農場動物</b> — 雞、豬、乳牛（各最多 5 隻）和馬。牠們住在你家旁的<b>圍欄牧場</b>，每天產<b>蛋 / 松露 / 牛奶</b>；走近按<b>使用</b>收集。買一匹<b>馬</b>就能用 <b>G</b> / 🐴 騎馬 快速旅行。"];
   const useC=lang==="zh"?controlsZH:controls, useT=lang==="zh"?tipsZH:tips;
   const cH=useC.map(c=>`<div class="item"><b>${c[0]}</b><span>⌨️ ${c[1]} &nbsp;·&nbsp; 📱 ${c[2]}</span></div>`).join("");
   const tH=tiles.map(k=>{ const d=descOf(k); return d?`<div class="item"><b>${d[0]}</b><span>${d[1]}</span></div>`:""; }).join("");
@@ -1350,6 +1849,59 @@ document.getElementById("questBtn").addEventListener("click",openQuests);
 document.getElementById("questClose").addEventListener("click",()=>questsEl.classList.remove("open"));
 questsEl.addEventListener("pointerdown",e=>{ if(e.target===questsEl)questsEl.classList.remove("open"); });
 
+/* ---- milestones / achievements ---- */
+const ACHIEVEMENTS=[
+  {ic:"🏡", name:"New beginnings", desc:"Move into the old family cottage", done:()=>seenIntro||metCat},
+  {ic:"🌱", name:"Green thumb", desc:"Harvest 5 crops", done:()=>stats.crops>=5},
+  {ic:"🪓", name:"Woodcutter", desc:"Chop 20 trees", done:()=>stats.trees>=20},
+  {ic:"🐟", name:"Angler", desc:"Catch 20 fish", done:()=>stats.fish>=20},
+  {ic:"🐹", name:"Reach the village", desc:"Meet Hamu across the road", done:()=>metHamu},
+  {ic:"⚔️", name:"Road cleared", desc:"Beat the Road Guardian", done:()=>bossDefeated},
+  {ic:"🐔", name:"First livestock", desc:"Keep an animal in your pasture", done:()=>animals.length>=1},
+  {ic:"⛏", name:"Spelunker", desc:"Reach dungeon floor 10", done:()=>(dungMax||1)>=10},
+  {ic:"💗", name:"Heart of the deep", desc:"Reach floor 100 (+1 permanent heart)", done:()=>(dungMax||1)>=100},
+  {ic:"🗝", name:"Dungeon master", desc:"Reach dungeon floor 500", done:()=>(dungMax||1)>=500},
+  {ic:"🏆", name:"To the bottom", desc:"Reach dungeon floor 1000", done:()=>(dungMax||1)>=1000},
+  {ic:"💰", name:"First fortune", desc:"Earn 1,000 coins total", done:()=>totalEarned>=1000},
+  {ic:"💵", name:"Wealthy", desc:"Earn 10,000 coins total", done:()=>totalEarned>=10000},
+  {ic:"🏦", name:"Tycoon", desc:"Earn 100,000 coins total", done:()=>totalEarned>=100000},
+  {ic:"👑", name:"Legend", desc:"Earn 200,000 coins — unlock late-game items", done:()=>totalEarned>=200000},
+  {ic:"💖", name:"Crystal heart", desc:"Buy a Life Crystal", done:()=>lifeCrystals>=1},
+];
+const achvEl=document.getElementById("achv");
+function renderAchv(){ const got=ACHIEVEMENTS.filter(a=>a.done()).length;
+  document.getElementById("achvBody").innerHTML=`<div class="item"><div><span>${got}/${ACHIEVEMENTS.length} ${(lang==="zh"?"已達成":"complete")}</span></div></div>`
+    +ACHIEVEMENTS.map(a=>{ const d=a.done(); return `<div class="item" style="${d?"":"opacity:.55"}"><span class="ic" style="font-size:20px">${d?a.ic:"🔒"}</span><div><b>${d?"✓ ":""}${t(a.name)}</b><span>${t(a.desc)}</span></div></div>`; }).join(""); }
+function openAchv(){ renderAchv(); achvEl.classList.add("open"); }
+document.getElementById("achvBtn").addEventListener("click",openAchv);
+document.getElementById("achvClose").addEventListener("click",()=>achvEl.classList.remove("open"));
+achvEl.addEventListener("pointerdown",e=>{ if(e.target===achvEl)achvEl.classList.remove("open"); });
+
+/* ---- settings ---- */
+let tutOn=localStorage.getItem("hs-tut")!=="0";
+try{ localStorage.removeItem("hs-uiscale"); }catch(e){}   // UI-scale removed — it broke click targets; clear any leftover zoom
+[".toolbar",".bar",".pad"].forEach(s=>{ const el=document.querySelector(s); if(el)el.style.zoom=""; });
+function applyTut(){ const h=document.querySelector(".hint"); if(h&&window.innerWidth>820)h.style.display=tutOn?"":"none"; }
+const settingsEl=document.getElementById("settings");
+function renderArtUploads(){ const C=[["player","🧑 You (standing)"],["cat","🐱 Shop Cat"],["hamu","🐹 Hamu"],["louie","🐱 Louie"],["david","🐶 David"],["fisher","🐸 Frog (Pelle)"]];
+  let html=C.map(([id,nm])=>{ const has=!!artData[id];
+    return `<div class="artrow"><div class="thumb">${has?`<img src="${artData[id]}">`:"🖼"}</div><div class="nm">${nm}</div><label>${has?"change":"upload"}<input type="file" accept="image/*" data-art="${id}"></label>${has?`<button class="setrow" data-artdel="${id}" style="padding:6px 10px;border-radius:999px;background:rgba(255,120,120,.25);border:1.5px solid rgba(255,140,140,.5);color:#fff;font-weight:700">✕</button>`:""}</div>`; }).join("");
+  html+=`<div class="artrow"><div class="thumb">${walkData.length?`<img src="${walkData[0]}">`:"🚶"}</div><div class="nm">🚶 Walk frames · ${walkData.length}<br><span style="font-size:10px;opacity:.6">add as many as you like — more = smoother</span></div><label>add<input type="file" accept="image/*" multiple data-walk="1"></label>${walkData.length?`<button data-walkclear="1" style="padding:6px 10px;border-radius:999px;background:rgba(255,120,120,.25);border:1.5px solid rgba(255,140,140,.5);color:#fff;font-weight:700">clear</button>`:""}</div>`;
+  document.getElementById("artUploads").innerHTML=html; }
+function openSettings(){ renderArtUploads(); document.getElementById("tutToggle").checked=tutOn; settingsEl.classList.add("open"); }
+document.getElementById("settingsBtn").addEventListener("click",openSettings);
+document.getElementById("settingsClose").addEventListener("click",()=>settingsEl.classList.remove("open"));
+settingsEl.addEventListener("pointerdown",e=>{ if(e.target===settingsEl)settingsEl.classList.remove("open"); });
+settingsEl.addEventListener("change",e=>{ const tg=e.target, d=tg.dataset||{};
+  if(d.art){ const f=tg.files&&tg.files[0]; if(f)downscaleFile(f,du=>{ artData[d.art]=du; saveArt(); buildArt(); renderArtUploads(); }); }
+  else if(d.walk){ const fs=[...(tg.files||[])]; (function next(i){ if(i>=fs.length){ saveArt(); buildArt(); renderArtUploads(); return; } downscaleFile(fs[i],du=>{ walkData.push(du); next(i+1); }); })(0); }
+  else if(tg.id==="tutToggle"){ tutOn=tg.checked; applyTut(); localStorage.setItem("hs-tut",tutOn?"1":"0"); } });
+settingsEl.addEventListener("click",e=>{ const d=e.target.dataset||{};
+  if(d.artdel){ delete artData[d.artdel]; saveArt(); buildArt(); renderArtUploads(); }
+  else if(d.walkclear){ walkData.length=0; saveArt(); buildArt(); renderArtUploads(); } });
+document.getElementById("artReset").addEventListener("click",()=>{ artData={}; walkData.length=0; saveArt(); buildArt(); renderArtUploads(); });
+applyTut();
+
 /* ---- rename ---- */
 const nameModalEl=document.getElementById("nameModal"), nameInputEl=document.getElementById("nameInput"); let nameDone=null;
 function openNameModal(onDone){ nameDone=onDone||null; nameInputEl.value=playerName==="You"?"":playerName; nameModalEl.classList.add("open"); setTimeout(()=>nameInputEl.focus(),30); }
@@ -1360,20 +1912,23 @@ nameInputEl.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Ent
 
 /* ---- village fisher (NPC) ---- */
 const marketEl=document.getElementById("market");
-const GEARCOST={rod:12,net:30};
+const GEARCOST={rod:12,silver_rod:60,gold_rod:150,net:30,wide_net:80,deep_net:180};
 function openMarket(){ renderMarket(); marketEl.classList.add("open"); }
 function renderMarket(){ document.getElementById("mktCoins").textContent=coins;
-  const gear=[{k:"rod",d:t("catch fish from any water")},{k:"net",d:t("catch 2–3 fish at a time")}];
+  const gear=[{k:"rod",d:t("basic rod — reel in the catch")},{k:"silver_rod",d:t("bigger catch bar, better fish")},{k:"gold_rod",d:t("biggest catch bar, best fish")},
+    {k:"net",d:t("set it in water; collect seafood next day")},{k:"wide_net",d:t("a net for better seafood")},{k:"deep_net",d:t("the best net for rare seafood")}];
   document.getElementById("gearList").innerHTML=gear.map(g=>{ const owned=countItem(g.k)>0,cost=GEARCOST[g.k];
     return `<div class="item">${iconSpan(g.k)}<div><b>${itemName(g.k)}</b><span>${g.d}</span></div><button data-buyg="${g.k}" ${owned||coins<cost?"disabled":""}>${owned?t("owned"):cost+"c"}</button></div>`; }).join("")
+    +`<div class="item">${iconSpan("bait")}<div><b>${itemName("bait")} ×${countItem("bait")}</b><span>${t("auto-used when fishing for better catches")}</span></div><button data-buybait="1" ${coins<5?"disabled":""}>5c</button></div>`
     +`<div class="item">${iconSpan("oil")}<div><b>${t("oil")}</b><span>${t("grow corn & press it, or buy a barrel here")}</span></div><button data-buyoil="1" ${coins<8?"disabled":""}>8c</button></div>`;
   const sellable=mktSellables();
   document.getElementById("mktSell").innerHTML=(sellable.length?sellable:["__none"]).map(k=>{ if(k==="__none")return `<div class="item"><div><span>${t("catch fish, mine ore or scoop sand, then sell it here")}</span></div></div>`;
     const v=ITEMS[k].sell,n=countItem(k); return `<div class="item">${iconSpan(k)}<div><b>${itemName(k)} ×${n}</b><span>${v}c ${t("each")}</span></div><button data-msell="${k}">${t("sell")}</button><button data-msellall="${k}">${t("all")}</button></div>`; }).join("")
     +(sellable.length?`<div class="item"><div><b>${t("Sell everything")}</b></div><button data-msellall="__mktall">${t("sell all")}</button></div>`:""); }
-function mktSellables(){ return ["fish","iron","gold","sand","glass","oil"].filter(k=>countItem(k)>0); }
+function mktSellables(){ return ["fish","tropical_fish","pufferfish","squid","octopus","shark","shrimp","eel","crab","lobster","oyster","urchin","pearl","iron","gold","sand","glass","oil"].filter(k=>countItem(k)>0); }
 marketEl.addEventListener("click",e=>{ const d=e.target.dataset||{};
   if(d.buyg){ const cost=GEARCOST[d.buyg]; if(countItem(d.buyg)===0&&coins>=cost&&addItem(d.buyg,1)){coins-=cost;SND.coin();} }
+  else if(d.buybait){ if(coins>=5&&addItem("bait",1)){coins-=5;SND.coin();} }
   else if(d.buyoil){ if(coins>=8&&addItem("oil",1)){coins-=8;SND.coin();} }
   else if(d.msell){ const k=d.msell; if(countItem(k)>0){ coins+=ITEMS[k].sell; removeItem(k,1); SND.coin(); } }
   else if(d.msellall){ if(d.msellall==="__mktall")mktSellables().forEach(sellStack); else sellStack(d.msellall); }
@@ -1384,21 +1939,68 @@ marketEl.addEventListener("pointerdown",e=>{ if(e.target===marketEl)marketEl.cla
 /* ---- Hamu the hamster merchant: buys materials at +25% ---- */
 const merchEl=document.getElementById("merchant");
 function merchPrice(k){ const b=k.startsWith("crop_")?CROPS[k.slice(5)].sell:ITEMS[k].sell; return Math.ceil(b*1.25); }
-function merchSellables(){ return [...CKEYS.map(k=>"crop_"+k),"wood","stone","goo","coal","silver","gold","iron","diamond","red_jewel","green_jewel","fossil","fish","sand","glass","oil","jewelry"].filter(k=>countItem(k)>0); }
+function merchSellables(){ return [...CKEYS.map(k=>"crop_"+k),"wood","stone","goo","coal","silver","gold","iron","diamond","red_jewel","green_jewel","fossil","fish","tropical_fish","pufferfish","squid","octopus","shark","shrimp","eel","sand","glass","oil","jewelry","egg","milk","truffle","cheese","crab","lobster","oyster","urchin","pearl","cherry_blossom",
+  "tea_bundle","dried_herb","amber_incense","frost_remedy","sweet_preserve","apple_preserve","melon_jam","pea_preserve","flower_oil","pumpkin_oil","citrus_extract","flower_sachet","spice_sachet","blossom_incense","perfume","sakura_perfume","moon_elixir","snow_essence"].filter(k=>countItem(k)>0); }
 function merchSell(k){ const n=countItem(k); if(n<=0)return; coins+=merchPrice(k)*n; removeItem(k,n); SND.coin(); }
 function openMerchant(){ renderMerchant(); merchEl.classList.add("open"); }
-function renderMerchant(){ document.getElementById("merchCoins").textContent=coins; const list=merchSellables();
+function buyAnimal(kind){ const A=ANIMALS[kind]; if(!A){ return; }
+  if(kind==="horse"&&!lateUnlocked()){ SND.no(); float(player.x,player.y-24,t("unlocks at 200,000 coins earned"),"#ffd9a8"); return; }   // prestige mount
+  if(animals.length>=penCap()){ SND.no(); float(player.x,player.y-24,t("pen is full — expand it at the cat"),"#ffd9a8"); return; }
+  if(ranchCount(kind)>=A.limit||coins<A.price){ SND.no(); return; }
+  coins-=A.price; addAnimal(kind); SND.coin(); float(player.x,player.y-26,t("delivered to your pasture!"),"#cdffd0"); save(); syncUI(); renderMerchant(); }
+function renderRanch(){ const penFull=animals.length>=penCap();
+  document.getElementById("merchRanch").innerHTML=`<div class="item"><div><span>🐾 ${t("animals")} ${animals.length}/${penCap()}${penFull?" — "+t("pen is full — expand it at the cat"):""}</span></div></div>`
+    +Object.entries(ANIMALS).map(([k,A])=>{
+    const have=ranchCount(k), full=have>=A.limit||penFull, poor=coins<A.price;
+    return `<div class="item"><span class="ic" style="font-size:22px;line-height:1">${A.face}</span><div><b>${t(A.name)} (${have}/${A.limit})</b><span>${t(A.desc)}</span></div><button data-buya="${k}" ${(full||poor)?"disabled":""}>${have>=A.limit?t("max"):A.price+"c"}</button></div>`; }).join("")
+    +`<div class="item"><div><span>🌸 ${(lang==="zh"?"稀有"+SEASON_ZH[seasonIdx()]+"季種子":"rare "+SEASONS[seasonIdx()]+" seeds")}</span></div></div>`
+    +CKEYS.filter(k=>CROPS[k].rare&&cropAllowed(k)).map(k=>{ const C=CROPS[k];
+      return `<div class="item">${iconSpan("seed_"+k)}<div><b>${itemName("seed_"+k)}</b><span>${t("processed at machines for luxury goods")}</span></div><button data-buyseed="${k}" ${coins<C.cost?"disabled":""}>${C.cost}c</button></div>`; }).join(""); }
+function renderMerchant(){ document.getElementById("merchCoins").textContent=coins; renderRanch(); const list=merchSellables();
   document.getElementById("merchSell").innerHTML=(list.length?list:["__none"]).map(k=>{ if(k==="__none")return `<div class="item"><div><span>${t("gather or harvest something to sell")}</span></div></div>`;
     const n=countItem(k); return `<div class="item">${iconSpan(k)}<div><b>${itemName(k)} ×${n}</b><span>${merchPrice(k)}c ${t("each")}</span></div><button data-msl="${k}">${t("all")}</button></div>`; }).join("")
     +(list.length?`<div class="item"><div><b>${t("Sell everything")}</b></div><button data-msl="__all">${t("sell all")}</button></div>`:""); }
-merchEl.addEventListener("click",e=>{ const k=e.target.dataset&&e.target.dataset.msl; if(!k)return; if(k==="__all")merchSellables().forEach(merchSell); else merchSell(k); syncUI(); save(); renderMerchant(); });
+merchEl.addEventListener("click",e=>{ const ba=e.target.dataset&&e.target.dataset.buya; if(ba){ buyAnimal(ba); return; }
+  const bs=e.target.dataset&&e.target.dataset.buyseed; if(bs){ const C=CROPS[bs]; if(coins>=C.cost&&addItem("seed_"+bs,1)){coins-=C.cost;SND.coin();} syncUI(); save(); renderMerchant(); return; }
+  const k=e.target.dataset&&e.target.dataset.msl; if(!k)return; if(k==="__all")merchSellables().forEach(merchSell); else merchSell(k); syncUI(); save(); renderMerchant(); });
+/* ---- horse fast-travel ---- */
+const teleEl=document.getElementById("teleport");
+function findClear(g,r0,c0){ for(let rad=0;rad<14;rad++)for(let dr=-rad;dr<=rad;dr++)for(let dc=-rad;dc<=rad;dc++){ const r=r0+dr,c=c0+dc;
+  if(g[r]&&g[r][c]&&!OBST.has(g[r][c].type)&&!WATER.has(g[r][c].type)&&!g[r][c].crop)return {r,c}; } return {r:r0,c:c0}; }
+function openTeleport(){ if(scene!=="out"||area==="dungeon"){ SND.no(); return; }
+  if(!hasHorse()){ SND.no(); float(player.x,player.y-24,t("buy a horse from Hamu first"),"#ffd9a8"); return; }
+  const dests=[["farm","🏡 "+t("your farm")],["village","🏘 "+t("village centre")]];
+  document.getElementById("teleList").innerHTML=dests.map(([d,l])=>`<div class="item"><div><b>${l}</b></div><button data-tele="${d}">${t("go")}</button></div>`).join("");
+  teleEl.classList.add("open"); }
+teleEl.addEventListener("click",e=>{ const d=e.target.dataset&&e.target.dataset.tele; if(!d)return; teleEl.classList.remove("open");
+  let p; if(d==="farm"){ setArea("home"); p=findClear(gridHome,doorR+2,doorC); } else { setArea("village"); p=findClear(gridVillage,Math.floor(VROWS/2),Math.floor(VCOLS/2)-3); }
+  setScene("out"); player.x=p.c*TILE+TILE/2; player.y=p.r*TILE+TILE/2; player.dir="d";player.fx=0;player.fy=1;
+  SND.door(); transCD=0.6; mobs.length=0; shots.length=0; hover=null; save(); });
+document.getElementById("teleClose").addEventListener("click",()=>teleEl.classList.remove("open"));
+teleEl.addEventListener("pointerdown",e=>{ if(e.target===teleEl)teleEl.classList.remove("open"); });
 document.getElementById("merchClose").addEventListener("click",()=>merchEl.classList.remove("open"));
 merchEl.addEventListener("pointerdown",e=>{ if(e.target===merchEl)merchEl.classList.remove("open"); });
 
 /* ---- custom art (drops in by filename; falls back to built-in drawing) ---- */
 const WORLD={}, PORTRAIT={};
 function loadImg(into,who,src){ try{ const im=new Image(); im.onload=()=>{into[who]=im;}; im.onerror=()=>{into[who]=null;}; im.src=src; }catch(e){} }
-["player","cat","fisher"].forEach(w=>{ loadImg(WORLD,w,"art/"+w+".png"); loadImg(PORTRAIT,w,"art/portrait-"+w+".png"); });
+["player","cat","fisher","hamu","louie","david"].forEach(w=>loadImg(WORLD,w,"art/"+w+".png"));
+["player","cat","fisher"].forEach(w=>loadImg(PORTRAIT,w,"art/portrait-"+w+".png"));
+const WORLDWALK=[];   // art/player-walk1.png, walk2, walk3 … auto-discovered in order (add as many as you like)
+(function loadWalk(i){ const im=new Image(); im.onload=()=>{ WORLDWALK[i]=im; loadWalk(i+1); }; im.onerror=()=>{}; im.src="art/player-walk"+(i+1)+".png"; })(0);
+/* ---- player/NPC art the player can upload in Settings (stored as data URLs) ---- */
+const ART_IDS=["player","cat","hamu","louie","david","fisher"];
+let artData={}, walkData=[]; try{ artData=JSON.parse(localStorage.getItem("hs-art")||"{}"); walkData=JSON.parse(localStorage.getItem("hs-walk")||"[]"); }catch(e){}
+const ART={}, WALKART=[];
+function imgReady(im){ return im&&im.complete&&im.naturalWidth>0; }
+function buildArt(){ for(const id of ART_IDS){ if(artData[id]){ if(!ART[id]||ART[id].src!==artData[id]){ const im=new Image(); im.src=artData[id]; ART[id]=im; } } else delete ART[id]; }
+  WALKART.length=0; walkData.forEach(d=>{ const im=new Image(); im.src=d; WALKART.push(im); }); }
+function saveArt(){ try{ localStorage.setItem("hs-art",JSON.stringify(artData)); localStorage.setItem("hs-walk",JSON.stringify(walkData)); }catch(e){ float(player.x,player.y-26,"too many images — storage full","#ff8f8f"); } }
+function artPick(id){ return ART[id]||WORLD[id]; }   // uploaded overrides drop-in art
+function drawSprite(im,x,yBase,htWanted,flip){ if(!imgReady(im))return false; const h=htWanted,w=h*(im.naturalWidth/im.naturalHeight||1); ctx.save(); if(flip){ctx.translate(x,0);ctx.scale(-1,1);ctx.translate(-x,0);} ctx.drawImage(im,x-w/2,yBase-h,w,h); ctx.restore(); return true; }
+// downscale an uploaded image so localStorage stays small, return a data URL
+function downscaleFile(file,cb){ const r=new FileReader(); r.onload=function(){ const img=new Image(); img.onload=function(){ const max=240,sc=Math.min(1,max/(img.naturalHeight||1)),w=Math.max(1,Math.round(img.naturalWidth*sc)),h=Math.max(1,Math.round(img.naturalHeight*sc)); const cv=document.createElement("canvas");cv.width=w;cv.height=h; cv.getContext("2d").drawImage(img,0,0,w,h); cb(cv.toDataURL("image/png")); }; img.onerror=function(){}; img.src=r.result; }; r.readAsDataURL(file); }
+buildArt();
 
 /* ---- visual-novel dialogue ---- */
 const SPEAKERS={ player:{name:"You",face:"🧑",col:"#2f6dd0"}, cat:{name:"Whiskers",face:"🐱",col:"#f3a64b"}, fisher:{name:"Pelle",face:"🐸",col:"#5aa84a"} };
@@ -1449,8 +2051,8 @@ function talkLouie(){ const L="louie",nm="Louie",fc="🐱",cl="#5aa0e6";
   startDialog([{who:L,name:nm,face:fc,col:cl,text:"Fresh fish, all day! Thanks again for stocking me up."}],null); }
 function hamuIntro(){ const H="hamu",nm="Hamu",fc="🐹",cl="#f49ac6"; startDialog([
   {who:H,name:nm,face:fc,col:cl,text:"Squeak! Hamu's the name — trading's my game. I'll pay top coin for your goods."},
-  {who:H,name:nm,face:fc,col:cl,text:"A word of advice: a fierce Road Guardian blocks the path between the lands."},
-  {who:H,name:nm,face:fc,col:cl,text:"Forge a metal sword AND metal armour, then beat it — that's the only way through. It's in your Quests list!"}
+  {who:H,name:nm,face:fc,col:cl,text:"I also raise farm animals! Buy a chicken, pig, cow or horse and they'll live in the pasture by your home."},
+  {who:H,name:nm,face:fc,col:cl,text:"They make milk, eggs and truffles each day — and a horse lets you fast-travel. Come trade any time!"}
 ], openMerchant); }
 /* opening story (plays once, inside the house) — skippable */
 function startIntro(){ setScene("in"); const mc=Math.floor(GC/2); player.x=mc*TILE+TILE/2; player.y=(GR-2)*TILE+TILE/2; player.dir="u";player.fx=0;player.fy=-1; transCD=1.2;
@@ -1498,6 +2100,11 @@ document.getElementById("langBtn").addEventListener("click",()=>{ lang=lang==="z
 setInterval(save,5000);
 const freshStart=!load(); if(freshStart) reset(); else { renderBar(); syncUI(); }
 applyLang();
+// add a top-right ✕ to every panel so phone players can close without scrolling to the bottom
+document.querySelectorAll(".shop > .card").forEach(card=>{ if(card.querySelector(".xclose"))return; const b=document.createElement("button"); b.className="xclose"; b.type="button"; b.textContent="✕";
+  b.addEventListener("click",e=>{ e.stopPropagation(); const cl=card.querySelector(".close"); if(cl)cl.click(); else card.parentElement.classList.remove("open"); });
+  card.insertBefore(b,card.firstChild); });
+document.querySelectorAll(".shop").forEach(sh=>{ sh.addEventListener("pointerdown",e=>{ if(e.target!==sh)return; const cl=sh.querySelector(".card>.close"); if(cl)cl.click(); else sh.classList.remove("open"); }); });   // tap backdrop to close
 resize(); requestAnimationFrame(frame); if(freshStart)openNameModal(maybeIntro); else maybeIntro();
 })();
 </script>
