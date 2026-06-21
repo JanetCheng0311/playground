@@ -941,7 +941,7 @@ function carvePen(g){ if(!g)return; const R1=penR1(), pgate=Math.floor((PEN_C0+P
   if(g[R1]&&g[R1][pgate]) g[R1][pgate].type="path"; if(g[R1]&&g[R1][pgate+1]) g[R1][pgate+1].type="path"; }   // gate to walk in
 // monster-free "safe" zones: home farm + pasture, and in the village the fenced town + the fisher's pen
 function inTown(r,c){ return r>=20&&r<=32&&c>=7&&c<=36; }            // inside the village fence ring
-function inFisherZone(r,c){ return r>=5&&r<=7&&c>=35&&c<=37; }       // fenced patch around Pelle the fisher
+function inFisherZone(r,c){ return r>=2&&r<=13&&c>=30&&c<=38; }      // big fenced coast around Pelle the fisher (open east to the sea)
 function inCaveZone(r,c){ return r<=CAVE_R+4&&r>=CAVE_R-2&&Math.abs(c-CAVE_C)<=2; }   // safe clearing around the dungeon entrance (incl. the approach path)
 function safeTile(r,c){ if(area==="home")return inFarm(r,c)||inPen(r,c); if(area==="village")return inTown(r,c)||inFisherZone(r,c)||inCaveZone(r,c); return false; }
 const ANIMALS={
@@ -1044,8 +1044,11 @@ function buildVillage(){ const g=[]; for(let r=0;r<VROWS;r++){ const row=[]; for
   for(let r=30;r<=33;r++) set(r,24,"path");                                       // path south through town
   block(25,22,2,2,"pond");                                                        // fountain in the square
   [[23,18],[23,30],[29,18],[29,30]].forEach(([r,c])=>{ if(g[r][c].type==="path")set(r,c,"lamp"); });  // street lamps
-  // fenced safe pen around the fisher on the beach (entrance on the west) so monsters can't reach him
-  [[5,35],[5,36],[5,37],[6,37],[7,35],[7,36],[7,37]].forEach(([r,c])=>set(r,c,"fence"));
+  // big fenced safe coast around the fisher (open east to the sea; gate on the west at the entry-road row)
+  { const fr0=2, fr1=13, fc0=30, fc1=38;
+    for(let c=fc0-1;c<=fc1;c++){ set(fr0-1,c,"fence"); set(fr1+1,c,"fence"); }       // north & south walls (rows 1 & 14)
+    for(let r=fr0-1;r<=fr1+1;r++) set(r,fc0-1,"fence");                              // west wall (col 29)
+    set(VROAD_R,fc0-1,"path"); }                                                     // gate on the west at row 9
   set(NPC_R,NPC_C,"wild"); set(NPC_R,NPC_C-1,"path");
   // dungeon entrance (a cave) in the north-west, with a rocky clearing around it
   for(let r=CAVE_R-1;r<=CAVE_R+2;r++)for(let c=CAVE_C-2;c<=CAVE_C+2;c++) set(r,c,"wild");
