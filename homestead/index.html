@@ -1059,17 +1059,43 @@ const DUNG_THEMES=[
 const DUNG_THEME_ZH={"Caverns":"洞窟","Mossy Ruins":"苔蘚遺跡","Frozen Depths":"冰封深淵","Infernal Pits":"煉獄深坑","Crystal Caves":"水晶洞","Sunken Sands":"沉沒之沙"};
 function themeOf(fl){ return DUNG_THEMES[Math.floor((fl-1)/6)%DUNG_THEMES.length]; }   // a new biome every 6 floors
 let dungTheme=DUNG_THEMES[0];
-function buildDungeon(fl){ dungTheme=themeOf(fl); const g=[]; for(let r=0;r<DR;r++){ const row=[]; for(let c=0;c<DC;c++) row.push({type:(r===0||c===0||r===DR-1||c===DC-1)?"dwall":"dfloor",crop:null}); g.push(row); }
-  const free=(r,c)=>g[r]&&g[r][c]&&g[r][c].type==="dfloor"&&!(r<4&&c<4);
-  for(let i=0;i<14+Math.min(20,fl);i++){ const r=2+(Math.random()*(DR-4)|0),c=2+(Math.random()*(DC-4)|0); if(free(r,c)&&!(r>DR-5&&c>DC-5))g[r][c].type="dwall"; }   // wall clusters
-  const res=5+Math.min(14,Math.floor(fl/2)), gemChance=Math.min(0.5,0.05+fl*0.01);   // limited, scaling resources
-  for(let i=0;i<res;i++){ let r,c,tries=0; do{ r=1+(Math.random()*(DR-2)|0); c=1+(Math.random()*(DC-2)|0);}while(!free(r,c)&&tries++<30); if(!free(r,c))continue;
-    const x=Math.random(); g[r][c].type = x<gemChance?"gem" : x<gemChance+0.35?"iron" : x<gemChance+0.45?"gold" : "rock"; }
-  if(Math.random()<0.18){ let r,c,tries=0; do{ r=1+(Math.random()*(DR-2)|0); c=1+(Math.random()*(DC-2)|0);}while(!free(r,c)&&tries++<40); if(free(r,c))g[r][c].type="dchest"; }   // rare treasure chest with nice loot
-  g[DR-3][DC-3].type="stairs"; dungStairs=[DR-3,DC-3];                       // stairs down
+function buildDungeon(fl){ dungTheme=themeOf(fl); const boss=(fl%10===0);
+  // randomised floor size — some floors small & tight, some big & sprawling
+  const big=Math.random()<0.4;
+  let DRr = boss ? 18 : (big?16:12)+(Math.random()*6|0);                     // rows 12-21
+  let DCr = boss ? 24 : (big?22:16)+(Math.random()*8|0);                     // cols 16-29
+  DRr=Math.max(11,Math.min(22,DRr)); DCr=Math.max(14,Math.min(30,DCr));
+  const g=[]; for(let r=0;r<DRr;r++){ const row=[]; for(let c=0;c<DCr;c++) row.push({type:"dwall",crop:null}); g.push(row); }   // start solid rock
+  const carve=(r,c)=>{ if(r>0&&c>0&&r<DRr-1&&c<DCr-1&&g[r][c].type==="dwall")g[r][c].type="dfloor"; };
+  const rooms=[];
+  for(let r=1;r<=3;r++)for(let c=1;c<=4;c++) carve(r,c); rooms.push([2,2]);  // guaranteed spawn room (top-left)
+  if(boss){                                                                  // boss floor: one open arena to fight in
+    for(let r=2;r<DRr-2;r++)for(let c=2;c<DCr-2;c++) carve(r,c); rooms.push([DRr>>1,DCr>>1]);
+  } else {                                                                   // dig random rooms, link with corridors
+    { const rw=3+(Math.random()*3|0), rh=3+(Math.random()*2|0), c0=DCr-rw-1, r0=DRr-rh-1;   // guaranteed far room
+      for(let r=r0;r<r0+rh;r++)for(let c=c0;c<c0+rw;c++) carve(r,c); rooms.push([r0+(rh>>1), c0+(rw>>1)]); }
+    const want=3+(Math.random()*6|0);
+    for(let i=0;i<want*4 && rooms.length<want+2;i++){
+      const rw=3+(Math.random()*4|0), rh=3+(Math.random()*3|0);
+      const c0=1+(Math.random()*(DCr-rw-2)|0), r0=1+(Math.random()*(DRr-rh-2)|0);
+      for(let r=r0;r<r0+rh;r++)for(let c=c0;c<c0+rw;c++) carve(r,c);
+      rooms.push([r0+(rh>>1), c0+(rw>>1)]); }
+    for(let i=1;i<rooms.length;i++){ const a=rooms[i-1], b=rooms[i];        // L-shaped corridor a→b (keeps everything connected)
+      if(Math.random()<0.5){ for(let c=Math.min(a[1],b[1]);c<=Math.max(a[1],b[1]);c++) carve(a[0],c); for(let r=Math.min(a[0],b[0]);r<=Math.max(a[0],b[0]);r++) carve(r,b[1]); }
+      else { for(let r=Math.min(a[0],b[0]);r<=Math.max(a[0],b[0]);r++) carve(r,a[1]); for(let c=Math.min(a[1],b[1]);c<=Math.max(a[1],b[1]);c++) carve(b[0],c); } }
+  }
   g[2][2].type="dfloor"; g[3][2].type="exitup"; dungExit=[3,2];             // way out (back to village) by the spawn
-  if(fl%50===0) g[2][3].type="elevator";             // elevator checkpoint every 50
-  dungBoss = (fl%10===0);                             // boss floor every 10
+  let far=rooms[rooms.length-1], fd=-1;                                      // stairs go in the room farthest from spawn
+  for(const rm of rooms){ const d=(rm[0]-2)*(rm[0]-2)+(rm[1]-2)*(rm[1]-2); if(d>fd&&!(rm[0]<=3&&rm[1]<=4)){ fd=d; far=rm; } }
+  g[far[0]][far[1]].type="stairs"; dungStairs=[far[0],far[1]];
+  const free=(r,c)=>g[r]&&g[r][c]&&g[r][c].type==="dfloor"&&!(r<=3&&c<=4)&&!(r===far[0]&&c===far[1]);
+  const cells=[]; for(let r=1;r<DRr-1;r++)for(let c=1;c<DCr-1;c++) if(free(r,c)) cells.push([r,c]);
+  for(let i=cells.length-1;i>0;i--){ const j=Math.random()*(i+1)|0, tmp=cells[i]; cells[i]=cells[j]; cells[j]=tmp; }   // shuffle
+  let ci=0; const res=Math.min(cells.length, 5+Math.min(14,Math.floor(fl/2))), gemChance=Math.min(0.5,0.05+fl*0.01);
+  for(let i=0;i<res;i++){ const a=cells[ci++], x=Math.random(); g[a[0]][a[1]].type = x<gemChance?"gem" : x<gemChance+0.35?"iron" : x<gemChance+0.45?"gold" : "rock"; }
+  if(Math.random()<0.18&&ci<cells.length){ const a=cells[ci++]; g[a[0]][a[1]].type="dchest"; }   // rare treasure chest with nice loot
+  if(fl%50===0&&ci<cells.length){ const a=cells[ci++]; g[a[0]][a[1]].type="elevator"; }           // elevator checkpoint every 50
+  dungBoss=boss;                                                            // boss floor every 10
   return g; }
 // a rare dungeon treasure chest — coins plus one nice reward (scaled by depth)
 function openDungChest(tt,cx,cy){ const fl=dungFloor||1, c0=80+fl*7+(Math.random()*60|0); coins+=c0; syncUI();
@@ -1247,7 +1273,8 @@ const BOSSES=[
   {name:"Wraith King", col:"#d23a7a", r:26, beh:"blink",  hpm:1.0} ];
 let shots=[];   // dungeon boss projectiles
 function spawnBoss(){ const B=BOSSES[(Math.floor(dungFloor/10)-1+50*BOSSES.length)%BOSSES.length]; const hp=Math.round((18+dungFloor*2)*B.hpm);
-  mobs.push({x:(DC*TILE)/2,y:(DR*TILE)/2,hp,maxHp:hp,r:B.r,flash:0,kx:0,ky:0,t:0,boss:true,beh:B.beh,name:B.name,col:B.col,cd:2.2,dash:0,cvx:0,cvy:0}); }
+  const gd=gridDung, cr=gd.length>>1, cc=gd[0].length>>1;   // arena centre of the actual generated floor
+  mobs.push({x:(cc+0.5)*TILE,y:(cr+0.5)*TILE,hp,maxHp:hp,r:B.r,flash:0,kx:0,ky:0,t:0,boss:true,beh:B.beh,name:B.name,col:B.col,cd:2.2,dash:0,cvx:0,cvy:0}); }
 function bossBehave(mb,ux,uy,d,dt){ mb.cd-=dt;
   if(mb.beh==="charge"){ if(mb.dash>0){ mb.dash-=dt; moveMob(mb,mb.cvx*dt,mb.cvy*dt,12); } else { moveMob(mb,ux*42*dt,uy*42*dt,12); if(mb.cd<=0){ mb.flash=0.35; mb.cvx=ux*360; mb.cvy=uy*360; mb.dash=0.7; mb.cd=2.6; } } }
   else if(mb.beh==="shoot"){ const w=d<200?-1:(d>340?1:0); moveMob(mb,ux*w*46*dt,uy*w*46*dt,12); if(mb.cd<=0){ mb.flash=0.18; for(let k=-1;k<=1;k++){const a=Math.atan2(uy,ux)+k*0.25; shots.push({x:mb.x,y:mb.y,vx:Math.cos(a)*250,vy:Math.sin(a)*250,t:3.4});} mb.cd=1.6; } }
