@@ -1864,11 +1864,12 @@ function drawPlayer(){ const sitting=player.sitting, px=sitting?(player.sitCx||p
   const x=px-camX,y=py-camY,bob=(player.moving&&!sitting)?Math.sin(now()*10)*1.5:0,blink=player.inv>0&&Math.floor(now()*12)%2===0;if(blink)ctx.globalAlpha=0.45;
   ctx.fillStyle="rgba(0,0,0,0.2)";ctx.beginPath();ctx.ellipse(x,y+12,11,5,0,0,7);ctx.fill();
   if(player.swing>0){ctx.strokeStyle="rgba(255,255,255,.85)";ctx.lineWidth=4;ctx.lineCap="round";const a=Math.atan2(player.fy,player.fx);ctx.beginPath();ctx.arc(x+player.fx*8,y+player.fy*8,18,a-0.9,a+0.9);ctx.stroke();}
-  const up=player.dir==="u"&&!sitting;                                              // facing up → show the back; else the front (seated always shows the front)
-  let pimg=up?artPick("player_back"):artPick("player");
-  const walk=up?WORLDWALK_BACK:(WALKART.length?WALKART:WORLDWALK);                   // back vs front walk frames (uploaded front frames still win)
-  if(player.moving&&!sitting&&walk.length){ const wf=walk[Math.floor(now()*8)%walk.length]; if(imgReady(wf))pimg=wf; }   // cycle walk frames
-  if(up&&!imgReady(pimg))pimg=artPick("player");                                    // no back art yet → fall back to the front sprite
+  const up=player.dir==="u"&&!sitting;                                              // facing up → show the back
+  const side=!up&&!sitting&&(player.dir==="l"||player.dir==="r")&&imgReady(artPick("player_side"));   // left/right → side art (only if it exists; else front)
+  let pimg=up?artPick("player_back"):side?artPick("player_side"):artPick("player");
+  const walk=up?WORLDWALK_BACK:(side?WORLDWALK_SIDE:(WALKART.length?WALKART:WORLDWALK));   // back / side / front walk frames
+  if(player.moving&&!sitting&&walk.length){ const wf=walk[Math.floor(now()*8)%walk.length]; if(imgReady(wf))pimg=wf; }   // cycle walk frames (side keeps the side standing pose if no side-walk art)
+  if((up||side)&&!imgReady(pimg))pimg=artPick("player");                            // missing back/side art → fall back to the front sprite
   if(drawSprite(pimg, x, y+15+(sitting?4:0), sitting?50:56, !sitting&&player.dir==="l")){ ctx.globalAlpha=1; return; }
   ctx.fillStyle="#2f6dd0";ctx.beginPath();ctx.roundRect(x-8,y-4+bob,16,16,5);ctx.fill();
   ctx.fillStyle="#ffd9a8";ctx.beginPath();ctx.arc(x,y-10+bob,8,0,7);ctx.fill();
@@ -2441,6 +2442,9 @@ const WORLDWALK=[];   // front walk frames: art/player-walk1.png, walk2, walk3 �
 loadImg(WORLD,"player_back","art/player-back.png");   // back-facing (up) standing sprite
 const WORLDWALK_BACK=[];   // back walk frames: art/player-back-walk1.png, walk2 …
 (function loadBack(i){ const im=new Image(); im.onload=()=>{ WORLDWALK_BACK[i]=im; loadBack(i+1); }; im.onerror=()=>{}; im.src="art/player-back-walk"+(i+1)+".png"; })(0);
+loadImg(WORLD,"player_side","art/player-side.png");   // side-facing (left/right) standing sprite — drawn facing right, mirrored for left
+const WORLDWALK_SIDE=[];   // side walk frames: art/player-side-walk1.png, walk2 …
+(function loadSide(i){ const im=new Image(); im.onload=()=>{ WORLDWALK_SIDE[i]=im; loadSide(i+1); }; im.onerror=()=>{}; im.src="art/player-side-walk"+(i+1)+".png"; })(0);
 /* ---- player/NPC art the player can upload in Settings (stored as data URLs) ---- */
 const ART_IDS=["player","cat","hamu","louie","david","fisher"];
 let artData={}, walkData=[]; try{ artData=JSON.parse(localStorage.getItem("hs-art")||"{}"); walkData=JSON.parse(localStorage.getItem("hs-walk")||"[]"); }catch(e){}
