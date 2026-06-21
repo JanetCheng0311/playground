@@ -1872,7 +1872,8 @@ function drawPlayer(){ const sitting=player.sitting, px=sitting?(player.sitCx||p
   const walk=up?WORLDWALK_BACK:(side?WORLDWALK_SIDE:(WALKART.length?WALKART:WORLDWALK));   // back / side / front walk frames
   if(player.moving&&!sitting&&walk.length){ const wf=walk[Math.floor(now()*8)%walk.length]; if(imgReady(wf))pimg=wf; }   // cycle walk frames (side keeps the side standing pose if no side-walk art)
   if((up||side)&&!imgReady(pimg))pimg=artPick("player");                            // missing back/side art → fall back to the front sprite
-  if(drawSprite(pimg, x, y+15+(sitting?4:0), sitting?50:56, !sitting&&player.dir==="l")){ ctx.globalAlpha=1; return; }
+  const flip = !sitting && player.dir==="l";            // mirror for left (side art is drawn facing right; front art also mirrors left)
+  if(drawSprite(pimg, x, y+15+(sitting?4:0), sitting?50:56, flip)){ ctx.globalAlpha=1; return; }
   ctx.fillStyle="#2f6dd0";ctx.beginPath();ctx.roundRect(x-8,y-4+bob,16,16,5);ctx.fill();
   ctx.fillStyle="#ffd9a8";ctx.beginPath();ctx.arc(x,y-10+bob,8,0,7);ctx.fill();
   ctx.fillStyle="#7a4a22";ctx.beginPath();ctx.arc(x,y-13+bob,8.5,Math.PI,2*Math.PI);ctx.fill();
