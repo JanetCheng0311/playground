@@ -1806,9 +1806,11 @@ function drawDecorAnimal(va){ const x=va.c*TILE+TILE/2-camX, y=va.r*TILE+TILE/2-
 function drawPlayer(){ const x=player.x-camX,y=player.y-camY,bob=player.moving?Math.sin(now()*10)*1.5:0,blink=player.inv>0&&Math.floor(now()*12)%2===0;if(blink)ctx.globalAlpha=0.45;
   ctx.fillStyle="rgba(0,0,0,0.2)";ctx.beginPath();ctx.ellipse(x,y+12,11,5,0,0,7);ctx.fill();
   if(player.swing>0){ctx.strokeStyle="rgba(255,255,255,.85)";ctx.lineWidth=4;ctx.lineCap="round";const a=Math.atan2(player.fy,player.fx);ctx.beginPath();ctx.arc(x+player.fx*8,y+player.fy*8,18,a-0.9,a+0.9);ctx.stroke();}
-  let pimg=artPick("player");
-  const walk=WALKART.length?WALKART:WORLDWALK;   // uploaded frames, else the art/player-walkN.png set
-  if(player.moving&&walk.length){ const wf=walk[Math.floor(now()*8)%walk.length]; if(imgReady(wf))pimg=wf; }   // cycle walk frames (smoother with more frames)
+  const up=player.dir==="u";                                                        // facing up → show the back; else the front
+  let pimg=up?artPick("player_back"):artPick("player");
+  const walk=up?WORLDWALK_BACK:(WALKART.length?WALKART:WORLDWALK);                   // back vs front walk frames (uploaded front frames still win)
+  if(player.moving&&walk.length){ const wf=walk[Math.floor(now()*8)%walk.length]; if(imgReady(wf))pimg=wf; }   // cycle walk frames
+  if(up&&!imgReady(pimg))pimg=artPick("player");                                    // no back art yet → fall back to the front sprite
   if(drawSprite(pimg, x, y+15, 56, player.dir==="l")){ ctx.globalAlpha=1; return; }
   ctx.fillStyle="#2f6dd0";ctx.beginPath();ctx.roundRect(x-8,y-4+bob,16,16,5);ctx.fill();
   ctx.fillStyle="#ffd9a8";ctx.beginPath();ctx.arc(x,y-10+bob,8,0,7);ctx.fill();
@@ -2376,8 +2378,11 @@ const WORLD={}, PORTRAIT={};
 function loadImg(into,who,src){ try{ const im=new Image(); im.onload=()=>{into[who]=im;}; im.onerror=()=>{into[who]=null;}; im.src=src; }catch(e){} }
 ["player","cat","fisher","hamu","louie","david"].forEach(w=>loadImg(WORLD,w,"art/"+w+".png"));
 ["player","cat","fisher"].forEach(w=>loadImg(PORTRAIT,w,"art/portrait-"+w+".png"));
-const WORLDWALK=[];   // art/player-walk1.png, walk2, walk3 … auto-discovered in order (add as many as you like)
+const WORLDWALK=[];   // front walk frames: art/player-walk1.png, walk2, walk3 … auto-discovered in order
 (function loadWalk(i){ const im=new Image(); im.onload=()=>{ WORLDWALK[i]=im; loadWalk(i+1); }; im.onerror=()=>{}; im.src="art/player-walk"+(i+1)+".png"; })(0);
+loadImg(WORLD,"player_back","art/player-back.png");   // back-facing (up) standing sprite
+const WORLDWALK_BACK=[];   // back walk frames: art/player-back-walk1.png, walk2 …
+(function loadBack(i){ const im=new Image(); im.onload=()=>{ WORLDWALK_BACK[i]=im; loadBack(i+1); }; im.onerror=()=>{}; im.src="art/player-back-walk"+(i+1)+".png"; })(0);
 /* ---- player/NPC art the player can upload in Settings (stored as data URLs) ---- */
 const ART_IDS=["player","cat","hamu","louie","david","fisher"];
 let artData={}, walkData=[]; try{ artData=JSON.parse(localStorage.getItem("hs-art")||"{}"); walkData=JSON.parse(localStorage.getItem("hs-walk")||"[]"); }catch(e){}
