@@ -109,6 +109,10 @@
   .invgrid .bslot .n{position:absolute;right:3px;bottom:1px;font-size:11px;font-weight:800;text-shadow:0 1px 2px #000,0 0 2px #000}
   .invlabel{font-size:10px;letter-spacing:.13em;text-transform:uppercase;opacity:.5;margin:13px 0 0}
   .eqrow{grid-template-columns:repeat(8,1fr);margin-top:4px}
+  .bagstats{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+  .bagstats .st{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:700;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:4px 9px}
+  .bagstats .st b{color:#ffd23b}
+  .bagstats .st.buffed b{color:#8ef0a0}
   .eqrow .bslot{border-color:rgba(255,210,59,.45)}
   .eqrow .bslot .eqg{font-size:16px;opacity:.4}
   .invname{min-height:36px;margin-top:10px;padding:7px 12px;border-radius:10px;background:rgba(0,0,0,.25);font-size:13px;font-weight:700;display:flex;align-items:center}
@@ -158,7 +162,13 @@
   #nameInput{width:100%;margin:6px 0 4px;font:inherit;font-size:16px;text-align:center;color:#fff;background:rgba(0,0,0,.35);border:1.5px solid rgba(255,255,255,.4);border-radius:10px;padding:11px;outline:none}
   #cheat{position:fixed;right:6px;bottom:5px;z-index:50;width:26px;height:20px;opacity:.25;font:inherit;font-size:11px;text-align:center;color:#fff;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.25);border-radius:6px;outline:none;transition:width .15s,opacity .15s}
   #cheat:focus{width:90px;opacity:.95;background:rgba(0,0,0,.7)}
-  #help .card{width:min(820px,100%)}
+  #help .card{width:min(720px,100%)}
+  .hcats{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;position:sticky;top:-6px;background:#0a2acc;padding-bottom:6px;z-index:2}
+  .hcat{font:inherit;font-size:12.5px;font-weight:700;color:#fff;background:rgba(255,255,255,.13);border:1.5px solid rgba(255,255,255,.3);border-radius:999px;padding:6px 12px;cursor:pointer}
+  .hcat.on{background:#fff;color:#0a2acc;border-color:#fff}
+  .hbody{max-height:56vh;overflow-y:auto}
+  .hbody .item div{flex:1;display:flex;flex-direction:column;gap:2px}
+  .hbody .item b{font-size:13.5px}.hbody .item span{font-size:12px;opacity:.82;line-height:1.4}
   .helpcols{display:flex;gap:22px;align-items:flex-start}
   .helpcol{flex:1 1 0;min-width:0}
   @media (max-width:680px){ .helpcols{flex-direction:column;gap:0} }
@@ -189,12 +199,12 @@
 <body>
 <header>
   <span class="title">Homestead<em>farm · gather · craft</em></span>
-  <span class="stat">💰 <b id="coins">0</b></span>
-  <span class="stat" id="clock">day 1 · morning</span>
   <button id="mapBtn">🗺 Map</button>
   <button id="questBtn">📋 Quests</button>
   <button id="achvBtn">🏆 Goals</button>
   <button id="friendsBtn">❤ Friends</button>
+  <button id="tutBtn">📖 Guide</button>
+  <button id="collBtn">🗿 Collection</button>
   <button id="settingsBtn">⚙ Settings</button>
   <button id="langBtn">中文</button>
   <a href="../">playground</a>
@@ -205,7 +215,6 @@
   <h3>game</h3>
   <div class="setrow">
     <button id="snd">🔊 sound</button>
-    <button id="helpBtn">？ controls</button>
     <button id="expBtn">💾 save file</button>
     <button id="impBtn">📂 load file</button>
     <button id="renameBtn">✏️ rename</button>
@@ -252,6 +261,7 @@
     <div class="invleft">
       <div class="invlabel">equipment</div>
       <div id="equipRow" class="invgrid eqrow"></div>
+      <div id="bagStats" class="bagstats"></div>
       <div class="invlabel">backpack</div>
       <div id="bagGrid" class="invgrid"></div>
       <div class="invlabel">hotbar · keys 1–0</div>
@@ -273,7 +283,7 @@
 </div></div>
 <div id="heldStack"></div>
 <div class="shop" id="help"><div class="card">
-  <h2>How to play</h2>
+  <h2>📖 Guide</h2>
   <div id="helpBody"></div>
   <button class="close" id="helpClose">close</button>
 </div></div>
@@ -333,6 +343,12 @@
   <p style="font-size:12px;opacity:.7;margin:-2px 0 4px">Give a townsfolk a gift they like (one per day) to grow your friendship.</p>
   <div id="friendsBody"></div>
   <button class="close" id="friendsClose">close</button>
+</div></div>
+<div class="shop" id="coll"><div class="card">
+  <h2>🗿 Collection <span class="c" style="margin-left:auto;font-size:14px" id="collCount"></span></h2>
+  <p style="font-size:12px;opacity:.7;margin:-2px 0 6px">Rare ancient relics — dig them up while tilling or find them deep in the dungeon. Sell them high, or show them off on a display stand.</p>
+  <div id="collBody"></div>
+  <button class="close" id="collClose">close</button>
 </div></div>
 <div id="vn"><div class="box">
   <div class="vnport"><img id="vnImg" alt=""><div id="vnFace" class="vnface"></div></div>
@@ -418,7 +434,7 @@ const ITEMS={
   stove:{kind:"place",tile:"stove",color:"#7d8893",name:"stove"},
   cap:{kind:"gear",slot:"hat",color:"#7aa86b",name:"cloth cap",bonus:{maxhp:1}}, vest:{kind:"gear",slot:"chest",color:"#b9883f",name:"leather vest",bonus:{maxhp:2}},
   legguards:{kind:"gear",slot:"pants",color:"#8a8f98",name:"leg guards",bonus:{maxhp:1}}, boots:{kind:"gear",slot:"shoes",color:"#6b4a2b",name:"swift boots",bonus:{maxhp:1,speed:22}},
-  ring:{kind:"gear",slot:"acc",color:"#ffd84a",name:"healing ring",bonus:{regen:1}}, charm:{kind:"gear",slot:"acc",color:"#c46aff",name:"power charm",bonus:{atk:1}},
+  ring:{kind:"gear",slot:"acc",color:"#ffd84a",name:"healing ring",bonus:{regen:1},filter:"hue-rotate(95deg) saturate(1.5)"}, charm:{kind:"gear",slot:"acc",color:"#c46aff",name:"power charm",bonus:{atk:1}},
   steel:{kind:"mat",color:"#8a939c",name:"steel bar",sell:14}, crown:{kind:"mat",color:"#ffe27a",name:"royal crown",sell:300},
   gold_sword:{kind:"gear",slot:"sword",color:"#ffd84a",name:"golden sword",bonus:{atk:2}}, plate_armor:{kind:"gear",slot:"armor",color:"#aeb9c6",name:"plate armour",bonus:{maxhp:3}},
   war_helm:{kind:"gear",slot:"hat",color:"#9aa3ab",name:"steel helm",bonus:{maxhp:2}}, crystal_ring:{kind:"gear",slot:"acc",color:"#9fe6ff",name:"crystal ring",bonus:{regen:2}}, war_charm:{kind:"gear",slot:"acc",color:"#e8344e",name:"war charm",bonus:{atk:2}},
@@ -430,7 +446,7 @@ const ITEMS={
   swift_band:{kind:"gear",slot:"acc",color:"#7fd2ff",name:"swift band",bonus:{speed:30}}, life_pendant:{kind:"gear",slot:"acc",color:"#ff8fae",name:"life pendant",bonus:{maxhp:2}},
   sage_amulet:{kind:"gear",slot:"acc",color:"#3fae5a",name:"sage amulet",bonus:{regen:2,maxhp:1}}, titan_seal:{kind:"gear",slot:"acc",color:"#c7ccd2",name:"titan seal",bonus:{maxhp:3}},
   berserk_idol:{kind:"gear",slot:"acc",color:"#e8344e",name:"berserk idol",bonus:{atk:3}},
-  shining_ring:{kind:"gear",slot:"acc",color:"#fff0a8",name:"shining ring",bonus:{atk:2,maxhp:2,regen:1}},   // dungeon ring: lights the dark + strong combat boost
+  shining_ring:{kind:"gear",slot:"acc",color:"#fff0a8",name:"shining ring",bonus:{atk:2,maxhp:2,regen:1},filter:"brightness(1.3) saturate(1.6) drop-shadow(0 0 2px #ffe27a)"},   // dungeon ring: lights the dark + strong combat boost
   iron_stew:{kind:"food",color:"#8a939c",name:"iron stew",food:60,buff:{bonus:{maxhp:3},dur:150},eff:"+3 hearts for 2.5 min"}, rage_skewer:{kind:"food",color:"#c23a2a",name:"rage skewer",food:50,buff:{bonus:{atk:2},dur:150},eff:"+2 attack for 2.5 min"},
   mending_broth:{kind:"food",color:"#5fae6a",name:"mending broth",food:55,buff:{bonus:{regen:2},dur:180},eff:"fast heal for 3 min"}, feast_platter:{kind:"food",color:"#d8913f",name:"feast platter",food:70,buff:{bonus:{maxhp:2,atk:1,speed:20},dur:120},eff:"+2 hearts, +1 attack & faster, 2 min"},
   egg:{kind:"food",color:"#f3e6c0",name:"egg",food:12,sell:6}, milk:{kind:"food",color:"#f4f0e6",name:"milk",food:16,sell:10}, truffle:{kind:"mat",color:"#5a4634",name:"truffle",sell:60},
@@ -466,6 +482,7 @@ const ITEMS={
   display_stand:{kind:"place",tile:"stand",color:"#9c7b4a",name:"display stand"} };
 const RELIC_KEYS=["relic_fan","relic_scroll","relic_compass","relic_mask","relic_hourglass","relic_vase","relic_lamp","relic_telescope","relic_clock","relic_dragon","relic_skull","relic_idol"];   // cheap → rare
 function findRelic(){ return RELIC_KEYS[Math.floor(Math.pow(Math.random(),1.8)*RELIC_KEYS.length)]; }   // biased toward the commoner (cheaper) ones
+let relicSeen={};   // which collectables the player has discovered (for the Collection panel)
 for(const k of CKEYS){ ITEMS["seed_"+k]={kind:"seed",crop:k}; ITEMS["crop_"+k]={kind:"crop",crop:k}; }   // seed/crop items for every crop (incl. seasonal)
 const FURN=["chair","table","lamp","rug"];
 const CATFOOD=["bread","pie"];   // food the cat sells (≥20c)
@@ -552,6 +569,7 @@ const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金�
   "You already gave a gift today — come back tomorrow.":"今天已經送過禮物了 — 明天再來吧。","Pick something from your bag to give.":"從背包挑一樣東西送出。","Nothing giftable in your bag right now.":"目前背包裡沒有可以送的東西。",
   "favourite":"最愛","?! My absolute favourite — you've made my whole day. Thank you!!":"？這是我的最愛 — 你讓我一整天都開心了，謝謝你！！",
   "took":"取回","hold a collectable to display it":"拿著收藏品才能展示",
+  "ATK":"攻擊","DEF":"防禦","not found yet":"尚未發現","sells":"售價","you have":"擁有","📖 Guide":"📖 指南","🗿 Collection":"🗿 收藏",
   "Deliver":"交付","Quest":"任務","Bring me":"幫我帶","for":"換","coins":"金幣","Still need":"還需要","all quests done":"所有任務已完成","bring":"帶來","deliver to":"交付給","has a new quest — go and talk":"有新任務 — 去找他聊聊",
   "Could you bring me 10 wood? I want to fix up the shop shelves.":"可以幫我帶 10 個木材嗎？我想修一修店裡的架子。","Lovely sturdy stuff — thank you!":"真是結實的好料 — 謝謝你！",
   "I'm cooking a big stew — could you spare 8 carrots?":"我在燉一大鍋湯 — 可以勻我 8 根胡蘿蔔嗎？","Mmm, these'll do nicely. Take some bone meal too.":"嗯，這些正好。也拿點骨粉吧。",
@@ -709,6 +727,7 @@ function applyLang(){ localStorage.setItem("hs-lang",lang);
   if(document.getElementById("achv").classList.contains("open"))renderAchv();
   if(document.getElementById("merchant").classList.contains("open"))renderMerchant();
   if(document.getElementById("friends").classList.contains("open"))renderFriends();
+  if(document.getElementById("coll").classList.contains("open"))renderColl();
   if(document.getElementById("giftui").classList.contains("open"))renderGift(); }
 
 const RECIPES=[
@@ -963,7 +982,8 @@ function addItem(key,n=1){ for(const s of bag){ if(s&&s.key===key){ s.count+=n; 
   for(let i=0;i<bag.length;i++){ if(!bag[i]){ bag[i]={key,count:n}; renderBar(); return true; } } return false; }
 function removeItem(key,n=1){ let left=n; for(let i=0;i<bag.length;i++){ const s=bag[i]; if(s&&s.key===key){ const t=Math.min(left,s.count); s.count-=t; left-=t; if(s.count<=0)bag[i]=null; if(left<=0)break; } } renderBar(); return left<=0; }
 function countItem(key){ let t=0; for(const s of bag) if(s&&s.key===key)t+=s.count; return t; }
-function gainItem(key,n,x,y){ if(addItem(key,n)){ float(x,y-18,"+"+n+" "+itemName(key),"#cdffd0"); } else { coins+=n; float(x,y-18,"bag full +"+n+"c","#ffe27a"); syncUI(); } }
+function gainItem(key,n,x,y){ if(key.startsWith("relic_"))relicSeen[key]=1;   // log discovered collectables for the Collection panel
+  if(addItem(key,n)){ float(x,y-18,"+"+n+" "+itemName(key),"#cdffd0"); } else { coins+=n; float(x,y-18,"bag full +"+n+"c","#ffe27a"); syncUI(); } }
 
 /* ---- maps ---- */
 function rebuildFence(g){ const gate=Math.floor((FC0+farmFC1)/2);
@@ -1025,7 +1045,7 @@ function buildVillage(){ const g=[]; for(let r=0;r<VROWS;r++){ const row=[]; for
   setVillageMeta(); return g; }
 function setArea(a){ area=a; gridOut=(a==="home")?gridHome:(a==="village")?gridVillage:gridDung; }
 /* ---- 1000-floor dungeon (entered from the village cave) ---- */
-let dungFloor=0, dungMax=1, dungBoss=false, gridDung=null, dungStairs=[19,27], dungExit=[3,2];
+let dungFloor=0, dungMax=1, dungBoss=false, gridDung=null, dungStairs=[19,27], dungExit=[3,2], dungBright=false;   // dungBright: "bright" cheat reveals the whole floor
 const DR=22, DC=30;
 function buildDungeon(fl){ const g=[]; for(let r=0;r<DR;r++){ const row=[]; for(let c=0;c<DC;c++) row.push({type:(r===0||c===0||r===DR-1||c===DC-1)?"dwall":"dfloor",crop:null}); g.push(row); }
   const free=(r,c)=>g[r]&&g[r][c]&&g[r][c].type==="dfloor"&&!(r<4&&c<4);
@@ -1064,7 +1084,7 @@ function setScene(s){ scene=s; if(s==="out"){G=gridOut;GR=gridOut.length;GC=grid
 
 function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false;bossDefeated=false; penLvl=0; area="home"; gridHome=buildOut(); gridVillage=buildVillage(); setArea("home"); coins=40; clock=0;
   for(let i=0;i<bag.length;i++)bag[i]=null; bag[0]={key:"seed_carrot",count:6}; bag[1]={key:"seed_wheat",count:2}; selSlot=0;
-  for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; catIntroPending=false; playerName="You"; louieQuest=0; metHamu=false; dungFloor=0; dungMax=1; stats.trees=0;stats.crops=0;stats.fish=0; animals.length=0; penLvl=0; weather="sunny"; weatherDay=-1; totalEarned=0; lifeCrystals=0; _lastCoins=40; for(const k in claimed)delete claimed[k]; resetFriends(); recalcMax();
+  for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; catIntroPending=false; playerName="You"; louieQuest=0; metHamu=false; dungFloor=0; dungMax=1; stats.trees=0;stats.crops=0;stats.fish=0; animals.length=0; penLvl=0; weather="sunny"; weatherDay=-1; totalEarned=0; lifeCrystals=0; _lastCoins=40; for(const k in claimed)delete claimed[k]; resetFriends(); relicSeen={}; recalcMax();
   setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2+TILE; player.hp=player.maxHp;player.inv=0; mobs.length=0; save(); renderBar(); syncUI(); }
 function stripOil(g){ if(!g)return; for(const row of g)for(const t of row){ if(t&&t.type==="oil")t.type="wild"; } }
 function patchVillage(g){ if(!g)return;
@@ -1101,15 +1121,15 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); co
     for(let i=0;i<bag.length;i++)bag[i]=s.bag&&s.bag[i]?s.bag[i]:null; selSlot=s.selSlot||0;
     catX=(doorC=FC0+2,(FC0+4)*TILE+TILE/2); catY=(doorR=FR0+3,(FR0+4)*TILE+TILE/2); setVillageMeta();
     metCat=!!s.metCat; metFisher=!!s.metFisher; bossDefeated=!!s.bossDefeated; seenIntro=!!s.seenIntro; catIntroPending=!!s.catIntroPending;
-    playerName=s.playerName||"You"; louieQuest=s.louieQuest||0; metHamu=!!s.metHamu; dungMax=s.dungMax||1; dungFloor=0; penLvl=s.penLvl||0; carvePen(gridHome); weather=s.weather||"sunny"; weatherDay=(typeof s.weatherDay==="number")?s.weatherDay:-1; totalEarned=s.totalEarned||0; lifeCrystals=s.lifeCrystals||0; _lastCoins=coins; if(s.stats)Object.assign(stats,s.stats); if(s.claimed)Object.assign(claimed,s.claimed); loadFriends(s);
+    playerName=s.playerName||"You"; louieQuest=s.louieQuest||0; metHamu=!!s.metHamu; dungMax=s.dungMax||1; dungFloor=0; penLvl=s.penLvl||0; carvePen(gridHome); weather=s.weather||"sunny"; weatherDay=(typeof s.weatherDay==="number")?s.weatherDay:-1; totalEarned=s.totalEarned||0; lifeCrystals=s.lifeCrystals||0; _lastCoins=coins; if(s.stats)Object.assign(stats,s.stats); if(s.claimed)Object.assign(claimed,s.claimed); loadFriends(s); relicSeen=(s.relicSeen&&typeof s.relicSeen==="object")?s.relicSeen:{};
     animals.length=0; if(Array.isArray(s.animals))for(const a of s.animals){ if(ANIMALS[a.kind])animals.push(a); }
     for(const sn in equip)equip[sn]=(s.equip&&s.equip[sn]&&ITEMS[s.equip[sn]])?s.equip[sn]:null; recalcMax();
     player.hunger=(typeof s.hunger==="number")?s.hunger:player.maxHunger; player.regenT=0;player.starveT=0;
     area=(s.area==="village")?"village":"home"; setArea(area);
     setScene("out"); player.x=s.px;player.y=s.py;player.hp=s.hp??player.maxHp; return true; } }catch(e){} return false; }
 function save(){ const inD=area==="dungeon"; const sArea=inD?"village":area, sx=inD?(CAVE_C+1)*TILE+TILE/2:(scene==="out"?player.x:outX), sy=inD?CAVE_R*TILE+TILE/2:(scene==="out"?player.y:outY);
-  localStorage.setItem("homestead4", JSON.stringify({v:5,area:sArea,home:packGrid(gridHome),village:packGrid(gridVillage),coins,clock,px:sx,py:sy,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger,playerName,louieQuest,metHamu,dungMax,stats,claimed,animals,penLvl,weather,weatherDay,totalEarned,lifeCrystals,friend,giftDay,questIdx,questOn})); }
-function syncUI(){ document.getElementById("coins").textContent=coins; }
+  localStorage.setItem("homestead4", JSON.stringify({v:5,area:sArea,home:packGrid(gridHome),village:packGrid(gridVillage),coins,clock,px:sx,py:sy,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger,playerName,louieQuest,metHamu,dungMax,stats,claimed,animals,penLvl,weather,weatherDay,totalEarned,lifeCrystals,friend,giftDay,questIdx,questOn,relicSeen})); }
+function syncUI(){ const e=document.getElementById("coins"); if(e)e.textContent=coins; }   // coins/date/time now live in the in-canvas HUD strip
 
 function resize(){ const rect=document.querySelector("main").getBoundingClientRect();
   VW=Math.max(280,Math.min(rect.width-8,760)); VH=Math.max(220,Math.min(rect.height-8,620));
@@ -1168,8 +1188,10 @@ const SND={ step(){tone("sine",150,110,0.06,0.05);},till(){tone("triangle",240,1
   equip(){tone("square",520,760,0.05,0.1);setTimeout(()=>tone("triangle",760,900,0.07,0.09),50);},sleep(){tone("sine",400,180,0.5,0.12);setTimeout(()=>tone("sine",260,120,0.6,0.1),180);} };
 
 let bannerMsg="", bannerUntil=0;
-function float(x,y,text,col){ const tx=t(text); fx.push({kind:"text",x,y,text:tx,col,life:1});
-  if(!/^[+\-]?[\d.]/.test(tx)){ bannerMsg=tx; bannerUntil=now()+2.6; } }   // also show real notices as a big banner (skips +coins/-hp popups)
+function float(x,y,text,col,quiet){ const tx=t(text);
+  let dy=0; for(const p of fx){ if(p.kind==="text"&&p.life>0.55&&Math.abs(p.x-x)<28&&Math.abs(p.y-(y+dy))<16)dy-=16; }   // stack overlapping notes upward so they don't cover each other
+  fx.push({kind:"text",x,y:y+dy,text:tx,col,life:1});
+  if(!quiet&&!/^[+\-]?[\d.]/.test(tx)){ bannerMsg=tx; bannerUntil=now()+2.6; } }   // also show real notices as a big banner (skips +coins/-hp popups & quiet ones)
 function burst(x,y,col,n){ for(let i=0;i<n;i++){const a=Math.random()*7,s=1+Math.random()*2.6;fx.push({kind:"p",x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1.4,col,life:1});} }
 
 /* ---- monsters ---- */
@@ -1235,12 +1257,14 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.
   if(tryAttack()){ save(); return; }
   const f=facedCell(); if(!f)return; const t=gridOut[f.r][f.c]; const cx=f.c*TILE+TILE/2,cy=f.r*TILE+TILE/2;
   const sel=bag[selSlot];
+  { const sr=Math.floor(player.y/TILE),sc=Math.floor(player.x/TILE),here2=(sr>=0&&sc>=0&&sr<GR&&sc<GC)?gridOut[sr][sc].type:"";   // stairs/exit/elevator are walkable, so also act on the tile you're STANDING on
+    if(here2==="stairs"){ descend(); return; } if(here2==="exitup"){ leaveDungeon(); return; } if(here2==="elevator"){ float(player.x,player.y-12,TR("checkpoint saved!"),"#9ad8ff"); leaveDungeon(); return; } }
   if(t.type==="door"){ enterHouse(); return; }
   if(t.type==="chest"){ openChest(f.r,f.c); return; }
   if(t.type==="stand"){ const isRelic=sel&&ITEMS[sel.key]&&ITEMS[sel.key].kind==="relic";
-    if(isRelic){ if(t.display)gainItem(t.display,1,cx,cy); t.display=sel.key; removeItem(sel.key,1); SND.place(); burst(cx,cy-8,"#ffe9b0",6); float(cx,cy-18,itemName(t.display),"#ffe9b0"); save(); return; }
-    if(t.display){ const had=t.display; delete t.display; gainItem(had,1,cx,cy); SND.place(); float(cx,cy-18,TR("took")+" "+itemName(had),"#ffe9b0"); save(); return; }
-    SND.no(); float(cx,cy-12,TR("hold a collectable to display it"),"#cfe6ff"); return; }
+    if(isRelic){ if(t.display)gainItem(t.display,1,cx,cy); t.display=sel.key; removeItem(sel.key,1); SND.place(); burst(cx,cy-8,"#ffe9b0",6); float(cx,cy-18,itemName(t.display),"#ffe9b0",true); save(); return; }
+    if(t.display){ const had=t.display; delete t.display; gainItem(had,1,cx,cy); SND.place(); float(cx,cy-18,TR("took")+" "+itemName(had),"#ffe9b0",true); save(); return; }
+    SND.no(); float(cx,cy-12,TR("hold a collectable to display it"),"#cfe6ff",true); return; }
   if(t.type==="stove"){ openStove(); return; }
   if(MACHINE_IN[t.type]){ useMachine(t,cx,cy); return; }
   if(t.type==="cave"){ enterDungeon(); return; }
@@ -1507,6 +1531,7 @@ cheatEl.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter")
   else if(v==="333"){ if(!hasHorse())addAnimal("horse"); float(player.x,player.y-26,"cheat: horse delivered","#ffe27a"); save(); }
   else if(v==="$$$"){ coins+=10000; SND.coin(); syncUI(); float(player.x,player.y-26,"cheat: +10000 coins","#ffe27a"); save(); }
   else if(v==="changeoc"){ localStorage.setItem("hs-oc","1"); const as=document.getElementById("artSection"); if(as)as.style.display=""; float(player.x,player.y-26,"cheat: character art unlocked","#ffe27a"); }
+  else if(v==="bright"){ dungBright=!dungBright; float(player.x,player.y-26,"cheat: dungeon light "+(dungBright?"ON":"OFF"),"#ffe27a"); }
   cheatEl.value=""; cheatEl.blur(); } });
 
 /* ---- physics ---- */
@@ -1800,7 +1825,7 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
     for(let r=0;r<gridOut.length;r++)for(let c=0;c<gridOut[0].length;c++){ if(LIGHTS.has(gridOut[r][c].type)){ const x=c*TILE+TILE/2-camX,y=r*TILE+TILE/2-camY; if(x<-80||y<-80||x>VW+80||y>VH+80)continue; const g=ctx.createRadialGradient(x,y,4,x,y,70); g.addColorStop(0,"rgba(255,200,120,.55)");g.addColorStop(1,"rgba(255,200,120,0)"); ctx.fillStyle=g; ctx.beginPath();ctx.arc(x,y,70,0,7);ctx.fill(); } }
     ctx.globalCompositeOperation="source-over"; } }
   // dungeon: dark, lit by a glow around the player
-  if(area==="dungeon"){ const lit=equip.acc1==="shining_ring"||equip.acc2==="shining_ring";   // the shining ring lights up the dark dungeon
+  if(area==="dungeon"&&!dungBright){ const lit=equip.acc1==="shining_ring"||equip.acc2==="shining_ring";   // the shining ring lights up the dark dungeon ("bright" cheat reveals all)
     ctx.fillStyle=lit?"rgba(6,4,16,.5)":"rgba(6,4,16,.62)";ctx.fillRect(0,0,VW,VH); ctx.globalCompositeOperation="lighter";
     const px=player.x-camX,py=player.y-camY,rad=lit?250:150,g=ctx.createRadialGradient(px,py,10,px,py,rad); g.addColorStop(0,lit?"rgba(255,238,170,.7)":"rgba(120,90,160,.55)");g.addColorStop(1,lit?"rgba(255,238,170,0)":"rgba(120,90,160,0)"); ctx.fillStyle=g;ctx.beginPath();ctx.arc(px,py,rad,0,7);ctx.fill(); ctx.globalCompositeOperation="source-over";
     const bossMob=mobs.find(m=>m.boss), bossLeft=dungBoss&&!!bossMob;
@@ -1855,11 +1880,6 @@ function frame(ts){   // browsers already pause rAF in a truly-hidden tab, so no
   if(frameAcc<FRAME_MIN){ requestAnimationFrame(frame); return; }   // throttle: skip this frame until enough time has passed
   const dt=Math.min(0.05,frameAcc); frameAcc=0; update(dt); draw(); updateWeatherAudio(dt);
   if(coins>_lastCoins)totalEarned+=coins-_lastCoins; _lastCoins=coins;   // accrue total-earned (gates late-game unlocks)
-  const ph=(clock%DAYLEN)/DAYLEN,sn=seasonIdx(),part=ph<0.25?"morning":ph<0.5?"noon":ph<0.72?"evening":"night";
-  const ind=scene==="in"?t("indoors")+" · ":"";
-  document.getElementById("clock").textContent= ind + (lang==="zh"
-      ? `${WEATHER_ICON[weather]} ${SEASON_ZH[sn]} ${dayOfSeason()}日, ${clockHour()} · 第${yearNum()}年`
-      : `${WEATHER_ICON[weather]} ${SEASONS[sn]} ${dayOfSeason()}, ${clockHour()} · Y${yearNum()}`);
   requestAnimationFrame(frame); }
 
 /* ---- hotbar ---- */
@@ -1928,7 +1948,7 @@ function baseKey(k){ return k.startsWith("seed_")?"seed":k.startsWith("crop_")?"
 function craftIcon(R){ return R.once?"#9aa3ab":itemColor(R.give); }
 function iconSpan(key,big){ const it=ITEMS[key];
   if(it&&it.kind==="seed"){ const sz=big?26:20,bz=big?14:11; return `<span class="emo seedico" style="font-size:${sz}px">🌰<span class="seedbadge" style="font-size:${bz}px">${CROP_EMOJI[it.crop]||""}</span></span>`; }
-  const em=itemEmoji(key); if(em)return `<span class="emo" style="font-size:${big?26:20}px">${em}</span>`;
+  const em=itemEmoji(key); if(em)return `<span class="emo" style="font-size:${big?26:20}px${it&&it.filter?";filter:"+it.filter:""}">${em}</span>`;   // optional hue/contrast tint so same-emoji items (e.g. rings) look different
   const sz=it.kind==="crop"?(big?24:22):(big?22:20),rad=it.kind==="mat"?4:50;
   return `<span class="dot" style="width:${sz}px;height:${sz}px;border-radius:${rad}px;background:${itemColor(key)}"></span>`; }
 function renderHeld(){ if(held){ heldEl.classList.add("show"); heldEl.innerHTML=iconSpan(held.key)+(held.count>1?`<span class="n">${held.count}</span>`:""); } else { heldEl.classList.remove("show"); heldEl.innerHTML=""; } }
@@ -1953,7 +1973,18 @@ const EQSLOTS=[["sword","🗡"],["armor","🛡"],["hat","🎩"],["chest","🦺"]
 const equipRowEl=document.getElementById("equipRow");
 function renderEquip(){ equipRowEl.innerHTML=""; for(const [sn,gl] of EQSLOTS){ const el=document.createElement("div"); el.className="bslot"; const k=equip[sn];
   if(k){ el.innerHTML=iconSpan(k); el.title=itemName(k); } else el.innerHTML=`<span class="eqg">${gl}</span>`;
-  el.addEventListener("click",()=>equipSlotClick(sn)); equipRowEl.appendChild(el); } }
+  el.addEventListener("click",()=>equipSlotClick(sn)); equipRowEl.appendChild(el); } renderBagStats(); }
+// live stat summary: attack damage, armour damage-reduction, hearts, speed, regen (+ active food buff)
+function renderBagStats(){ const el=document.getElementById("bagStats"); if(!el)return;
+  const tb=totalBonus(), buff=(activeBuff&&now()<activeBuff.until)?activeBuff:null, bc=k=>buff&&buff.bonus&&buff.bonus[k]?" buffed":"";
+  const atk=(hasAxe?2:1)+tb.atk, defR=Math.round(Math.min(0.7, gearBonus().maxhp*0.06)*100);
+  let html=`<span class="st${bc('atk')}">⚔ ${t("ATK")} <b>${atk}</b></span>`
+    +`<span class="st">🛡 ${t("DEF")} <b>${defR}%</b></span>`
+    +`<span class="st${bc('maxhp')}">❤ <b>${player.maxHp}</b></span>`;
+  if(tb.speed)html+=`<span class="st${bc('speed')}">👟 <b>+${tb.speed}</b></span>`;
+  if(tb.regen)html+=`<span class="st${bc('regen')}">✨ ${t("regen")} <b>+${tb.regen}</b></span>`;
+  if(buff)html+=`<span class="st buffed">⏫ ${itemName(buff.key)} ${Math.ceil(buff.until-now())}s</span>`;
+  el.innerHTML=html; }
 function equipSlotClick(sn){ const cur=equip[sn];
   if(held){ if(!itemFitsSlot(held.key,sn))return; equip[sn]=held.key; held.count--; if(held.count<=0)held=null; if(cur)addItem(cur,1); SND.equip(); }
   else if(cur){ held={key:cur,count:1}; equip[sn]=null; SND.equip(); }
@@ -2094,12 +2125,39 @@ function renderHelp(){ const tiles=["grass","soil","tree","rock","iron","gold","
   const tH=tiles.map(k=>{ const d=descOf(k); return d?`<div class="item"><b>${d[0]}</b><span>${d[1]}</span></div>`:""; }).join("");
   const iH=items.map(k=>{ const base=k.startsWith("seed_")?"seed":k.startsWith("crop_")?"crop":k; const u=useOf(base)||useOf(k); return `<div class="item"><span class="ihead">${iconSpan(k)}</span> <b>${itemName(k)}</b><span>${u}</span></div>`; }).join("");
   const tipsH=useT.map(x=>`<div class="item"><span>${x}</span></div>`).join("");
-  document.getElementById("helpBody").innerHTML=
-    `<div class="helpcols">`+
-      `<div class="helpcol"><h4>${t("shortcuts")}</h4>${cH}<h4>${t("tutorial")}</h4>${tipsH}</div>`+
-      `<div class="helpcol"><h4>${t("around the world")}</h4>${tH}<h4>${t("items in your bag")}</h4>${iH}</div>`+
-    `</div>`; }
-document.getElementById("helpBtn").addEventListener("click",()=>{ renderHelp(); helpEl.classList.add("open"); });
+  const L=(en,zh)=>lang==="zh"?zh:en, STN={maxhp:L("hearts","生命"),atk:L("atk","攻擊"),regen:L("regen","回復"),speed:L("speed","速度")};
+  const row=h=>`<div class="item"><span>${h}</span></div>`;
+  // generated lists straight from the game data
+  const cropH=Object.keys(CROPS).map(k=>{ const C=CROPS[k],dy=C.dur/360,seas=(C.s||[]).map(i=>["🌸","☀️","🍂","❄️"][i]).join("");
+    return `<div class="item">${iconSpan("crop_"+k)}<div><b>${itemName("crop_"+k)} ${seas}</b><span>${L("grows in","成長")} ${dy%1?dy.toFixed(1):dy} ${L("days","天")} · ${L("sells","賣")} ${C.sell}c · 🍖+${C.food}</span></div></div>`; }).join("");
+  const foodH=Object.keys(ITEMS).filter(k=>ITEMS[k].kind==="food").sort((a,b)=>ITEMS[a].food-ITEMS[b].food).map(k=>{ const it=ITEMS[k],b=it.buff&&it.buff.bonus?Object.entries(it.buff.bonus).map(([s,v])=>(STN[s]||s)+" +"+v).join(", "):"";
+    return `<div class="item">${iconSpan(k)}<div><b>${itemName(k)}</b><span>🍖 +${it.food} ${L("hunger","飽食")}${b?" · ✨ "+b:""}</span></div></div>`; }).join("");
+  const combatH=row(L("Press use/E to hit the monster you <b>face</b>. Equip a <b>sword</b> for +attack; the <b>axe</b> hits for 2.","按 使用/E 攻擊你<b>面對</b>的怪物。裝備<b>劍</b>加攻擊；<b>斧頭</b>造成 2 點傷害。"))
+    +row(L("<b>Armour reduces damage</b> taken — open the bag to see your <b>⚔ ATK</b> and <b>🛡 DEF</b>. Better/more armour = less harm.","<b>盔甲可減傷</b> — 打開背包查看你的 <b>⚔ 攻擊</b> 與 <b>🛡 防禦</b>。盔甲越多越好，受傷越少。"))
+    +row(L("Eat <b>buff food</b> (power roast +atk, iron stew +hearts…) for a timed boost. Well-fed, you heal between fights.","吃<b>增益食物</b>（力量烤肉+攻擊、鋼鐵燉湯+生命…）獲得限時加成。吃飽時戰鬥間會回血。"))
+    +row(L("Town, farm and the fisher's pen are <b>safe</b>. The village wilds and the <b>dungeon</b> have monsters.","城鎮、農場與漁夫圍欄是<b>安全</b>的。村莊荒野與<b>地城</b>有怪物。"));
+  const fishingH=row(L("Stand by water with a <b>rod</b> selected and use to start. Keep the bar over the moving fish — <b>hold</b> use to rise, release to drop — and fill the meter.","拿著<b>釣竿</b>站在水邊按使用開始。讓橫條對準游動的魚 —<b>按住</b>使用上升、放開下降 — 把進度填滿即可。"))
+    +row(L("Better <b>rods</b> (silver/gold) give a wider bar & rarer fish. Buy <b>bait</b> from Pelle for better catches.","更好的<b>釣竿</b>（銀/金）橫條更寬、魚更稀有。向培利買<b>魚餌</b>提升收穫。"))
+    +row(L("<b>Nets</b> — place in water, collect the next day. Wider/deeper nets trap rarer seafood.","<b>漁網</b> — 放進水中，隔天收取。更寬更深的網能捕到更稀有的海鮮。"));
+  const craftH=row(L("Open the bag and <b>drop items into the 3×3 grid</b>; a valid recipe lights up the result — click it to craft.","打開背包<b>把物品放進 3×3 格子</b>；配對成功會亮起結果 — 點它製作。"))
+    +row(L("The <b>recipe book</b> is an icon palette: tap an icon to see what it needs and <b>auto-load</b> the grid (if you have the materials).","<b>配方書</b>是圖示面板：點圖示查看所需材料並<b>自動載入</b>格子（若材料足夠）。"));
+  const animalsH=row(L("Buy <b>chicken / pig / cow / horse</b> from Hamu. They live in your fenced <b>pasture</b> and make an <b>egg / truffle / milk</b> daily — walk up and use to collect.","向哈姆購買<b>雞 / 豬 / 乳牛 / 馬</b>。牠們住在你的<b>牧場</b>，每天產<b>蛋 / 松露 / 牛奶</b> — 走近按使用收集。"))
+    +row(L("Keep an animal <b>30+ days</b> for double produce. A <b>horse</b> lets you fast-travel (G / 🐴 Ride).","飼養動物<b>30 天以上</b>產量加倍。<b>馬</b>可快速旅行（G / 🐴 騎馬）。"));
+  const socialH=row(L("Each townsfolk has a <b>friendship bar</b> (4 levels). Give <b>gifts</b> they like — each has loves and a ⭐ <b>favourite</b> — to raise it (one a day).","每位鎮民都有<b>友誼條</b>（4 級）。送他們喜歡的<b>禮物</b>（各有喜愛與 ⭐ <b>最愛</b>）來提升（每天一次）。"))
+    +row(L("They also offer <b>fetch quests</b> for coins & items. Open <b>❤ Friends</b> to see everyone.","他們也提供<b>跑腿任務</b>換金幣與物品。打開 <b>❤ 朋友</b> 查看所有人。"));
+  const collectH=row(L("Rare <b>relics</b> (moai, crystal skull, jade dragon…) turn up while <b>tilling soil</b> and deep in the <b>dungeon</b>. No use — <b>sell</b> them high, or show them off.","稀有<b>古物</b>（摩艾、水晶骷髏、翡翠龍…）會在<b>翻土</b>與<b>地城</b>深處出現。無用途 — <b>高價賣出</b>或拿來炫耀。"))
+    +row(L("Craft a <b>display stand</b> (wood+stone), place it, then use a relic on it to display. Use it empty-handed to take it back. See <b>🗿 Collection</b> for the full list.","製作<b>展示架</b>（木+石），放置後對它使用古物來展示。空手使用可取回。完整清單見 <b>🗿 收藏</b>。"));
+  const CATS=[["controls","🎮",L("Controls","操作"),cH],["crops","🌱",L("Crops","作物"),cropH],["food","🍳",L("Food","食物"),foodH],
+    ["combat","⚔️",L("Combat","戰鬥"),combatH],["fishing","🎣",L("Fishing","釣魚"),fishingH],["craft","🔨",L("Crafting","製作"),craftH],
+    ["animals","🐄",L("Animals","動物"),animalsH],["social","❤",L("Friends","朋友"),socialH],["collect","🗿",L("Collectables","收藏"),collectH],
+    ["world","🌍",L("World","世界"),tH+iH],["tips","💡",L("Tips","技巧"),tipsH]];
+  if(!CATS.some(c=>c[0]===helpCat))helpCat="controls"; const cur=CATS.find(c=>c[0]===helpCat);
+  const btns=CATS.map(c=>`<button type="button" class="hcat${c[0]===helpCat?' on':''}" data-hcat="${c[0]}">${c[1]} ${c[2]}</button>`).join("");
+  document.getElementById("helpBody").innerHTML=`<div class="hcats">${btns}</div><div class="hbody">${cur[3]}</div>`; }
+let helpCat="controls";
+document.getElementById("helpBody").addEventListener("click",e=>{ const b=e.target.closest&&e.target.closest("[data-hcat]"); if(b){ helpCat=b.dataset.hcat; renderHelp(); } });
+function openTutorial(){ renderHelp(); helpEl.classList.add("open"); }
+document.getElementById("tutBtn").addEventListener("click",openTutorial);
 document.getElementById("helpClose").addEventListener("click",()=>helpEl.classList.remove("open"));
 helpEl.addEventListener("pointerdown",e=>{ if(e.target===helpEl)helpEl.classList.remove("open"); });
 
@@ -2403,6 +2461,17 @@ function openFriends(){ renderFriends(); friendsEl.classList.add("open"); }
 document.getElementById("friendsBtn").addEventListener("click",openFriends);
 document.getElementById("friendsClose").addEventListener("click",()=>friendsEl.classList.remove("open"));
 friendsEl.addEventListener("pointerdown",e=>{ if(e.target===friendsEl)friendsEl.classList.remove("open"); });
+/* ---- Collection: every relic, found or still a mystery ---- */
+const collEl=document.getElementById("coll");
+function renderColl(){ const found=RELIC_KEYS.filter(k=>relicSeen[k]||countItem(k)>0).length;
+  document.getElementById("collCount").textContent=found+"/"+RELIC_KEYS.length;
+  document.getElementById("collBody").innerHTML=RELIC_KEYS.slice().reverse().map(k=>{ const seen=!!relicSeen[k]||countItem(k)>0, it=ITEMS[k];
+    if(!seen) return `<div class="item" style="opacity:.5"><span class="emo" style="font-size:20px">🔒</span><div><b>? ? ?</b><span>${t("not found yet")}</span></div></div>`;
+    return `<div class="item">${iconSpan(k)}<div><b>${itemName(k)}</b><span>${t("sells")} ${it.sell}c · ${t("you have")} ${countItem(k)}</span></div></div>`; }).join(""); }
+function openColl(){ renderColl(); collEl.classList.add("open"); }
+document.getElementById("collBtn").addEventListener("click",openColl);
+document.getElementById("collClose").addEventListener("click",()=>collEl.classList.remove("open"));
+collEl.addEventListener("pointerdown",e=>{ if(e.target===collEl)collEl.classList.remove("open"); });
 /* opening story (plays once, inside the house) — skippable */
 function startIntro(){ setScene("in"); const mc=Math.floor(GC/2); player.x=mc*TILE+TILE/2; player.y=(GR-2)*TILE+TILE/2; player.dir="u";player.fx=0;player.fy=-1; transCD=1.2;
   startDialog([
