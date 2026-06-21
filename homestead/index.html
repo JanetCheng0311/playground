@@ -569,7 +569,7 @@ const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金�
   "You already gave a gift today — come back tomorrow.":"今天已經送過禮物了 — 明天再來吧。","Pick something from your bag to give.":"從背包挑一樣東西送出。","Nothing giftable in your bag right now.":"目前背包裡沒有可以送的東西。",
   "favourite":"最愛","?! My absolute favourite — you've made my whole day. Thank you!!":"？這是我的最愛 — 你讓我一整天都開心了，謝謝你！！",
   "took":"取回","hold a collectable to display it":"拿著收藏品才能展示",
-  "ATK":"攻擊","DEF":"防禦","not found yet":"尚未發現","sells":"售價","you have":"擁有","📖 Guide":"📖 指南","🗿 Collection":"🗿 收藏","inside your house":"在你的屋內",
+  "ATK":"攻擊","DEF":"防禦","not found yet":"尚未發現","sells":"售價","you have":"擁有","📖 Guide":"📖 指南","🗿 Collection":"🗿 收藏","inside your house":"在你的屋內","✨ Treasure!":"✨ 寶藏！",
   "Deliver":"交付","Quest":"任務","Bring me":"幫我帶","for":"換","coins":"金幣","Still need":"還需要","all quests done":"所有任務已完成","bring":"帶來","deliver to":"交付給","has a new quest — go and talk":"有新任務 — 去找他聊聊",
   "Could you bring me 10 wood? I want to fix up the shop shelves.":"可以幫我帶 10 個木材嗎？我想修一修店裡的架子。","Lovely sturdy stuff — thank you!":"真是結實的好料 — 謝謝你！",
   "I'm cooking a big stew — could you spare 8 carrots?":"我在燉一大鍋湯 — 可以勻我 8 根胡蘿蔔嗎？","Mmm, these'll do nicely. Take some bone meal too.":"嗯，這些正好。也拿點骨粉吧。",
@@ -843,7 +843,7 @@ const ROAD_R=OROWS-4;
 const VCOLS=46, VROWS=34;
 const VROAD_R=9, RIVER_C=14, SEA_C0=39, SAND_C=38, NPC_R=6, NPC_C=36, CAVE_R=4, CAVE_C=6;
 
-const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor","chest","stove","dwall","cave","gem","trough","snowman","drying_rack","preserve_pot","press_table","craft_bench","perfume_stand","stand"]);
+const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor","chest","stove","dwall","cave","gem","trough","snowman","drying_rack","preserve_pot","press_table","craft_bench","perfume_stand","stand","dchest"]);
 const CHESTN=18;
 const WATER=new Set(["pond","river","sea"]);
 // player-placed tiles that can be removed (hold use) — maps the tile back to the item you get
@@ -931,7 +931,8 @@ function carvePen(g){ if(!g)return; const R1=penR1(), pgate=Math.floor((PEN_C0+P
 // monster-free "safe" zones: home farm + pasture, and in the village the fenced town + the fisher's pen
 function inTown(r,c){ return r>=20&&r<=32&&c>=7&&c<=36; }            // inside the village fence ring
 function inFisherZone(r,c){ return r>=5&&r<=7&&c>=35&&c<=37; }       // fenced patch around Pelle the fisher
-function safeTile(r,c){ if(area==="home")return inFarm(r,c)||inPen(r,c); if(area==="village")return inTown(r,c)||inFisherZone(r,c); return false; }
+function inCaveZone(r,c){ return r<=CAVE_R+4&&r>=CAVE_R-2&&Math.abs(c-CAVE_C)<=2; }   // safe clearing around the dungeon entrance (incl. the approach path)
+function safeTile(r,c){ if(area==="home")return inFarm(r,c)||inPen(r,c); if(area==="village")return inTown(r,c)||inFisherZone(r,c)||inCaveZone(r,c); return false; }
 const ANIMALS={
   chicken:{name:"chicken", face:"🐔", col:"#f0e6cf", price:60,  limit:5, produce:"egg",     big:false, desc:"lays an egg each day"},
   pig:    {name:"pig",     face:"🐷", col:"#f3a6c0", price:160, limit:5, produce:"truffle", big:false, desc:"roots up a truffle each day"},
@@ -1047,17 +1048,41 @@ function setArea(a){ area=a; gridOut=(a==="home")?gridHome:(a==="village")?gridV
 /* ---- 1000-floor dungeon (entered from the village cave) ---- */
 let dungFloor=0, dungMax=1, dungBoss=false, gridDung=null, dungStairs=[19,27], dungExit=[3,2], dungBright=false;   // dungBright: "bright" cheat reveals the whole floor
 const DR=22, DC=30;
-function buildDungeon(fl){ const g=[]; for(let r=0;r<DR;r++){ const row=[]; for(let c=0;c<DC;c++) row.push({type:(r===0||c===0||r===DR-1||c===DC-1)?"dwall":"dfloor",crop:null}); g.push(row); }
+// themed floor "biomes" — the look changes every few floors (Stardew-style banded mines)
+const DUNG_THEMES=[
+  {name:"Caverns",       floor:"#3a3444", wall:"#241f2e"},
+  {name:"Mossy Ruins",   floor:"#2d3a2f", wall:"#1d2a20"},
+  {name:"Frozen Depths", floor:"#2b3a48", wall:"#1c2a36"},
+  {name:"Infernal Pits", floor:"#3e2826", wall:"#2a1816"},
+  {name:"Crystal Caves", floor:"#352a48", wall:"#231838"},
+  {name:"Sunken Sands",  floor:"#3a3526", wall:"#2a261a"} ];
+const DUNG_THEME_ZH={"Caverns":"洞窟","Mossy Ruins":"苔蘚遺跡","Frozen Depths":"冰封深淵","Infernal Pits":"煉獄深坑","Crystal Caves":"水晶洞","Sunken Sands":"沉沒之沙"};
+function themeOf(fl){ return DUNG_THEMES[Math.floor((fl-1)/6)%DUNG_THEMES.length]; }   // a new biome every 6 floors
+let dungTheme=DUNG_THEMES[0];
+function buildDungeon(fl){ dungTheme=themeOf(fl); const g=[]; for(let r=0;r<DR;r++){ const row=[]; for(let c=0;c<DC;c++) row.push({type:(r===0||c===0||r===DR-1||c===DC-1)?"dwall":"dfloor",crop:null}); g.push(row); }
   const free=(r,c)=>g[r]&&g[r][c]&&g[r][c].type==="dfloor"&&!(r<4&&c<4);
   for(let i=0;i<14+Math.min(20,fl);i++){ const r=2+(Math.random()*(DR-4)|0),c=2+(Math.random()*(DC-4)|0); if(free(r,c)&&!(r>DR-5&&c>DC-5))g[r][c].type="dwall"; }   // wall clusters
   const res=5+Math.min(14,Math.floor(fl/2)), gemChance=Math.min(0.5,0.05+fl*0.01);   // limited, scaling resources
   for(let i=0;i<res;i++){ let r,c,tries=0; do{ r=1+(Math.random()*(DR-2)|0); c=1+(Math.random()*(DC-2)|0);}while(!free(r,c)&&tries++<30); if(!free(r,c))continue;
     const x=Math.random(); g[r][c].type = x<gemChance?"gem" : x<gemChance+0.35?"iron" : x<gemChance+0.45?"gold" : "rock"; }
+  if(Math.random()<0.18){ let r,c,tries=0; do{ r=1+(Math.random()*(DR-2)|0); c=1+(Math.random()*(DC-2)|0);}while(!free(r,c)&&tries++<40); if(free(r,c))g[r][c].type="dchest"; }   // rare treasure chest with nice loot
   g[DR-3][DC-3].type="stairs"; dungStairs=[DR-3,DC-3];                       // stairs down
   g[2][2].type="dfloor"; g[3][2].type="exitup"; dungExit=[3,2];             // way out (back to village) by the spawn
   if(fl%50===0) g[2][3].type="elevator";             // elevator checkpoint every 50
   dungBoss = (fl%10===0);                             // boss floor every 10
   return g; }
+// a rare dungeon treasure chest — coins plus one nice reward (scaled by depth)
+function openDungChest(tt,cx,cy){ const fl=dungFloor||1, c0=80+fl*7+(Math.random()*60|0); coins+=c0; syncUI();
+  const r=Math.random(), deep=fl>=30; let item,n=1;
+  if(r<0.32){ item=findRelic(); }                                            // 32% a collectable relic
+  else if(r<0.52){ item="diamond"; n=deep?2:1; }
+  else if(r<0.70){ item=Math.random()<0.5?"red_jewel":"green_jewel"; n=2; }
+  else if(r<0.82){ item="fossil"; n=deep?2:1; }
+  else if(r<0.92){ item="steel"; n=2; }
+  else { item="elixir"; }
+  gainItem(item,n,cx,cy); tt.type="dfloor"; tt.hits=0;
+  SND.coin(); setTimeout(()=>SND.harvest(),90); burst(cx,cy,"#ffe27a",18); burst(cx,cy-6,"#ffd84a",10);
+  float(cx,cy-24,TR("✨ Treasure!")+" +"+c0+"c","#ffe27a"); save(); }
 function gotoDungeon(){ gridDung=buildDungeon(dungFloor); setArea("dungeon"); setScene("out"); mobs.length=0; shots.length=0; spawnT=0; hover=null;
   player.x=2.5*TILE; player.y=2.5*TILE; player.dir="d";player.fx=0;player.fy=1; transCD=0.4; if(dungBoss)spawnBoss(); save(); }
 function enterDungeon(){ dungFloor=(dungMax>=50)?Math.floor(dungMax/50)*50:1; dungBoss=false; gotoDungeon();
@@ -1275,6 +1300,7 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.
   if(t.type==="stairs"){ descend(); return; }
   if(t.type==="exitup"){ leaveDungeon(); return; }
   if(t.type==="elevator"){ float(cx,cy-12,TR("checkpoint saved!"),"#9ad8ff"); leaveDungeon(); return; }
+  if(t.type==="dchest"){ openDungChest(t,cx,cy); return; }
   if(t.type==="gem"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||4)-1; SND.mine(); burst(cx,cy-6,"#9fe6ff",6); if(t.hits<=0){ const dep=dungFloor; const r=Math.random();
       gainItem(r<0.18?"diamond":r<0.45?(Math.random()<0.5?"red_jewel":"green_jewel"):r<0.7?"fossil":"silver",1,cx,cy); if(dep>=20&&Math.random()<0.2)gainItem("diamond",1,cx,cy);
         if(Math.random()<0.07){ const rk=findRelic(); gainItem(rk,1,cx,cy); float(cx,cy-22,"✨ "+itemName(rk)+"!","#ffe9b0"); }   // rare relic in the gem veins
@@ -1601,7 +1627,7 @@ function updateCamera(){ camX=Math.max(0,Math.min(GW-VW,player.x-VW/2)); camY=Ma
 function tileColor(t){ return {wild:"#5a9e4e",grass:"#7ec850",path:"#cdab73",ppath:"#bfa980",soil:"#9c6b3f",fence:"#5e8c3a",house:"#e9e4da",pond:"#5aa0e6",door:"#7a4a22",tree:"#5a9e4e",rock:"#5a9e4e",torch:"#7ec850",pfence:"#5a9e4e",floor:"#caa46a",wall:"#7a5230",bed:"#caa46a",mat:"#caa46a",
     road:"#c9b27e",river:"#4a8fd6",sea:"#2f6fb0",sand:"#e6d8a8",iron:"#5a9e4e",gold:"#5a9e4e",lantern:"#5a9e4e",goldlamp:"#5a9e4e",mfence:"#5a9e4e",oil:"#5a9e4e",oillamp:"#5a9e4e",
     church:"#e3ddd2",churchtop:"#e3ddd2",shop:"#c98b5a",hdoor:"#cdbf9c",chest:"#5a9e4e",stove:"#5a9e4e",
-    dwall:"#241f2e",dfloor:"#3a3444",stairs:"#3a3444",exitup:"#3a3444",elevator:"#3a3444",gem:"#3a3444",cave:"#5a9e4e"}[t.type]||"#5a9e4e"; }
+    dwall:dungTheme.wall,dfloor:dungTheme.floor,dchest:"#e0a83a",stairs:"#f0e0a0",exitup:"#8fd0ff",elevator:"#9aa3ab",gem:"#9fe6ff",cave:"#5a9e4e"}[t.type]||"#5a9e4e"; }
 function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE||y<-TILE||x>VW||y>VH)return;
   ctx.fillStyle=tileColor(t); ctx.fillRect(x,y,TILE,TILE);
   if(t.type==="wild"||t.type==="grass"){ ctx.fillStyle="rgba(0,0,0,0.05)";if((r+c)%2)ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle=shade(tileColor(t),1.08);ctx.fillRect(x+7,y+9,3,3);ctx.fillRect(x+24,y+27,3,3); }
@@ -1682,13 +1708,16 @@ function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE|
     ctx.fillStyle="#6b4a2b";ctx.beginPath();ctx.roundRect(x+4,y+12,TILE-8,TILE-18,4);ctx.fill();   // wooden trough
     ctx.fillStyle="#4a8fd6";ctx.fillRect(x+7,y+15,TILE-14,TILE-25);   // water
     ctx.fillStyle="rgba(255,255,255,.3)";ctx.fillRect(x+9,y+17+Math.sin(now()*2+c)*1,9,2); }
-  else if(t.type==="dwall"){ ctx.fillStyle="#241f2e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#322a3e";ctx.fillRect(x+2,y+2,TILE-4,TILE-6);ctx.fillStyle="rgba(0,0,0,.3)";ctx.fillRect(x,y+TILE-5,TILE,5); }
-  else if(t.type==="dfloor"){ ctx.fillStyle="#3a3444";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="rgba(0,0,0,.12)";if((r+c)%2)ctx.fillRect(x,y,TILE,TILE); }
-  else if(t.type==="stairs"){ ctx.fillStyle="#3a3444";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#1a1622";for(let k=0;k<4;k++)ctx.fillRect(x+5+k*4,y+8+k*7,TILE-10-k*8,6);
+  else if(t.type==="dwall"){ ctx.fillStyle=dungTheme.wall;ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle=shade(dungTheme.wall,1.4);ctx.fillRect(x+2,y+2,TILE-4,TILE-6);ctx.fillStyle="rgba(0,0,0,.3)";ctx.fillRect(x,y+TILE-5,TILE,5); }
+  else if(t.type==="dfloor"){ ctx.fillStyle=dungTheme.floor;ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="rgba(0,0,0,.12)";if((r+c)%2)ctx.fillRect(x,y,TILE,TILE); }
+  else if(t.type==="dchest"){ ctx.fillStyle=dungTheme.floor;ctx.fillRect(x,y,TILE,TILE);   // golden treasure chest
+    const gl=0.35+0.22*Math.sin(now()*4+c); ctx.globalCompositeOperation="lighter";const rg=ctx.createRadialGradient(x+TILE/2,y+TILE/2,3,x+TILE/2,y+TILE/2,24);rg.addColorStop(0,"rgba(255,220,120,"+gl+")");rg.addColorStop(1,"rgba(255,220,120,0)");ctx.fillStyle=rg;ctx.beginPath();ctx.arc(x+TILE/2,y+TILE/2,24,0,7);ctx.fill();ctx.globalCompositeOperation="source-over";
+    ctx.fillStyle="#8a5a1a";ctx.fillRect(x+7,y+18,TILE-14,TILE-22);ctx.fillStyle="#e0a83a";ctx.fillRect(x+7,y+12,TILE-14,8);ctx.fillStyle="#5a3a10";ctx.fillRect(x+7,y+19,TILE-14,2);ctx.fillStyle="#ffe9a8";ctx.fillRect(x+TILE/2-2,y+17,4,7);ctx.fillStyle="rgba(255,255,255,.55)";ctx.fillRect(x+9,y+13,TILE-18,2); }
+  else if(t.type==="stairs"){ ctx.fillStyle=dungTheme.floor;ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#1a1622";for(let k=0;k<4;k++)ctx.fillRect(x+5+k*4,y+8+k*7,TILE-10-k*8,6);
     ctx.fillStyle="rgba(255,255,255,.85)";ctx.font="700 9px Helvetica";ctx.textAlign="center";ctx.fillText("▼",x+TILE/2,y+TILE-3); }
-  else if(t.type==="exitup"){ ctx.fillStyle="#3a3444";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#8fd0ff";for(let k=0;k<3;k++)ctx.fillRect(x+10+k*4,y+TILE-10-k*7,TILE-20-k*8,5);ctx.fillStyle="#8fd0ff";ctx.font="700 9px Helvetica";ctx.textAlign="center";ctx.fillText("▲",x+TILE/2,y+10); }
-  else if(t.type==="elevator"){ ctx.fillStyle="#3a3444";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#9aa3ab";ctx.fillRect(x+6,y+5,TILE-12,TILE-10);ctx.fillStyle="#2b3036";ctx.fillRect(x+TILE/2-1,y+5,2,TILE-10);ctx.fillStyle="#ffd23b";ctx.font="700 9px Helvetica";ctx.textAlign="center";ctx.fillText("⇕",x+TILE/2,y+TILE/2+3); }
-  else if(t.type==="gem"){ ctx.fillStyle="#3a3444";ctx.fillRect(x,y,TILE,TILE);const gc=["#9fe6ff","#e8344e","#3fae5a","#ffd84a"][(r+c)%4];ctx.fillStyle=gc;ctx.beginPath();ctx.moveTo(x+TILE/2,y+8);ctx.lineTo(x+TILE-10,y+TILE/2);ctx.lineTo(x+TILE/2,y+TILE-8);ctx.lineTo(x+10,y+TILE/2);ctx.closePath();ctx.fill();ctx.fillStyle="rgba(255,255,255,.5)";ctx.fillRect(x+TILE/2-2,y+12,4,6); }
+  else if(t.type==="exitup"){ ctx.fillStyle=dungTheme.floor;ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#8fd0ff";for(let k=0;k<3;k++)ctx.fillRect(x+10+k*4,y+TILE-10-k*7,TILE-20-k*8,5);ctx.fillStyle="#8fd0ff";ctx.font="700 9px Helvetica";ctx.textAlign="center";ctx.fillText("▲",x+TILE/2,y+10); }
+  else if(t.type==="elevator"){ ctx.fillStyle=dungTheme.floor;ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#9aa3ab";ctx.fillRect(x+6,y+5,TILE-12,TILE-10);ctx.fillStyle="#2b3036";ctx.fillRect(x+TILE/2-1,y+5,2,TILE-10);ctx.fillStyle="#ffd23b";ctx.font="700 9px Helvetica";ctx.textAlign="center";ctx.fillText("⇕",x+TILE/2,y+TILE/2+3); }
+  else if(t.type==="gem"){ ctx.fillStyle=dungTheme.floor;ctx.fillRect(x,y,TILE,TILE);const gc=["#9fe6ff","#e8344e","#3fae5a","#ffd84a"][(r+c)%4];ctx.fillStyle=gc;ctx.beginPath();ctx.moveTo(x+TILE/2,y+8);ctx.lineTo(x+TILE-10,y+TILE/2);ctx.lineTo(x+TILE/2,y+TILE-8);ctx.lineTo(x+10,y+TILE/2);ctx.closePath();ctx.fill();ctx.fillStyle="rgba(255,255,255,.5)";ctx.fillRect(x+TILE/2-2,y+12,4,6); }
   if(t.crop) drawCrop(x+TILE/2,y+TILE-8,t.crop);
 }
 function drawCrop(x,by,cr){ const C=CROPS[cr.type],ratio=Math.min(1,cr.grow),ripe=cr.grow>=1,h=6+ratio*20+(ripe?2:0),bob=ripe?Math.sin(now()*4+x)*1.5:0;
@@ -1835,7 +1864,8 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
     const bossMob=mobs.find(m=>m.boss), bossLeft=dungBoss&&!!bossMob;
     dungBeacon((dungExit[1]+0.5)*TILE,(dungExit[0]+0.5)*TILE,"rgba(140,210,255,.9)","▲");
     dungBeacon((dungStairs[1]+0.5)*TILE,(dungStairs[0]+0.5)*TILE,bossLeft?"rgba(255,90,90,.9)":"rgba(255,210,120,.95)","▼");
-    ctx.fillStyle="#cdb0ff";ctx.font="800 14px Helvetica,Arial";ctx.textAlign="right";ctx.fillText("⛏ "+t("floor")+" "+dungFloor+(bossLeft?" — "+t("BOSS")+": "+t(bossMob.name):""),VW-12,VH-12); }
+    const tname=lang==="zh"?(DUNG_THEME_ZH[dungTheme.name]||dungTheme.name):dungTheme.name;
+    ctx.fillStyle="#cdb0ff";ctx.font="800 14px Helvetica,Arial";ctx.textAlign="right";ctx.fillText("⛏ "+t("floor")+" "+dungFloor+" · "+tname+(bossLeft?" — "+t("BOSS")+": "+t(bossMob.name):""),VW-12,VH-12); }
   // ---- icon HUD (Minecraft/Stardew style): a row of hearts + a row of food ----
   const R=11, SP=25, X0=24, YH=26, YF=YH+30, NF=10, step=player.maxHunger/NF;
   for(let i=0;i<player.maxHp;i++) heartIcon(X0+i*SP,YH,R,i<player.hp);
