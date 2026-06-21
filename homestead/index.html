@@ -462,7 +462,7 @@ const ITEMS={
   // ---- collectables: rare ancient relics. No use — sell them for a lot, or place them on a display stand as decoration ----
   relic_fan:{kind:"relic",color:"#e07a9a",name:"ornate fan",sell:90}, relic_scroll:{kind:"relic",color:"#e8dcc0",name:"ancient scroll",sell:120}, relic_compass:{kind:"relic",color:"#c0a060",name:"old compass",sell:130}, relic_mask:{kind:"relic",color:"#d08a4a",name:"tribal mask",sell:150},
   relic_hourglass:{kind:"relic",color:"#d6b06a",name:"ancient hourglass",sell:160}, relic_vase:{kind:"relic",color:"#7fb0d0",name:"ancient vase",sell:180}, relic_lamp:{kind:"relic",color:"#e8c14a",name:"genie lamp",sell:200}, relic_telescope:{kind:"relic",color:"#c79a4a",name:"brass telescope",sell:220},
-  relic_clock:{kind:"relic",color:"#b08a4a",name:"antique clock",sell:240}, relic_dragon:{kind:"relic",color:"#3fae5a",name:"jade dragon",sell:280}, relic_skull:{kind:"relic",color:"#dfe6ea",name:"crystal skull",sell:300}, relic_idol:{kind:"relic",color:"#e8c14a",name:"golden idol",sell:350},
+  relic_clock:{kind:"relic",color:"#b08a4a",name:"antique clock",sell:240}, relic_dragon:{kind:"relic",color:"#3fae5a",name:"jade dragon",sell:280}, relic_skull:{kind:"relic",color:"#dfe6ea",name:"crystal skull",sell:300}, relic_idol:{kind:"relic",color:"#9aa3ab",name:"moai statue",sell:350},
   display_stand:{kind:"place",tile:"stand",color:"#9c7b4a",name:"display stand"} };
 const RELIC_KEYS=["relic_fan","relic_scroll","relic_compass","relic_mask","relic_hourglass","relic_vase","relic_lamp","relic_telescope","relic_clock","relic_dragon","relic_skull","relic_idol"];   // cheap → rare
 function findRelic(){ return RELIC_KEYS[Math.floor(Math.pow(Math.random(),1.8)*RELIC_KEYS.length)]; }   // biased toward the commoner (cheaper) ones
@@ -512,7 +512,7 @@ const NAME_ZH={ wood:"木材", stone:"石頭", goo:"黏液", iron:"鐵礦", gold
   elixir:"靈藥", steel:"鋼錠", crown:"皇冠", gold_sword:"黃金劍", plate_armor:"板甲", war_helm:"鋼盔", crystal_ring:"水晶戒指", war_charm:"戰爭護符", jerky:"肉乾", fish_stew:"魚湯",
   leather_armor:"皮甲", gold_armor:"黃金盔甲", diamond_armor:"鑽石盔甲", frost_plate:"冰霜板甲", diamond_helm:"鑽石頭盔", chain_vest:"鎖子甲", gold_greaves:"黃金護腿", winged_boots:"飛翼靴",
   swift_band:"迅捷手環", life_pendant:"生命吊墜", sage_amulet:"賢者護符", titan_seal:"泰坦印記", berserk_idol:"狂暴神像", shining_ring:"閃耀之戒",
-  relic_fan:"華麗摺扇", relic_scroll:"古卷軸", relic_compass:"古羅盤", relic_mask:"部落面具", relic_hourglass:"古老沙漏", relic_vase:"古董花瓶", relic_lamp:"神燈", relic_telescope:"黃銅望遠鏡", relic_clock:"古董時鐘", relic_dragon:"翡翠龍", relic_skull:"水晶骷髏", relic_idol:"黃金神像", display_stand:"展示架",
+  relic_fan:"華麗摺扇", relic_scroll:"古卷軸", relic_compass:"古羅盤", relic_mask:"部落面具", relic_hourglass:"古老沙漏", relic_vase:"古董花瓶", relic_lamp:"神燈", relic_telescope:"黃銅望遠鏡", relic_clock:"古董時鐘", relic_dragon:"翡翠龍", relic_skull:"水晶骷髏", relic_idol:"摩艾石像", display_stand:"展示架",
   iron_stew:"鋼鐵燉湯", rage_skewer:"狂怒串燒", mending_broth:"癒合湯", feast_platter:"盛宴拼盤",
   egg:"蛋", milk:"牛奶", truffle:"松露", omelette:"煎蛋捲", cheese:"起司",
   crab:"螃蟹", lobster:"龍蝦", oyster:"生蠔", urchin:"海膽", pearl:"珍珠", pearl_necklace:"珍珠項鍊",
@@ -1599,8 +1599,9 @@ function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE|
     ctx.fillStyle="#8a6a3a";ctx.fillRect(x+TILE/2-11,y+TILE-11,22,8);                       // base
     ctx.fillStyle="#a9854f";ctx.fillRect(x+TILE/2-6,y+15,12,TILE-25);                        // column
     ctx.fillStyle="#c9ad7e";ctx.fillRect(x+TILE/2-10,y+11,20,6);                             // top plinth
-    if(t.display){ const em=itemEmoji(t.display)||"❔"; ctx.font="18px serif";ctx.textAlign="center";ctx.textBaseline="middle";
+    if(t.display){ const em=itemEmoji(t.display)||"❔"; ctx.textAlign="center";ctx.textBaseline="middle";
       ctx.fillStyle="rgba(255,240,180,.4)";ctx.beginPath();ctx.arc(x+TILE/2,y+5,11,0,7);ctx.fill();   // soft glow behind the relic
+      ctx.globalAlpha=1; ctx.fillStyle="#000"; ctx.font="20px serif";                                 // full opacity so the emoji shows at 100%
       ctx.fillText(em,x+TILE/2,y+5+Math.sin(now()*2+c)*1.5);ctx.textBaseline="alphabetic";ctx.textAlign="left"; } }
   else if(t.type==="road"){ ctx.fillStyle="rgba(0,0,0,.07)";ctx.fillRect(x+2,y+2,TILE-4,TILE-4);ctx.fillStyle="rgba(255,255,255,.16)";ctx.fillRect(x+TILE/2-7,y+TILE/2-2,14,4); }
   else if(t.type==="river"||t.type==="pond"||t.type==="sea"){ const dk=t.type==="sea"?"#2f6fb0":t.type==="river"?"#4a8fd6":"#4a8fd6";ctx.fillStyle=dk;ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="rgba(255,255,255,.16)";ctx.fillRect(x+8,y+10+Math.sin(now()*2+c)*2,14,3);ctx.fillRect(x+22,y+26+Math.cos(now()*2+r)*2,10,3); }
