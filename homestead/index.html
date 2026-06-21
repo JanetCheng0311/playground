@@ -1623,7 +1623,8 @@ function update(dt){ if(scene==="boss"){ updateBoss(dt); return; }
   if(transCD<=0){ if(scene==="out"&&here==="door")enterHouse(); else if(scene==="in"&&here==="mat")exitHouse();
     else if(scene==="out"&&here==="road"){ if(area==="home"&&pc>=OCOLS-1){ if(bossDefeated)gotoArea("village"); else tryBoss(); } else if(area==="village"&&pc<=0)gotoArea("home"); } }
   if(scene==="out"){ const seasonGrow=(seasonIdx()===0||seasonIdx()===2)?1.25:1;   // spring & autumn grow a bit faster
-    for(let r=0;r<gridOut.length;r++)for(let c=0;c<gridOut[0].length;c++){ const cr=gridOut[r][c].crop; if(cr&&cr.grow<1){ const C=CROPS[cr.type];const s=(now()<cr.boost?2.4:1)*seasonGrow; cr.grow=Math.min(1,cr.grow+dt/C.dur*s); } }
+    const rainGrow=(area==="home"&&isRainy())?1.6:1;   // rain waters the whole farm — crops grow faster all day
+    for(let r=0;r<gridOut.length;r++)for(let c=0;c<gridOut[0].length;c++){ const cr=gridOut[r][c].crop; if(cr&&cr.grow<1){ const C=CROPS[cr.type];const s=(now()<cr.boost?2.4:1)*seasonGrow*rainGrow; cr.grow=Math.min(1,cr.grow+dt/C.dur*s); } }
     const outside=!inFarm(pr,pc); const target=area==="dungeon"?Math.min(3+Math.floor(dungFloor/5),12):area==="village"?(isNight()?9:5):(isNight()?12:(outside?8:4));   // the village wilds now have monsters (town & fisher pen stay safe)
     spawnT-=dt; if(spawnT<=0&&mobs.filter(m=>!m.boss).length<target){spawnMob();spawnT=area==="dungeon"?1.6:(isNight()?1.4:2.2);}
     for(const mb of mobs){ mb.t+=dt;mb.flash=Math.max(0,mb.flash-dt);const dx=player.x-mb.x,dy=player.y-mb.y,d=Math.hypot(dx,dy)||1;
@@ -1658,7 +1659,9 @@ function tileColor(t){ return {wild:"#5a9e4e",grass:"#7ec850",path:"#cdab73",ppa
 function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE||y<-TILE||x>VW||y>VH)return;
   ctx.fillStyle=tileColor(t); ctx.fillRect(x,y,TILE,TILE);
   if(t.type==="wild"||t.type==="grass"){ ctx.fillStyle="rgba(0,0,0,0.05)";if((r+c)%2)ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle=shade(tileColor(t),1.08);ctx.fillRect(x+7,y+9,3,3);ctx.fillRect(x+24,y+27,3,3); }
-  else if(t.type==="soil"){ if(t.crop&&now()<t.crop.boost){ctx.fillStyle="rgba(0,0,0,.18)";ctx.fillRect(x,y,TILE,TILE);}ctx.strokeStyle="rgba(0,0,0,0.13)";for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(x+4,y+9+k*12);ctx.lineTo(x+TILE-4,y+9+k*12);ctx.stroke();} }
+  else if(t.type==="soil"){ const rainWet=(area==="home"&&isRainy()), wet=rainWet||(t.crop&&(t.crop.wet||now()<t.crop.boost));   // rain keeps the whole farm wet all day; watered crops stay damp too
+    if(wet){ctx.fillStyle="rgba(0,0,0,"+(rainWet||(t.crop&&now()<t.crop.boost)?.22:.15)+")";ctx.fillRect(x,y,TILE,TILE);}
+    ctx.strokeStyle="rgba(0,0,0,0.13)";for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(x+4,y+9+k*12);ctx.lineTo(x+TILE-4,y+9+k*12);ctx.stroke();} }
   else if(t.type==="path"||t.type==="ppath"){ ctx.fillStyle="rgba(0,0,0,.08)";ctx.fillRect(x+4,y+4,TILE-8,TILE-8); }
   else if(t.type==="fence"){ ctx.fillStyle="#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#6b4a2b";ctx.fillRect(x+TILE/2-3,y+5,6,TILE-10);ctx.fillRect(x+4,y+TILE/2-3,TILE-8,6); }
   else if(t.type==="pfence"){ ctx.fillStyle="#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#d6a85e";ctx.fillRect(x+TILE/2-3,y+5,6,TILE-10);ctx.fillRect(x+4,y+TILE/2-3,TILE-8,6);ctx.fillStyle="rgba(255,255,255,.25)";ctx.fillRect(x+TILE/2-3,y+5,2,TILE-10); }
