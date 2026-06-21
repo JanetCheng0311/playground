@@ -417,6 +417,10 @@ const ITEMS={
   fence:{kind:"place",tile:"pfence",color:"#7a5a32",name:"fence"}, ppath:{kind:"place",tile:"ppath",color:"#cdab73",name:"stone path"},
   chair:{kind:"place",tile:"chair",color:"#c08b5a",name:"chair",buy:15}, table:{kind:"place",tile:"table",color:"#a9784a",name:"table",buy:22},
   lamp:{kind:"place",tile:"lamp",color:"#ffd27a",name:"lamp",buy:28}, rug:{kind:"place",tile:"rug",color:"#c25b6b",name:"rug",buy:12},
+  bench:{kind:"place",tile:"bench",color:"#a9784a",name:"bench",buy:20}, stool:{kind:"place",tile:"stool",color:"#b5895a",name:"stool",buy:10},
+  bookshelf:{kind:"place",tile:"bookshelf",color:"#8a5a34",name:"bookshelf",buy:35}, plant:{kind:"place",tile:"plant",color:"#3f9b54",name:"potted plant",buy:18},
+  fountain:{kind:"place",tile:"fountain",color:"#9fb0bc",name:"fountain",buy:60}, barrel:{kind:"place",tile:"barrel",color:"#9c6b3f",name:"barrel",buy:14},
+  clock:{kind:"place",tile:"clock",color:"#7a542e",name:"clock",buy:40}, bluerug:{kind:"place",tile:"bluerug",color:"#4a78c2",name:"blue rug",buy:12},
   iron:{kind:"mat",color:"#c4ccd4",name:"iron ore",sell:6}, gold:{kind:"mat",color:"#ffd84a",name:"gold",sell:20},
   coal:{kind:"mat",color:"#2e2e33",name:"coal",sell:4}, silver:{kind:"mat",color:"#c7ccd2",name:"silver",sell:9},
   diamond:{kind:"mat",color:"#9fe6ff",name:"diamond",sell:60}, red_jewel:{kind:"mat",color:"#e8344e",name:"red jewel",sell:45}, green_jewel:{kind:"mat",color:"#3fae5a",name:"green jewel",sell:45},
@@ -484,7 +488,7 @@ const RELIC_KEYS=["relic_fan","relic_scroll","relic_compass","relic_mask","relic
 function findRelic(){ return RELIC_KEYS[Math.floor(Math.pow(Math.random(),1.8)*RELIC_KEYS.length)]; }   // biased toward the commoner (cheaper) ones
 let relicSeen={};   // which collectables the player has discovered (for the Collection panel)
 for(const k of CKEYS){ ITEMS["seed_"+k]={kind:"seed",crop:k}; ITEMS["crop_"+k]={kind:"crop",crop:k}; }   // seed/crop items for every crop (incl. seasonal)
-const FURN=["chair","table","lamp","rug"];
+const FURN=["chair","table","lamp","rug","bench","stool","bookshelf","plant","fountain","barrel","clock","bluerug"];
 const CATFOOD=["bread","pie"];   // food the cat sells (≥20c)
 const DESC={ grass:["Grass","till it with use to make soil for planting"], wild:["Wild grass","out here you'll find trees, rocks & slimes"],
   soil:["Tilled soil","plant a seed, water it, harvest when ripe"], tree:["Tree","press use to chop it for wood"], rock:["Rock","press use to mine it for stone"],
@@ -502,8 +506,10 @@ const DESC={ grass:["Grass","till it with use to make soil for planting"], wild:
 const USE={ seed:"plant it on tilled soil", crop:"sell it at the cat shop for coins", wood:"craft torches, fences and paths",
   stone:"craft stone paths and a sturdy axe", goo:"craft a healing salve", salve:"select it and press use to heal 2 hearts",
   torch:"select it and place on the ground to light the night", fence:"select & place to build your own wall",
-  ppath:"select & place a tidy stone path", chair:"select & place to decorate", table:"select & place to decorate",
+  ppath:"select & place a tidy stone path", chair:"select & place — you can sit on it", table:"select & place to decorate",
   lamp:"select & place a glowing lamp", rug:"select & place a soft rug",
+  bench:"select & place — you can sit on it", stool:"select & place — you can sit on it", bookshelf:"select & place to decorate",
+  plant:"select & place a potted plant", fountain:"select & place a fountain", barrel:"select & place a barrel", clock:"select & place a clock", bluerug:"select & place a soft rug",
   iron:"craft a lantern, or sell it to the fisher", gold:"craft a gold lamp, or sell it for lots of coins",
   fish:"sell it to Pelle the fisher in the village", sand:"melt 2 into glass at the crafting table",
   glass:"used to craft lanterns and gold lamps", rod:"select it, face water & press use to fish",
@@ -522,6 +528,7 @@ const CROPNAME_ZH={ carrot:"紅蘿蔔", potato:"馬鈴薯", wheat:"小麥", corn
   sakura_bud:"櫻花蕾", golden_citrus:"黃金柑橘", moonfruit:"月光果", snow_lotus:"雪蓮" };
 const NAME_ZH={ wood:"木材", stone:"石頭", goo:"黏液", iron:"鐵礦", gold:"黃金", fish:"魚", sand:"沙", glass:"玻璃", oil:"油", salve:"藥膏",
   torch:"火把", fence:"木柵欄", ppath:"石板路", chair:"椅子", table:"桌子", lamp:"檯燈", rug:"地毯", lantern:"提燈", goldlamp:"黃金燈", mfence:"金屬柵欄",
+  bench:"長椅", stool:"凳子", bookshelf:"書架", plant:"盆栽", fountain:"噴泉", barrel:"木桶", clock:"時鐘", bluerug:"藍地毯",
   oillamp:"油燈", rod:"釣竿", net:"漁網", metal_sword:"金屬劍", metal_armor:"金屬盔甲", chest:"箱子",
   berry:"莓果", meat:"肉", cap:"布帽", vest:"皮背心", legguards:"護腿", boots:"輕快靴", ring:"治療戒指", charm:"力量護符",
   bread:"麵包", pie:"莓果派", salad:"花園沙拉", hearty_stew:"豐盛燉湯", power_roast:"力量烤肉", swift_salad:"迅捷青蔬", stove:"爐灶",
@@ -550,7 +557,8 @@ const DESC_ZH={ grass:["草地","用「使用」翻土成可種植的泥土"], w
   slime:["史萊姆","用「使用」揮擊打敗它，取得黏液與金幣"], chest:["箱子","按「使用」打開來存放物品"] };
 const USE_ZH={ seed:"種在翻好的泥土上", crop:"在貓商店販售換金幣", wood:"製作火把、柵欄與道路", stone:"製作石板路與堅固斧頭", goo:"製作治療藥膏",
   salve:"選取後按使用回復 2 顆心", torch:"選取後放在地上照亮夜晚", fence:"選取並放置建造自己的牆", ppath:"選取並放置整齊的石板路",
-  chair:"選取並放置裝飾", table:"選取並放置裝飾", lamp:"選取並放置發光檯燈", rug:"選取並放置柔軟地毯", iron:"製作提燈，或賣給漁夫",
+  chair:"選取並放置 — 可以坐上去", table:"選取並放置裝飾", lamp:"選取並放置發光檯燈", rug:"選取並放置柔軟地毯", iron:"製作提燈，或賣給漁夫",
+  bench:"選取並放置 — 可以坐上去", stool:"選取並放置 — 可以坐上去", bookshelf:"選取並放置裝飾", plant:"選取並放置盆栽", fountain:"選取並放置噴泉", barrel:"選取並放置木桶", clock:"選取並放置時鐘", bluerug:"選取並放置柔軟地毯",
   gold:"製作黃金燈，或高價賣出", fish:"賣給村莊裡的漁夫培利", sand:"在工作台用 2 個熔成玻璃", glass:"用來製作提燈與黃金燈",
   rod:"選取後面對水面按使用釣魚", net:"選取後面對水面按使用一次釣更多魚", lantern:"選取並放置明亮的金屬燈", goldlamp:"選取並放置華麗的黃金燈",
   mfence:"選取並放置金屬牆（長按使用可拆除）", oil:"由玉米榨取或史萊姆掉落 — 做油燈或賣出", oillamp:"選取並放置溫暖的油燈",
@@ -691,6 +699,7 @@ const CROP_EMOJI={ carrot:"🥕", potato:"🥔", wheat:"🌾", corn:"🌽", pump
   sakura_bud:"🌸", golden_citrus:"🍋", moonfruit:"🌙", snow_lotus:"🪷" };
 const ICON={ wood:"🪵", stone:"🪨", goo:"🟢", iron:"🔩", gold:"🪙", fish:"🐟", sand:"🏖️", glass:"🔷", oil:"🛢️", salve:"🧪",
   torch:"🔥", fence:"🚧", ppath:"🧱", chair:"🪑", table:"🟫", lamp:"💡", rug:"🟥", lantern:"🏮", goldlamp:"🔆", mfence:"⛓️", oillamp:"🕯️",
+  bench:"🪑", stool:"🪑", bookshelf:"📚", plant:"🪴", fountain:"⛲", barrel:"🛢️", clock:"🕰️", bluerug:"🟦",
   rod:"🎣", net:"🥅", metal_sword:"🗡️", metal_armor:"🛡️", chest:"🧰", berry:"🫐", meat:"🍖", cap:"🧢", vest:"🦺", legguards:"👖", boots:"👢", ring:"💍", charm:"🔮",
   bread:"🍞", pie:"🥧", salad:"🥗", hearty_stew:"🍲", power_roast:"🍗", swift_salad:"🥬", stove:"🔥",
   coal:"⚫", silver:"🥈", diamond:"💎", red_jewel:"🔴", green_jewel:"💚", fossil:"🦴", jewelry:"📿",
@@ -800,7 +809,7 @@ const RECIPE_CATS=[
   {id:"armor", ic:"🛡️", label:"armour & gear", keys:["cap","vest","legguards","boots","metal_armor","plate_armor","war_helm","leather_armor","chain_vest","gold_armor","frost_plate","diamond_armor","diamond_helm","gold_greaves","winged_boots"]},
   {id:"acc", ic:"💍", label:"accessories", keys:["shining_ring","ring","charm","crystal_ring","war_charm","swift_band","life_pendant","sage_amulet","titan_seal","berserk_idol","pearl_necklace"]},
   {id:"mat", ic:"💎", label:"materials", keys:["glass","jewelry","oil","steel","crown"]},
-  {id:"furn", ic:"🪑", label:"furniture & decor", keys:["torch","fence","ppath","lantern","goldlamp","mfence","oillamp","snowman","chest","display_stand"]},
+  {id:"furn", ic:"🪑", label:"furniture & decor", keys:["chair","bench","stool","table","lamp","rug","bluerug","bookshelf","plant","fountain","barrel","clock","torch","fence","ppath","lantern","goldlamp","mfence","oillamp","snowman","chest","display_stand"]},
   {id:"tools", ic:"🛠", label:"tools & stations", keys:["stove","axe","drying_rack","preserve_pot","press_table","craft_bench","perfume_stand"]} ];
 const RECIPE_CAT_OF={}; RECIPE_CATS.forEach(c=>c.keys.forEach(k=>{RECIPE_CAT_OF[k]=c.id;}));
 
@@ -843,14 +852,15 @@ const ROAD_R=OROWS-4;
 const VCOLS=46, VROWS=34;
 const VROAD_R=9, RIVER_C=14, SEA_C0=39, SAND_C=38, NPC_R=6, NPC_C=36, CAVE_R=4, CAVE_C=6;
 
-const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor","chest","stove","dwall","cave","gem","trough","snowman","drying_rack","preserve_pot","press_table","craft_bench","perfume_stand","stand","dchest"]);
+const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor","chest","stove","dwall","cave","gem","trough","snowman","drying_rack","preserve_pot","press_table","craft_bench","perfume_stand","stand","dchest","bench","stool","bookshelf","plant","fountain","barrel","clock"]);
+const SITTABLE=new Set(["chair","bench","stool"]);   // press use to sit; move or press use again to stand
 const CHESTN=18;
 const WATER=new Set(["pond","river","sea"]);
 // player-placed tiles that can be removed (hold use) — maps the tile back to the item you get
-const TILE2ITEM={ pfence:"fence", mfence:"mfence", chair:"chair", table:"table", lamp:"lamp", rug:"rug", torch:"torch", lantern:"lantern", goldlamp:"goldlamp", oillamp:"oillamp", ppath:"ppath", stove:"stove", snowman:"snowman", drying_rack:"drying_rack", preserve_pot:"preserve_pot", press_table:"press_table", craft_bench:"craft_bench", perfume_stand:"perfume_stand", stand:"display_stand" };
+const TILE2ITEM={ pfence:"fence", mfence:"mfence", chair:"chair", table:"table", lamp:"lamp", rug:"rug", torch:"torch", lantern:"lantern", goldlamp:"goldlamp", oillamp:"oillamp", ppath:"ppath", stove:"stove", snowman:"snowman", drying_rack:"drying_rack", preserve_pot:"preserve_pot", press_table:"press_table", craft_bench:"craft_bench", perfume_stand:"perfume_stand", stand:"display_stand", bench:"bench", stool:"stool", bookshelf:"bookshelf", plant:"plant", fountain:"fountain", barrel:"barrel", clock:"clock", bluerug:"bluerug" };
 const BREAKABLE=new Set(Object.keys(TILE2ITEM));   // NOT the farm "fence" (only expand that via the cat)
 const FARMLAND=new Set(["grass","soil","path","ppath"]);
-const PLACEABLE_ON=new Set(["grass","wild","path","ppath","floor","rug","road"]);
+const PLACEABLE_ON=new Set(["grass","wild","path","ppath","floor","rug","bluerug","road"]);
 const LIGHTS=new Set(["torch","lamp","lantern","goldlamp","oillamp"]);
 function inFarm(r,c){ return area==="home"&&r>FR0&&r<farmFR1&&c>FC0&&c<farmFC1; }
 const TREEHITS=()=>hasAxe?2:3, ROCKHITS=()=>hasAxe?3:4, IRONHITS=()=>hasAxe?4:5, GOLDHITS=()=>hasAxe?5:6;
@@ -1301,8 +1311,10 @@ function talkInteract(){ if(scene!=="out"){ return; }
       if(n.role==="merchant"){ if(metHamu)npcMenu("hamu",openMerchant); else {metHamu=true;save();hamuIntro();} } else if(n.role==="quest")talkLouie(); else if(n.id==="david")npcMenu("david",null); else startDialog(n.lines.map(s=>({who:"vnpc",name:n.name,face:n.face,col:n.col,text:s})),null); return; } }
     for(const v of villagers){ if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); startDialog(v.lines.map(s=>({who:"vill",name:v.name,face:v.face,col:v.col,text:s})),null); return; } } }
   float(player.x,player.y-22,"no one to talk to here","#cfe0ff"); }
-function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.18;
-  if(scene==="in"){ const f=facedCell(); if(!f)return; const t=gridIn[f.r][f.c]; if(t.type==="bed")sleep(); else if(t.type==="mat")exitHouse(); else if(t.type==="stove")openStove(); return; }
+function interact(){ if(scene==="boss"){ bossAttack(); return; }
+  if(player.sitting){ player.sitting=false; SND.step(); return; }   // already seated → stand up
+  player.swing=0.18;
+  if(scene==="in"){ const f=facedCell(); if(!f)return; const t=gridIn[f.r][f.c]; if(t.type==="bed")sleep(); else if(t.type==="mat")exitHouse(); else if(t.type==="stove")openStove(); else if(SITTABLE.has(t.type))toggleSit(f); return; }
   // pasture animals: collect their daily produce, or hop on the horse to fast-travel
   if(area==="home"){ for(const a of animals){ if(Math.hypot(a.x-player.x,a.y-player.y)<TILE*1.5){
     if(a.kind==="horse"){ openTeleport(); return; }
@@ -1322,6 +1334,7 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.
     if(t.display){ const had=t.display; delete t.display; gainItem(had,1,cx,cy); SND.place(); float(cx,cy-18,TR("took")+" "+itemName(had),"#ffe9b0",true); save(); return; }
     SND.no(); float(cx,cy-12,TR("hold a collectable to display it"),"#cfe6ff",true); return; }
   if(t.type==="stove"){ openStove(); return; }
+  if(SITTABLE.has(t.type)){ toggleSit(f); return; }   // sit on a chair / bench / stool
   if(MACHINE_IN[t.type]){ useMachine(t,cx,cy); return; }
   if(t.type==="cave"){ enterDungeon(); return; }
   if(t.type==="stairs"){ descend(); return; }
@@ -1372,6 +1385,9 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.
   // use a salve
   if(sel&&ITEMS[sel.key].kind==="use"&&ITEMS[sel.key].heal&&player.hp<player.maxHp){ const h=ITEMS[sel.key].heal; player.hp=Math.min(player.maxHp,player.hp+h); removeItem(sel.key,1); SND.heal(); float(player.x,player.y-24,"+"+h+"♥","#ff8fae"); save(); }
 }
+// sit on a seat: the player stays on their (free) tile, but the sprite is drawn on the seat. Moving or pressing use stands up.
+function toggleSit(f){ if(player.sitting){ player.sitting=false; SND.step(); return; }
+  player.sitting=true; player.sitCx=f.c*TILE+TILE/2; player.sitCy=f.r*TILE+TILE/2; player.dir="d"; player.fx=0; player.fy=1; player.moving=false; SND.place(); }
 function inFarmHouseConflict(f){ const t=gridOut[f.r][f.c]; return false; }
 function nearThreat(){ return scene==="out"&&mobs.some(m=>Math.hypot(m.x-player.x,m.y-player.y)<TILE*3); }
 function blockTalk(){ SND.no(); float(player.x,player.y-24,"fight off the monsters first!","#ff8f8f"); }
@@ -1610,7 +1626,10 @@ function update(dt){ if(scene==="boss"){ updateBoss(dt); return; }
   if(fishing){ updateFishing(dt); player.moving=false; return; }   // freeze the world during the fishing minigame
   if(dialogOpen||document.querySelector(".shop.open")){ player.moving=false; keys.l=keys.r=keys.u=keys.d=0; return; }   // freeze the world (no monster attacks) while a menu/bag/dialogue is open
   if(transCD>0)transCD-=dt;
-  let vx=0,vy=0; if(keys.l)vx-=1;if(keys.r)vx+=1;if(keys.u)vy-=1;if(keys.d)vy+=1; player.moving=!!(vx||vy);
+  let vx=0,vy=0; if(keys.l)vx-=1;if(keys.r)vx+=1;if(keys.u)vy-=1;if(keys.d)vy+=1;
+  if(player.sitting&&(vx||vy))player.sitting=false;   // any movement input stands up off a seat
+  if(player.sitting)vx=vy=0;
+  player.moving=!!(vx||vy);
   if(!player.moving)running=false; const sp=(running?224:132)*dt;
   if(vx||vy){ const m=Math.hypot(vx,vy);vx/=m;vy/=m;
     if(Math.abs(vx)>=Math.abs(vy)){player.dir=vx<0?"l":"r";player.fx=vx<0?-1:1;player.fy=0;}   // full 4-way facing so every block (up/down/left/right) is easy to target
@@ -1680,6 +1699,14 @@ function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE|
   else if(t.type==="chair"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#8a5a30";ctx.fillRect(x+12,y+8,6,TILE-18);ctx.fillStyle="#c08b5a";ctx.fillRect(x+12,y+18,TILE-24,12); }
   else if(t.type==="table"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#a9784a";ctx.fillRect(x+5,y+12,TILE-10,9);ctx.fillStyle="#7a542e";ctx.fillRect(x+7,y+20,4,TILE-24);ctx.fillRect(x+TILE-11,y+20,4,TILE-24); }
   else if(t.type==="lamp"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#6b4a2b";ctx.fillRect(x+TILE/2-2,y+18,4,TILE-20);const gl=0.5+0.3*Math.sin(now()*4+c);ctx.fillStyle="rgba(255,210,122,"+gl+")";ctx.beginPath();ctx.moveTo(x+TILE/2-9,y+18);ctx.lineTo(x+TILE/2+9,y+18);ctx.lineTo(x+TILE/2+6,y+7);ctx.lineTo(x+TILE/2-6,y+7);ctx.fill(); }
+  else if(t.type==="bench"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#8a5a30";ctx.fillRect(x+4,y+9,TILE-8,5);ctx.fillStyle="#a9784a";ctx.fillRect(x+4,y+15,TILE-8,7);ctx.fillStyle="#7a542e";ctx.fillRect(x+6,y+22,4,7);ctx.fillRect(x+TILE-10,y+22,4,7); }
+  else if(t.type==="stool"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#b5895a";ctx.beginPath();ctx.ellipse(x+TILE/2,y+15,9,5,0,0,7);ctx.fill();ctx.fillStyle="#7a542e";ctx.fillRect(x+TILE/2-7,y+18,3,8);ctx.fillRect(x+TILE/2+4,y+18,3,8); }
+  else if(t.type==="bookshelf"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#6b4326";ctx.fillRect(x+5,y+4,TILE-10,TILE-7);const bk=["#c25b6b","#5b8fc2","#d9b14a","#5bb07a"];for(let s=0;s<2;s++)for(let i=0;i<4;i++){ctx.fillStyle=bk[(i+s)%4];ctx.fillRect(x+7+i*5,y+6+s*11,4,9);}ctx.fillStyle="#4a2e18";ctx.fillRect(x+5,y+16,TILE-10,2); }
+  else if(t.type==="plant"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#b86a3c";ctx.beginPath();ctx.moveTo(x+TILE/2-8,y+TILE-7);ctx.lineTo(x+TILE/2+8,y+TILE-7);ctx.lineTo(x+TILE/2+6,y+TILE-15);ctx.lineTo(x+TILE/2-6,y+TILE-15);ctx.fill();ctx.fillStyle="#3f9b54";const sw=Math.sin(now()*2+c)*1.2;ctx.beginPath();ctx.arc(x+TILE/2+sw,y+9,8,0,7);ctx.fill();ctx.fillStyle="#4fb866";ctx.beginPath();ctx.arc(x+TILE/2-4+sw,y+11,4,0,7);ctx.arc(x+TILE/2+5+sw,y+8,4,0,7);ctx.fill(); }
+  else if(t.type==="fountain"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#9fb0bc";ctx.beginPath();ctx.ellipse(x+TILE/2,y+TILE/2+5,14,9,0,0,7);ctx.fill();ctx.fillStyle="#4a8fd6";ctx.beginPath();ctx.ellipse(x+TILE/2,y+TILE/2+5,10,6,0,0,7);ctx.fill();ctx.fillStyle="#bcd6ef";const sp=2+Math.abs(Math.sin(now()*4+c))*4;ctx.fillRect(x+TILE/2-1,y+TILE/2-sp,2,sp+4);ctx.fillStyle="rgba(255,255,255,.5)";ctx.beginPath();ctx.arc(x+TILE/2-4,y+TILE/2+4,1.5,0,7);ctx.arc(x+TILE/2+4,y+TILE/2+6,1.5,0,7);ctx.fill(); }
+  else if(t.type==="barrel"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#9c6b3f";ctx.beginPath();ctx.roundRect(x+9,y+7,TILE-18,TILE-12,4);ctx.fill();ctx.fillStyle="#6b4426";ctx.fillRect(x+9,y+12,TILE-18,2);ctx.fillRect(x+9,y+20,TILE-18,2);ctx.fillStyle="#b07a47";ctx.fillRect(x+12,y+7,2,TILE-12);ctx.fillRect(x+TILE-14,y+7,2,TILE-12); }
+  else if(t.type==="clock"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#5a3a1e";ctx.fillRect(x+9,y+4,TILE-18,TILE-7);ctx.fillStyle="#7a542e";ctx.fillRect(x+11,y+6,TILE-22,TILE-11);ctx.fillStyle="#f0ead2";ctx.beginPath();ctx.arc(x+TILE/2,y+13,6,0,7);ctx.fill();ctx.strokeStyle="#2a1a10";ctx.lineWidth=1.2;const a=now()*0.7;ctx.beginPath();ctx.moveTo(x+TILE/2,y+13);ctx.lineTo(x+TILE/2+Math.cos(a)*4,y+13+Math.sin(a)*4);ctx.moveTo(x+TILE/2,y+13);ctx.lineTo(x+TILE/2+Math.cos(a*2)*3,y+13+Math.sin(a*2)*3);ctx.stroke(); }
+  else if(t.type==="bluerug"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#4a78c2";ctx.fillRect(x+4,y+6,TILE-8,TILE-12);ctx.fillStyle="#a8c6f0";ctx.fillRect(x+9,y+11,TILE-18,TILE-22); }
   else if(t.type==="stand"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);
     ctx.fillStyle="#8a6a3a";ctx.fillRect(x+TILE/2-11,y+TILE-11,22,8);                       // base
     ctx.fillStyle="#a9854f";ctx.fillRect(x+TILE/2-6,y+15,12,TILE-25);                        // column
@@ -1833,15 +1860,16 @@ function drawDecorAnimal(va){ const x=va.c*TILE+TILE/2-camX, y=va.r*TILE+TILE/2-
   ctx.fillStyle="rgba(0,0,0,.22)";ctx.beginPath();ctx.ellipse(x,y+12,big?13:10,4,0,0,7);ctx.fill();
   ctx.fillStyle=A.col;ctx.beginPath();ctx.ellipse(x,y+5+bob,big?13:10,big?10:8,0,0,7);ctx.fill();
   ctx.textAlign="center";ctx.textBaseline="middle";ctx.font=(big?"21px":"17px")+" serif";ctx.fillText(A.face,x,y-4+bob);ctx.textBaseline="alphabetic"; }
-function drawPlayer(){ const x=player.x-camX,y=player.y-camY,bob=player.moving?Math.sin(now()*10)*1.5:0,blink=player.inv>0&&Math.floor(now()*12)%2===0;if(blink)ctx.globalAlpha=0.45;
+function drawPlayer(){ const sitting=player.sitting, px=sitting?(player.sitCx||player.x):player.x, py=sitting?(player.sitCy||player.y):player.y;
+  const x=px-camX,y=py-camY,bob=(player.moving&&!sitting)?Math.sin(now()*10)*1.5:0,blink=player.inv>0&&Math.floor(now()*12)%2===0;if(blink)ctx.globalAlpha=0.45;
   ctx.fillStyle="rgba(0,0,0,0.2)";ctx.beginPath();ctx.ellipse(x,y+12,11,5,0,0,7);ctx.fill();
   if(player.swing>0){ctx.strokeStyle="rgba(255,255,255,.85)";ctx.lineWidth=4;ctx.lineCap="round";const a=Math.atan2(player.fy,player.fx);ctx.beginPath();ctx.arc(x+player.fx*8,y+player.fy*8,18,a-0.9,a+0.9);ctx.stroke();}
-  const up=player.dir==="u";                                                        // facing up → show the back; else the front
+  const up=player.dir==="u"&&!sitting;                                              // facing up → show the back; else the front (seated always shows the front)
   let pimg=up?artPick("player_back"):artPick("player");
   const walk=up?WORLDWALK_BACK:(WALKART.length?WALKART:WORLDWALK);                   // back vs front walk frames (uploaded front frames still win)
-  if(player.moving&&walk.length){ const wf=walk[Math.floor(now()*8)%walk.length]; if(imgReady(wf))pimg=wf; }   // cycle walk frames
+  if(player.moving&&!sitting&&walk.length){ const wf=walk[Math.floor(now()*8)%walk.length]; if(imgReady(wf))pimg=wf; }   // cycle walk frames
   if(up&&!imgReady(pimg))pimg=artPick("player");                                    // no back art yet → fall back to the front sprite
-  if(drawSprite(pimg, x, y+15, 56, player.dir==="l")){ ctx.globalAlpha=1; return; }
+  if(drawSprite(pimg, x, y+15+(sitting?4:0), sitting?50:56, !sitting&&player.dir==="l")){ ctx.globalAlpha=1; return; }
   ctx.fillStyle="#2f6dd0";ctx.beginPath();ctx.roundRect(x-8,y-4+bob,16,16,5);ctx.fill();
   ctx.fillStyle="#ffd9a8";ctx.beginPath();ctx.arc(x,y-10+bob,8,0,7);ctx.fill();
   ctx.fillStyle="#7a4a22";ctx.beginPath();ctx.arc(x,y-13+bob,8.5,Math.PI,2*Math.PI);ctx.fill();
