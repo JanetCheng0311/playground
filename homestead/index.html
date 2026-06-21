@@ -50,9 +50,8 @@
   .act2{pointer-events:auto;width:46px;height:46px;border-radius:50%;border:1.5px solid rgba(255,255,255,.5);background:rgba(255,255,255,.14);color:#fff;font-size:18px;cursor:pointer}
   .act2:active{background:rgba(255,255,255,.3)}
   body.inboss .pad{display:flex}
-  body.inboss .joy{display:none}
-  body.inboss .act{width:104px;height:104px;font-size:18px;border-width:2.5px}
-  body.inboss .act2{display:none}
+  body.inboss .act{width:92px;height:92px;font-size:16px;border-width:2.5px}
+  body.inboss .act2{display:flex;width:64px;height:64px;font-size:24px}   /* repurposed as a JUMP button during the boss fight */
   .shop{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(0,12,60,.55);backdrop-filter:blur(4px);padding:16px}
   .shop.open{display:flex}
   .shop .card{position:relative;background:#0a2acc;border:1px solid rgba(255,255,255,.3);border-radius:20px;width:min(470px,100%);max-height:88vh;overflow-y:auto;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.4)}
@@ -67,6 +66,29 @@
   .shop .item button{font:inherit;font-size:12px;font-weight:700;color:#0a2acc;background:#fff;border:none;border-radius:999px;padding:7px 13px;cursor:pointer;min-width:54px}
   .shop .item button[disabled]{opacity:.4;cursor:default}
   .shop .close{margin-top:16px;width:100%;font:inherit;font-weight:700;color:#fff;background:none;border:1.5px solid rgba(255,255,255,.5);border-radius:999px;padding:11px;cursor:pointer}
+  .vrow{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:700;padding:7px 0}
+  .vrow input[type=range]{flex:1;accent-color:#ffd23b;cursor:pointer}
+  .keybinds{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}
+  .kbrow{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px}
+  .kbkey{font:inherit;font-size:12px;font-weight:800;color:#0a2acc;background:#fff;border:none;border-radius:8px;padding:6px 10px;min-width:62px;cursor:pointer}
+  .kbkey.wait{color:#fff;background:rgba(255,210,59,.3);outline:2px solid #ffd23b}
+  .friendbar{margin:8px 0 12px}
+  .fbtier{font-size:13px;font-weight:800;color:#ffd23b;margin-bottom:6px}
+  .fbbar{height:9px;border-radius:6px;background:rgba(0,0,0,.32);overflow:hidden}
+  .fbfill{height:100%;background:linear-gradient(90deg,#ff9ab2,#ff5b78);border-radius:6px;transition:width .3s}
+  .giftstatus{font-size:12px;opacity:.82;margin-bottom:10px}
+  .giftgrid{display:grid;grid-template-columns:repeat(auto-fill,52px);gap:8px;max-height:42vh;overflow-y:auto;margin-bottom:4px}
+  .giftcell{position:relative;width:52px;height:52px;border-radius:10px;border:1.5px solid rgba(255,255,255,.25);background:rgba(0,0,0,.24);cursor:pointer;display:grid;place-items:center;font-size:22px}
+  .giftcell:hover{border-color:#ffd23b}
+  .giftcell.off{opacity:.45;cursor:default}
+  .giftcell .gn{position:absolute;right:3px;bottom:1px;font-size:11px;font-weight:800;text-shadow:0 1px 2px #000,0 0 2px #000}
+  .giftnone{opacity:.6;font-size:13px;padding:10px 0}
+  .frow{display:flex;gap:12px;align-items:center;padding:11px 0;border-top:1px solid rgba(255,255,255,.14)}
+  .fface{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:23px;flex:0 0 auto}
+  .fmain{flex:1;min-width:0}
+  .fhead{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px;gap:8px;align-items:baseline}
+  .fhead span{font-size:11.5px;opacity:.9;color:#ffd2dd;font-weight:700;white-space:nowrap}
+  .floves{font-size:11px;opacity:.6;margin-top:5px}
   .toolbar{flex:0 0 auto;display:flex;gap:7px;justify-content:center;flex-wrap:wrap;padding:8px 12px 0}
   .toolbar button{font:inherit;font-weight:700;font-size:12.5px;color:#fff;background:rgba(255,255,255,.16);border:1.5px solid rgba(255,255,255,.45);border-radius:999px;padding:6px 13px;cursor:pointer;transition:background .15s}
   .toolbar button em{font-style:normal;opacity:.6;font-weight:400;font-size:11px}
@@ -101,8 +123,23 @@
   .cslot .dot{border-radius:5px}
   .cslot .n{position:absolute;right:3px;bottom:1px;font-size:11px;font-weight:800;text-shadow:0 1px 2px #000,0 0 2px #000}
   .crafthint{font-size:12px;opacity:.7;min-height:18px;margin-bottom:8px}
-  .recipebook summary{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.6;cursor:pointer;margin-bottom:6px}
-  .craftlist{max-height:30vh;overflow-y:auto}
+  .recipebook{margin-top:14px}
+  .recipebook>h3{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.6;margin:0 0 6px}
+  .craftlist{max-height:34vh;overflow-y:auto}
+  .rbcat{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#ffd23b;margin:10px 0 4px;padding:7px 0 3px;border-top:1px solid rgba(255,255,255,.13);position:sticky;top:0;background:#0a2acc;z-index:1}
+  .rbcat:first-child{border-top:none;margin-top:0}
+  .rbcatic{font-size:15px}
+  /* clickable recipe icon palette — a quick way to find & load a recipe */
+  .rbicons{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:2px}
+  .ricon{width:38px;height:38px;border-radius:9px;border:1.5px solid rgba(255,255,255,.22);background:rgba(0,0,0,.24);cursor:pointer;display:grid;place-items:center;padding:0;position:relative}
+  .ricon.aff{border-color:rgba(143,230,160,.65);box-shadow:0 0 6px rgba(143,230,160,.25)}
+  .ricon.dim{opacity:.45}
+  .ricon.owned{opacity:.4}
+  .ricon.sel{border-color:#ffd23b;box-shadow:0 0 8px rgba(255,210,59,.5)}
+  .ricon .emo,.ricon .dot{pointer-events:none}
+  .recipedetail{font-size:12px;min-height:22px;margin:2px 0 8px;display:flex;align-items:center;gap:7px;color:#dce8ff}
+  .recipedetail .emo,.recipedetail .dot{flex:0 0 auto;width:18px;text-align:center}
+  .recipedetail .rdhint{opacity:.55}
   .craftlist .item{cursor:pointer}
   .craftlist .item .dot{width:20px;height:20px;border-radius:5px;flex:0 0 auto;align-self:center}
   .emo{line-height:1;pointer-events:none}
@@ -157,6 +194,7 @@
   <button id="mapBtn">🗺 Map</button>
   <button id="questBtn">📋 Quests</button>
   <button id="achvBtn">🏆 Goals</button>
+  <button id="friendsBtn">❤ Friends</button>
   <button id="settingsBtn">⚙ Settings</button>
   <button id="langBtn">中文</button>
   <a href="../">playground</a>
@@ -174,9 +212,19 @@
     <button id="new">🔄 new game</button>
   </div>
   <label class="setrow" style="cursor:pointer"><input type="checkbox" id="tutToggle" checked> &nbsp;show tutorial hint bar</label>
-  <h3>character art — upload your own PNG (transparent background works best)</h3>
-  <div id="artUploads"></div>
-  <button id="artReset" class="close" style="border-color:rgba(255,140,140,.6)">reset all art to default</button>
+  <h3>audio</h3>
+  <label class="vrow">🔊 sound effects <input type="range" id="sfxVol" min="0" max="100" step="1"></label>
+  <label class="vrow">🎵 music <input type="range" id="musVol" min="0" max="100" step="1"></label>
+  <h3>display</h3>
+  <div class="setrow"><button id="fsBtn">⛶ fullscreen</button></div>
+  <h3>controls — click a key, then press a new one to rebind</h3>
+  <div id="keybinds" class="keybinds"></div>
+  <button id="keyReset" class="close" style="border-color:rgba(255,200,140,.6);margin-top:8px">reset keys to default</button>
+  <div id="artSection" style="display:none">
+    <h3>character art — upload your own PNG (transparent background works best)</h3>
+    <div id="artUploads"></div>
+    <button id="artReset" class="close" style="border-color:rgba(255,140,140,.6)">reset all art to default</button>
+  </div>
   <button class="close" id="settingsClose">close</button>
 </div></div>
 <main><canvas id="stage"></canvas></main>
@@ -218,7 +266,7 @@
         <div id="craftOut" class="cout"></div>
       </div>
       <div id="craftHint" class="crafthint">drop items into the grid to craft</div>
-      <details class="recipebook"><summary>recipe book</summary><div id="recipeList" class="craftlist"></div></details>
+      <div class="recipebook"><h3>📖 recipe book</h3><div id="recipeDetail" class="recipedetail"><span class="rdhint">tap an icon to see &amp; load a recipe</span></div><div id="recipeList" class="craftlist"></div></div>
     </div>
   </div>
   <button class="close" id="bagClose">close</button>
@@ -273,6 +321,19 @@
   <h3>cook buff food</h3><div id="stoveList"></div>
   <button class="close" id="stoveClose">close</button>
 </div></div>
+<div class="shop" id="giftui"><div class="card" style="width:min(420px,100%)">
+  <h2>🎁 <span id="giftName">Friend</span></h2>
+  <div class="friendbar"><div class="fbtier" id="giftTier"></div><div class="fbbar"><div class="fbfill" id="giftBarFill"></div></div></div>
+  <div id="giftStatus" class="giftstatus"></div>
+  <div id="giftGrid" class="giftgrid"></div>
+  <button class="close" id="giftClose">close</button>
+</div></div>
+<div class="shop" id="friends"><div class="card">
+  <h2>❤ Friends</h2>
+  <p style="font-size:12px;opacity:.7;margin:-2px 0 4px">Give a townsfolk a gift they like (one per day) to grow your friendship.</p>
+  <div id="friendsBody"></div>
+  <button class="close" id="friendsClose">close</button>
+</div></div>
 <div id="vn"><div class="box">
   <div class="vnport"><img id="vnImg" alt=""><div id="vnFace" class="vnface"></div></div>
   <div class="vnbody"><div id="vnName" class="vnname"></div><div id="vnText" class="vntext"></div>
@@ -283,7 +344,7 @@
   <div class="joy" id="joy"><div class="joynub" id="joynub"></div></div>
   <div class="actcol"><button class="act2" id="talkBtn2">💬</button><button class="act" id="actBtn">use</button></div>
 </div>
-<input id="cheat" maxlength="6" placeholder="·" autocomplete="off" spellcheck="false">
+<input id="cheat" maxlength="8" placeholder="·" autocomplete="off" spellcheck="false">
 <script>
 (() => {
 "use strict";
@@ -369,6 +430,7 @@ const ITEMS={
   swift_band:{kind:"gear",slot:"acc",color:"#7fd2ff",name:"swift band",bonus:{speed:30}}, life_pendant:{kind:"gear",slot:"acc",color:"#ff8fae",name:"life pendant",bonus:{maxhp:2}},
   sage_amulet:{kind:"gear",slot:"acc",color:"#3fae5a",name:"sage amulet",bonus:{regen:2,maxhp:1}}, titan_seal:{kind:"gear",slot:"acc",color:"#c7ccd2",name:"titan seal",bonus:{maxhp:3}},
   berserk_idol:{kind:"gear",slot:"acc",color:"#e8344e",name:"berserk idol",bonus:{atk:3}},
+  shining_ring:{kind:"gear",slot:"acc",color:"#fff0a8",name:"shining ring",bonus:{atk:2,maxhp:2,regen:1}},   // dungeon ring: lights the dark + strong combat boost
   iron_stew:{kind:"food",color:"#8a939c",name:"iron stew",food:60,buff:{bonus:{maxhp:3},dur:150},eff:"+3 hearts for 2.5 min"}, rage_skewer:{kind:"food",color:"#c23a2a",name:"rage skewer",food:50,buff:{bonus:{atk:2},dur:150},eff:"+2 attack for 2.5 min"},
   mending_broth:{kind:"food",color:"#5fae6a",name:"mending broth",food:55,buff:{bonus:{regen:2},dur:180},eff:"fast heal for 3 min"}, feast_platter:{kind:"food",color:"#d8913f",name:"feast platter",food:70,buff:{bonus:{maxhp:2,atk:1,speed:20},dur:120},eff:"+2 hearts, +1 attack & faster, 2 min"},
   egg:{kind:"food",color:"#f3e6c0",name:"egg",food:12,sell:6}, milk:{kind:"food",color:"#f4f0e6",name:"milk",food:16,sell:10}, truffle:{kind:"mat",color:"#5a4634",name:"truffle",sell:60},
@@ -396,7 +458,14 @@ const ITEMS={
   tea_bundle:{kind:"mat",color:"#7aa83f",name:"tea bundle",sell:80}, dried_herb:{kind:"mat",color:"#6aa83f",name:"dried herb",sell:40}, amber_incense:{kind:"mat",color:"#d49030",name:"amber incense",sell:60}, frost_remedy:{kind:"mat",color:"#9fd6e6",name:"frost remedy",sell:110},
   sweet_preserve:{kind:"mat",color:"#e23a4e",name:"sweet preserve",sell:90}, apple_preserve:{kind:"mat",color:"#e2402e",name:"apple preserve",sell:150}, melon_jam:{kind:"mat",color:"#3fae5a",name:"melon jam",sell:120}, pea_preserve:{kind:"mat",color:"#8fd06a",name:"pea preserve",sell:70},
   flower_oil:{kind:"mat",color:"#ffcf3a",name:"flower oil",sell:90}, pumpkin_oil:{kind:"mat",color:"#e8702a",name:"pumpkin oil",sell:75}, citrus_extract:{kind:"mat",color:"#ffd24a",name:"citrus extract",sell:130}, flower_sachet:{kind:"mat",color:"#ff7ab0",name:"flower sachet",sell:100}, spice_sachet:{kind:"mat",color:"#e0762a",name:"spice sachet",sell:95},
-  blossom_incense:{kind:"mat",color:"#ffb7d5",name:"cherry blossom incense",sell:165}, perfume:{kind:"mat",color:"#e8a0c0",name:"perfume",sell:220}, sakura_perfume:{kind:"mat",color:"#ffb7d5",name:"sakura perfume",sell:240}, moon_elixir:{kind:"mat",color:"#bcd0ff",name:"moon elixir",sell:260}, snow_essence:{kind:"mat",color:"#eaf4ff",name:"snow essence",sell:240} };
+  blossom_incense:{kind:"mat",color:"#ffb7d5",name:"cherry blossom incense",sell:165}, perfume:{kind:"mat",color:"#e8a0c0",name:"perfume",sell:220}, sakura_perfume:{kind:"mat",color:"#ffb7d5",name:"sakura perfume",sell:240}, moon_elixir:{kind:"mat",color:"#bcd0ff",name:"moon elixir",sell:260}, snow_essence:{kind:"mat",color:"#eaf4ff",name:"snow essence",sell:240},
+  // ---- collectables: rare ancient relics. No use — sell them for a lot, or place them on a display stand as decoration ----
+  relic_fan:{kind:"relic",color:"#e07a9a",name:"ornate fan",sell:90}, relic_scroll:{kind:"relic",color:"#e8dcc0",name:"ancient scroll",sell:120}, relic_compass:{kind:"relic",color:"#c0a060",name:"old compass",sell:130}, relic_mask:{kind:"relic",color:"#d08a4a",name:"tribal mask",sell:150},
+  relic_hourglass:{kind:"relic",color:"#d6b06a",name:"ancient hourglass",sell:160}, relic_vase:{kind:"relic",color:"#7fb0d0",name:"ancient vase",sell:180}, relic_lamp:{kind:"relic",color:"#e8c14a",name:"genie lamp",sell:200}, relic_telescope:{kind:"relic",color:"#c79a4a",name:"brass telescope",sell:220},
+  relic_clock:{kind:"relic",color:"#b08a4a",name:"antique clock",sell:240}, relic_dragon:{kind:"relic",color:"#3fae5a",name:"jade dragon",sell:280}, relic_skull:{kind:"relic",color:"#dfe6ea",name:"crystal skull",sell:300}, relic_idol:{kind:"relic",color:"#e8c14a",name:"golden idol",sell:350},
+  display_stand:{kind:"place",tile:"stand",color:"#9c7b4a",name:"display stand"} };
+const RELIC_KEYS=["relic_fan","relic_scroll","relic_compass","relic_mask","relic_hourglass","relic_vase","relic_lamp","relic_telescope","relic_clock","relic_dragon","relic_skull","relic_idol"];   // cheap → rare
+function findRelic(){ return RELIC_KEYS[Math.floor(Math.pow(Math.random(),1.8)*RELIC_KEYS.length)]; }   // biased toward the commoner (cheaper) ones
 for(const k of CKEYS){ ITEMS["seed_"+k]={kind:"seed",crop:k}; ITEMS["crop_"+k]={kind:"crop",crop:k}; }   // seed/crop items for every crop (incl. seasonal)
 const FURN=["chair","table","lamp","rug"];
 const CATFOOD=["bread","pie"];   // food the cat sells (≥20c)
@@ -442,7 +511,8 @@ const NAME_ZH={ wood:"木材", stone:"石頭", goo:"黏液", iron:"鐵礦", gold
   coal:"煤炭", silver:"銀", diamond:"鑽石", red_jewel:"紅寶石", green_jewel:"綠寶石", fossil:"化石", jewelry:"珠寶",
   elixir:"靈藥", steel:"鋼錠", crown:"皇冠", gold_sword:"黃金劍", plate_armor:"板甲", war_helm:"鋼盔", crystal_ring:"水晶戒指", war_charm:"戰爭護符", jerky:"肉乾", fish_stew:"魚湯",
   leather_armor:"皮甲", gold_armor:"黃金盔甲", diamond_armor:"鑽石盔甲", frost_plate:"冰霜板甲", diamond_helm:"鑽石頭盔", chain_vest:"鎖子甲", gold_greaves:"黃金護腿", winged_boots:"飛翼靴",
-  swift_band:"迅捷手環", life_pendant:"生命吊墜", sage_amulet:"賢者護符", titan_seal:"泰坦印記", berserk_idol:"狂暴神像",
+  swift_band:"迅捷手環", life_pendant:"生命吊墜", sage_amulet:"賢者護符", titan_seal:"泰坦印記", berserk_idol:"狂暴神像", shining_ring:"閃耀之戒",
+  relic_fan:"華麗摺扇", relic_scroll:"古卷軸", relic_compass:"古羅盤", relic_mask:"部落面具", relic_hourglass:"古老沙漏", relic_vase:"古董花瓶", relic_lamp:"神燈", relic_telescope:"黃銅望遠鏡", relic_clock:"古董時鐘", relic_dragon:"翡翠龍", relic_skull:"水晶骷髏", relic_idol:"黃金神像", display_stand:"展示架",
   iron_stew:"鋼鐵燉湯", rage_skewer:"狂怒串燒", mending_broth:"癒合湯", feast_platter:"盛宴拼盤",
   egg:"蛋", milk:"牛奶", truffle:"松露", omelette:"煎蛋捲", cheese:"起司",
   crab:"螃蟹", lobster:"龍蝦", oyster:"生蠔", urchin:"海膽", pearl:"珍珠", pearl_necklace:"珍珠項鍊",
@@ -474,7 +544,39 @@ const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金�
   "💬 Talk":"💬 對話","🎒 Bag":"🎒 背包","🗺 Map":"🗺 地圖","？ Help":"？ 說明",
   "WASD/arrows move (double-tap a direction to run) · 1–0 pick item · E/Space to act (till, chop/mine, fish, fight, place) · hold use ~1.5s to remove anything you placed · press T to talk to the cat/fisher · M for the map · I for bag & crafting":"WASD/方向鍵移動（連按兩下方向衝刺）· 1–0 選物品 · E/空白鍵 動作（翻土、砍伐/開採、釣魚、戰鬥、放置）· 長按使用約1.5秒可拆除你放置的東西 · 按 T 與貓/漁夫對話 · M 開地圖 · I 開背包與製作",
   "🐾 Whiskers' Shop":"🐾 小鬍子商店","buy seeds":"購買種子","buy furniture":"購買家具","sell":"販售","upgrades":"升級","close":"關閉",
-  "Backpack":"背包","hotbar · keys 1–0":"快捷欄 · 按鍵 1–0","🔨 Crafting table":"🔨 工作台","drop items into the grid to craft":"把物品放進格子來製作","recipe book":"配方書",
+  "Backpack":"背包","hotbar · keys 1–0":"快捷欄 · 按鍵 1–0","🔨 Crafting table":"🔨 工作台","drop items into the grid to craft":"把物品放進格子來製作","recipe book":"配方書","📖 recipe book":"📖 配方書",
+  "food":"食物","consumables":"消耗品","weapons":"武器","armour & gear":"防具裝備","accessories":"飾品","materials":"材料","furniture & decor":"家具擺設","tools & stations":"工具與工作站","other":"其他",
+  "tap an icon to see & load a recipe":"點圖示查看並載入配方","✓ ready — click the result to craft":"✓ 可製作 — 點結果即可製作","✗ still need":"✗ 還缺",
+  "❤ Friends":"❤ 朋友","loves":"喜愛","Acquaintance":"點頭之交","Friend":"朋友","Good Friend":"好友","Best Friend":"摯友","🎁 Give a gift":"🎁 送禮物","Bye":"再見",
+  "Give a townsfolk a gift they like (one per day) to grow your friendship.":"每天送鎮民一份他們喜歡的禮物，增進友誼。",
+  "You already gave a gift today — come back tomorrow.":"今天已經送過禮物了 — 明天再來吧。","Pick something from your bag to give.":"從背包挑一樣東西送出。","Nothing giftable in your bag right now.":"目前背包裡沒有可以送的東西。",
+  "favourite":"最愛","?! My absolute favourite — you've made my whole day. Thank you!!":"？這是我的最愛 — 你讓我一整天都開心了，謝謝你！！",
+  "took":"取回","hold a collectable to display it":"拿著收藏品才能展示",
+  "Deliver":"交付","Quest":"任務","Bring me":"幫我帶","for":"換","coins":"金幣","Still need":"還需要","all quests done":"所有任務已完成","bring":"帶來","deliver to":"交付給","has a new quest — go and talk":"有新任務 — 去找他聊聊",
+  "Could you bring me 10 wood? I want to fix up the shop shelves.":"可以幫我帶 10 個木材嗎？我想修一修店裡的架子。","Lovely sturdy stuff — thank you!":"真是結實的好料 — 謝謝你！",
+  "I'm cooking a big stew — could you spare 8 carrots?":"我在燉一大鍋湯 — 可以勻我 8 根胡蘿蔔嗎？","Mmm, these'll do nicely. Take some bone meal too.":"嗯，這些正好。也拿點骨粉吧。",
+  "Hook me 5 shrimp, would you? They make the finest bait.":"幫我釣 5 隻蝦好嗎？牠們是最好的魚餌。","Ha! These'll land me the big ones.":"哈！有這些就能釣到大傢伙了。",
+  "My lamps have run dry — bring 4 oil so I can fish at night?":"我的燈沒油了 — 帶 4 桶油來，我好夜釣？","Now I can fish till dawn. Cheers, mate.":"這下能釣到天亮了。多謝啦，夥伴。",
+  "I need 12 stone to expand the stall — got any to spare?":"我需要 12 塊石頭來擴建攤位 — 有多的嗎？","Squeak! That'll do nicely.":"吱！這正好。",
+  "Bring me 6 iron ore and I'll pay you handsomely.":"帶 6 塊鐵礦來，我會付你優厚的報酬。","Quality ore — a pleasure doing business.":"上等的礦石 — 合作愉快。",
+  "Woof! I'm starving — got 5 meat to share with a good dog?":"汪！我餓壞了 — 有 5 塊肉分給好狗狗嗎？","Best meal I've had in ages! Thanks, pal!":"好久沒吃這麼香了！謝啦，夥伴！",
+  "I'm dreaming of an omelette — could you fetch me 6 eggs?":"我好想吃煎蛋捲 — 可以幫我拿 6 顆蛋來嗎？","Yum yum! You're the best, you know that?":"好吃好吃！你最棒了，知道嗎？",
+  "?! You remembered — I absolutely love this. Thank you!":"？你還記得 — 我超愛這個，謝謝你！","? That's thoughtful of you — thanks!":"？你真貼心，謝謝你！",
+  "? …that's really not my thing, but I'll take it, I suppose.":"？這其實不太是我的菜，不過我就收下吧。","? Well… thank you, that's kind.":"？嗯…謝謝你，真好心。",
+  "Mrrp. You're the new farmer, aren't you? Mind the rugs.":"喵嗚。你就是新來的農夫吧？小心別踩髒地毯。","Welcome back. The shop's open whenever you need it.":"歡迎回來。需要的話，店隨時開著。",
+  "Always good to see you, friend. Tea's brewing.":"見到你真好，朋友。茶正煮著呢。","Purrr… my favourite human. This homestead's lucky to have you.":"呼嚕…我最喜歡的人類。這片家園有你真是幸運。",
+  "Ahoy. Try not to scare off my fish.":"嘿喲。別把我的魚嚇跑了。","Back again? The tide's been kind today.":"又來啦？今天潮水很不錯。",
+  "Good to see a friendly face on the pier.":"碼頭上能見到熟面孔真好。","My finest catches are yours first — you've earned it, mate.":"最好的漁獲先留給你 — 你應得的，夥伴。",
+  "Squeak. Browsing, or buying?":"吱。隨便看看，還是要買？","Ah, a returning customer. Good, good.":"啊，回頭客。好，很好。",
+  "Always a pleasure trading with a friend.":"和朋友做生意總是愉快。","For my dearest friend, only the best deals. Squeak!":"給我最好的朋友，只有最划算的價錢。吱！",
+  "Oh — hello. Do I know you?":"喔 — 你好。我認識你嗎？","Hey, it's you again. Thanks for the fish.":"嘿，又是你。謝謝你的魚。",
+  "My favourite regular! Pull up a crate.":"我最愛的常客！搬個箱子坐吧。","You're the best thing to happen to this stall, truly.":"你真的是這個攤子遇過最棒的事。",
+  "Woof! A stranger! …a friendly one, I hope?":"汪！陌生人！…希望是友善的那種？","Hey hey! Good to see you, pal!":"嘿嘿！見到你真好，夥伴！",
+  "My best buddy's here! Woof woof!":"我最好的麻吉來啦！汪汪！","You're family now, you know that? My tail won't quit!":"你現在是家人了，知道嗎？我的尾巴停不下來！",
+  "Bring me 100 fish and I'll pay you ":"幫我抓 100 條魚，我付你 "," coins. Catch them with a rod or net from any water.":" 枚金幣。用釣竿或漁網在任何水域捕捉。",
+  "A hundred fish! You're a legend. Here's your ":"一百條魚！你真是傳奇。這是你的 "," coins — the stall's open thanks to you.":" 枚金幣 — 多虧了你，攤子開張了。",
+  "Still need fish — ":"還差一些魚 — "," of 100 so far. Keep at it!":" / 100 條，繼續加油！",
+  "Bring me ":"幫我抓 "," fish and I'll pay you ":" 條魚，我付你 ","Sounds good — you're on.":"好的 — 交給我吧。","Fish delivered! You're a legend. Here's your ":"魚送到了！你真是傳奇。這是你的 "," of ":" / "," so far. Keep at it!":" 條，繼續加油！","Louie: bring fish":"路易：帶魚來",
   "How to play":"遊玩說明","🎣 Pelle the Fisher":"🎣 漁夫培利","buy gear":"購買裝備","sell catch & ore":"販售漁獲與礦石","space / tap ▾":"空白鍵 / 點擊 ▾",
   // dynamic phrases
   "grows into a":"可長成","crop":"金幣作物","each":"每個","max":"已滿","gather or harvest something to sell":"採集或收成東西才能販售","no one to talk to here":"這裡沒有人可以對話","Expand farm":"擴建農場","more land inside the fence":"圍欄內更多土地","Bigger house":"擴建房屋","a roomier home inside":"更寬敞的室內",
@@ -555,6 +657,7 @@ const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金�
   "Spelunker":"探洞者","Reach dungeon floor 10":"到達地城第 10 層","Heart of the deep":"深淵之心","Reach floor 100 (+1 permanent heart)":"到達第 100 層（永久 +1 心）","Dungeon master":"地城大師","Reach dungeon floor 500":"到達地城第 500 層","To the bottom":"抵達最底","Reach dungeon floor 1000":"到達地城第 1000 層",
   "First fortune":"第一桶金","Earn 1,000 coins total":"累計賺取 1,000 金幣","Wealthy":"富有","Earn 10,000 coins total":"累計賺取 10,000 金幣","Tycoon":"大亨","Earn 100,000 coins total":"累計賺取 100,000 金幣","Legend":"傳奇","Earn 200,000 coins — unlock late-game items":"累計賺取 200,000 — 解鎖後期物品","Crystal heart":"水晶之心","Buy a Life Crystal":"購買生命水晶" };
 function t(s){ return lang==="zh" && ZH[s]!==undefined ? ZH[s] : s; }
+const TR=t;   // non-shadowed alias for use inside functions whose local `t` is a map tile (e.g. interact())
 function descOf(k){ return (lang==="zh"&&DESC_ZH[k])?DESC_ZH[k]:DESC[k]; }
 function useOf(base){ return (lang==="zh"&&USE_ZH[base])?USE_ZH[base]:(USE[base]||""); }
 function howOf(k){ return (lang==="zh"&&HOWTO_ZH[k])?HOWTO_ZH[k]:(HOWTO[k]||"craft it"); }
@@ -575,7 +678,8 @@ const ICON={ wood:"🪵", stone:"🪨", goo:"🟢", iron:"🔩", gold:"🪙", fi
   coal:"⚫", silver:"🥈", diamond:"💎", red_jewel:"🔴", green_jewel:"💚", fossil:"🦴", jewelry:"📿",
   elixir:"🧴", steel:"⚙️", crown:"👑", gold_sword:"⚔️", plate_armor:"🛡️", war_helm:"🪖", crystal_ring:"💠", war_charm:"🧿", jerky:"🥓", fish_stew:"🍛",
   leather_armor:"🧥", gold_armor:"🥇", diamond_armor:"🔰", frost_plate:"❄️", diamond_helm:"⛑️", chain_vest:"👕", gold_greaves:"🩳", winged_boots:"🥾",
-  swift_band:"💫", life_pendant:"💗", sage_amulet:"🔱", titan_seal:"🏅", berserk_idol:"😡",
+  swift_band:"💫", life_pendant:"💗", sage_amulet:"🔱", titan_seal:"🏅", berserk_idol:"😡", shining_ring:"💍",
+  relic_fan:"🪭", relic_scroll:"📜", relic_compass:"🧭", relic_mask:"🎭", relic_hourglass:"⏳", relic_vase:"🏺", relic_lamp:"🪔", relic_telescope:"🔭", relic_clock:"🕰️", relic_dragon:"🐉", relic_skull:"💀", relic_idol:"🗿", display_stand:"🏛️",
   iron_stew:"🥘", rage_skewer:"🍢", mending_broth:"🍵", feast_platter:"🍱",
   egg:"🥚", milk:"🥛", truffle:"🍄", omelette:"🍳", cheese:"🧀",
   crab:"🦀", lobster:"🦞", oyster:"🦪", urchin:"🟣", pearl:"⚪", pearl_necklace:"📿",
@@ -603,7 +707,9 @@ function applyLang(){ localStorage.setItem("hs-lang",lang);
   if(document.getElementById("help").classList.contains("open"))renderHelp();
   if(document.getElementById("quests").classList.contains("open"))renderQuests();
   if(document.getElementById("achv").classList.contains("open"))renderAchv();
-  if(document.getElementById("merchant").classList.contains("open"))renderMerchant(); }
+  if(document.getElementById("merchant").classList.contains("open"))renderMerchant();
+  if(document.getElementById("friends").classList.contains("open"))renderFriends();
+  if(document.getElementById("giftui").classList.contains("open"))renderGift(); }
 
 const RECIPES=[
   {key:"salve", give:"salve", cost:{goo:2}, desc:"restores 2 hearts (use it from your bag)"},
@@ -615,6 +721,7 @@ const RECIPES=[
   {key:"goldlamp", give:"goldlamp", cost:{gold:1,glass:1}, desc:"a fancy golden lamp to place"},
   {key:"mfence", give:"mfence", cost:{iron:1}, desc:"a sturdy metal wall to place"},
   {key:"chest", give:"chest", cost:{wood:6}, desc:"place it to store items"},
+  {key:"display_stand", give:"display_stand", cost:{wood:4,stone:2}, desc:"place it, then put a collectable on it to show off"},
   {key:"stove", give:"stove", cost:{stone:4,iron:1}, desc:"place it, then cook buff food at it"},
   {key:"bread", give:"bread", cost:{crop_wheat:2}, desc:"food — restores hunger"},
   {key:"salad", give:"salad", cost:{crop_carrot:1,crop_corn:1}, desc:"food — restores hunger"},
@@ -636,6 +743,7 @@ const RECIPES=[
   {key:"plate_armor", give:"plate_armor", cost:{steel:2,silver:1}, desc:"heavy plate armour (+3 hearts)"},
   {key:"war_helm", give:"war_helm", cost:{steel:1}, desc:"a steel helm (+2 hearts)"},
   {key:"crystal_ring", give:"crystal_ring", cost:{diamond:1,glass:1}, desc:"crystal ring (regen even faster)"},
+  {key:"shining_ring", give:"shining_ring", cost:{diamond:1,gold:1,green_jewel:1}, desc:"shining ring — lights the dungeon & boosts combat (+2 atk, +2 hearts, regen)"},
   {key:"war_charm", give:"war_charm", cost:{diamond:1,red_jewel:1}, desc:"war charm (+2 attack)"},
   {key:"jerky", give:"jerky", cost:{meat:2}, desc:"dried meat — filling food"},
   {key:"fish_stew", give:"fish_stew", cost:{fish:2,crop_carrot:1}, desc:"warming stew — heals faster & +1 heart"},
@@ -665,6 +773,17 @@ const RECIPES=[
   {key:"craft_bench", give:"craft_bench", cost:{iron:4,glass:1,oil:1}, desc:"crafts sachets & incense (2-3 days)"},
   {key:"perfume_stand", give:"perfume_stand", cost:{steel:2,glass:2,red_jewel:1}, desc:"distills luxury perfumes (4-5 days)"},
 ];
+// recipe-book categories (shown as labelled, icon-tagged groups so items are easy to find)
+const RECIPE_CATS=[
+  {id:"food", ic:"🍳", label:"food", keys:["bread","salad","jerky","fish_stew","omelette","cheese"]},
+  {id:"consum", ic:"🧪", label:"consumables", keys:["salve","elixir","bone_meal","bone_meal_f"]},
+  {id:"weapon", ic:"⚔️", label:"weapons", keys:["metal_sword","gold_sword"]},
+  {id:"armor", ic:"🛡️", label:"armour & gear", keys:["cap","vest","legguards","boots","metal_armor","plate_armor","war_helm","leather_armor","chain_vest","gold_armor","frost_plate","diamond_armor","diamond_helm","gold_greaves","winged_boots"]},
+  {id:"acc", ic:"💍", label:"accessories", keys:["shining_ring","ring","charm","crystal_ring","war_charm","swift_band","life_pendant","sage_amulet","titan_seal","berserk_idol","pearl_necklace"]},
+  {id:"mat", ic:"💎", label:"materials", keys:["glass","jewelry","oil","steel","crown"]},
+  {id:"furn", ic:"🪑", label:"furniture & decor", keys:["torch","fence","ppath","lantern","goldlamp","mfence","oillamp","snowman","chest","display_stand"]},
+  {id:"tools", ic:"🛠", label:"tools & stations", keys:["stove","axe","drying_rack","preserve_pot","press_table","craft_bench","perfume_stand"]} ];
+const RECIPE_CAT_OF={}; RECIPE_CATS.forEach(c=>c.keys.forEach(k=>{RECIPE_CAT_OF[k]=c.id;}));
 
 const FR0=4,FC0=4; let farmFR1=15, farmFC1=18, houseLvl=0, farmLvl=0, hasAxe=false;
 let scene="out", area="home", G, GR, GC, GW, GH, gridOut, gridHome, gridVillage, gridIn, doorR, doorC, transCD=0;
@@ -679,6 +798,8 @@ function dungeonHearts(){ return Math.min(5, Math.floor((dungMax||1)/100)); }   
 const stats={trees:0,crops:0,fish:0}; const claimed={};   // mission progress + claimed quests
 const hasSword=()=>!!equip.sword, hasArmor=()=>!!equip.armor;
 function gearBonus(){ const b={atk:0,maxhp:0,regen:0,speed:0}; for(const sn in equip){ const k=equip[sn]; if(k&&ITEMS[k].bonus)for(const s in ITEMS[k].bonus)b[s]+=ITEMS[k].bonus[s]; } return b; }
+// armour defence: better gear (more maxhp from armour/accessories) softens every hit. Diminishing, capped ~70%.
+function defenseCut(dmg){ const def=gearBonus().maxhp; const red=Math.min(0.7, def*0.06); return Math.max(0.25, dmg*(1-red)); }
 let activeBuff=null;   // {bonus,until,key} from eating buff food cooked at a stove
 function buffBonus(){ return (activeBuff&&now()<activeBuff.until)?activeBuff.bonus:{}; }
 function totalBonus(){ const g=gearBonus(),f=buffBonus(),o={atk:0,maxhp:0,regen:0,speed:0}; for(const s in o)o[s]=(g[s]||0)+(f[s]||0); return o; }
@@ -703,11 +824,11 @@ const ROAD_R=OROWS-4;
 const VCOLS=46, VROWS=34;
 const VROAD_R=9, RIVER_C=14, SEA_C0=39, SAND_C=38, NPC_R=6, NPC_C=36, CAVE_R=4, CAVE_C=6;
 
-const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor","chest","stove","dwall","cave","gem","trough","snowman","drying_rack","preserve_pot","press_table","craft_bench","perfume_stand"]);
+const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor","chest","stove","dwall","cave","gem","trough","snowman","drying_rack","preserve_pot","press_table","craft_bench","perfume_stand","stand"]);
 const CHESTN=18;
 const WATER=new Set(["pond","river","sea"]);
 // player-placed tiles that can be removed (hold use) — maps the tile back to the item you get
-const TILE2ITEM={ pfence:"fence", mfence:"mfence", chair:"chair", table:"table", lamp:"lamp", rug:"rug", torch:"torch", lantern:"lantern", goldlamp:"goldlamp", oillamp:"oillamp", ppath:"ppath", stove:"stove", snowman:"snowman", drying_rack:"drying_rack", preserve_pot:"preserve_pot", press_table:"press_table", craft_bench:"craft_bench", perfume_stand:"perfume_stand" };
+const TILE2ITEM={ pfence:"fence", mfence:"mfence", chair:"chair", table:"table", lamp:"lamp", rug:"rug", torch:"torch", lantern:"lantern", goldlamp:"goldlamp", oillamp:"oillamp", ppath:"ppath", stove:"stove", snowman:"snowman", drying_rack:"drying_rack", preserve_pot:"preserve_pot", press_table:"press_table", craft_bench:"craft_bench", perfume_stand:"perfume_stand", stand:"display_stand" };
 const BREAKABLE=new Set(Object.keys(TILE2ITEM));   // NOT the farm "fence" (only expand that via the cat)
 const FARMLAND=new Set(["grass","soil","path","ppath"]);
 const PLACEABLE_ON=new Set(["grass","wild","path","ppath","floor","rug","road"]);
@@ -719,10 +840,62 @@ function setVillageMeta(){ npcX=NPC_C*TILE+TILE/2; npcY=NPC_R*TILE+TILE/2;
   villagers.length=0;   // animal NPCs only — human townsfolk removed
   for(const n of VNPCS){ n.x=n.c*TILE+TILE/2; n.y=n.r*TILE+TILE/2; } }
 const VNPCS=[
-  {id:"hamu", c:26,r:24, name:"Hamu", face:"🐹", col:"#f49ac6", role:"merchant", ears:"round"},
+  {id:"hamu", c:28,r:21, name:"Hamu", face:"🐹", col:"#f49ac6", role:"merchant", ears:"round"},
   {id:"louie", c:11,r:27, name:"Louie", face:"🐱", col:"#5aa0e6", role:"quest", ears:"cat"},
   {id:"david", c:20,r:23, name:"David", face:"🐶", col:"#e0913f", role:"chat", ears:"flop",
     lines:["Woof! Welcome to the village, friend!","Pelle fishes the sea, Hamu trades, Louie's got a job for you.","Hamu's stall sells farm animals now — go grab a chicken!"]} ];
+
+/* ---- friendship: gift each townsfolk something they like to raise their friendship (4 levels). Whiskers the cat starts maxed out. ---- */
+const NPCMETA={
+  cat:   {who:"cat",   name:"Whiskers", face:"🐱", col:"#f3a64b"},
+  fisher:{who:"fisher",name:"Pelle",    face:"🐸", col:"#5aa84a"},
+  hamu:  {who:"hamu",  name:"Hamu",     face:"🐹", col:"#f49ac6"},
+  louie: {who:"louie", name:"Louie",    face:"🐱", col:"#5aa0e6"},
+  david: {who:"david", name:"David",    face:"🐶", col:"#e0913f"} };
+const FRIEND_IDS=["cat","fisher","hamu","louie","david"], FRIEND_MAX=100, FRIEND_TIER=["Acquaintance","Friend","Good Friend","Best Friend"];
+let friend={}, giftDay={}, questIdx={}, questOn={};
+function resetFriends(){ friend={cat:FRIEND_MAX,fisher:0,hamu:0,louie:0,david:0}; giftDay={}; questIdx={}; questOn={}; }
+function loadFriends(s){ resetFriends(); if(s&&s.friend)for(const k of FRIEND_IDS){ const v=s.friend[k]; if(typeof v==="number"&&isFinite(v))friend[k]=Math.max(0,Math.min(FRIEND_MAX,v)); } if(s&&s.giftDay&&typeof s.giftDay==="object")for(const k of FRIEND_IDS){ if(typeof s.giftDay[k]==="number")giftDay[k]=s.giftDay[k]; }
+  if(s&&s.questIdx&&typeof s.questIdx==="object")for(const k in NPC_QUESTS){ if(typeof s.questIdx[k]==="number")questIdx[k]=s.questIdx[k]; } if(s&&s.questOn&&typeof s.questOn==="object")for(const k in NPC_QUESTS){ questOn[k]=!!s.questOn[k]; } }
+/* ---- NPC quests: each townsfolk offers a short chain of fetch-quests for coins, items & friendship ---- */
+const NPC_QUESTS={
+  cat:[ {ask:"wood", n:10, reward:60, text:"Could you bring me 10 wood? I want to fix up the shop shelves.", thanks:"Lovely sturdy stuff — thank you!"},
+        {ask:"crop_carrot", n:8, reward:90, item:"bone_meal", itemN:2, text:"I'm cooking a big stew — could you spare 8 carrots?", thanks:"Mmm, these'll do nicely. Take some bone meal too."} ],
+  fisher:[ {ask:"shrimp", n:5, reward:80, text:"Hook me 5 shrimp, would you? They make the finest bait.", thanks:"Ha! These'll land me the big ones."},
+        {ask:"oil", n:4, reward:120, text:"My lamps have run dry — bring 4 oil so I can fish at night?", thanks:"Now I can fish till dawn. Cheers, mate."} ],
+  hamu:[ {ask:"stone", n:12, reward:70, text:"I need 12 stone to expand the stall — got any to spare?", thanks:"Squeak! That'll do nicely."},
+        {ask:"iron", n:6, reward:140, text:"Bring me 6 iron ore and I'll pay you handsomely.", thanks:"Quality ore — a pleasure doing business."} ],
+  david:[ {ask:"meat", n:5, reward:100, text:"Woof! I'm starving — got 5 meat to share with a good dog?", thanks:"Best meal I've had in ages! Thanks, pal!"},
+        {ask:"egg", n:6, reward:90, text:"I'm dreaming of an omelette — could you fetch me 6 eggs?", thanks:"Yum yum! You're the best, you know that?"} ] };
+function friendLevel(id){ const p=friend[id]||0; return p>=75?4:p>=50?3:p>=25?2:1; }
+function friendTier(id){ return FRIEND_TIER[friendLevel(id)-1]; }
+function _giftSet(){ const s=new Set(); for(const a of arguments)for(const k of a)s.add(k); return s; }
+const _SEA=["fish","shrimp","pufferfish","tropical_fish","oyster","urchin","squid","octopus","lobster","eel","shark","crab"],
+  _GEM=["diamond","red_jewel","green_jewel","jewelry","crown","pearl","fossil","gold","silver"],
+  _CROP=["crop_carrot","crop_wheat","crop_corn","crop_pumpkin"],
+  _FLOWER=["perfume","sakura_perfume","flower_sachet","blossom_incense","flower_oil","spice_sachet","cherry_blossom","moon_elixir","snow_essence","sweet_preserve","melon_jam"],
+  _PRODUCE=["egg","milk","truffle","cheese","omelette"];
+const GIFT_PREF={
+  cat:   {love:_giftSet(_SEA,["milk"]),          like:_giftSet(_PRODUCE,["berry"]),       hate:_giftSet(["goo","stone","sand"])},
+  fisher:{love:_giftSet(_SEA,["pearl","oil"]),   like:_giftSet(["sand","glass","iron"]),  hate:_giftSet(_FLOWER)},
+  hamu:  {love:_giftSet(_GEM),                   like:_giftSet(_CROP,["truffle"]),        hate:_giftSet(["goo","wood"])},
+  louie: {love:_giftSet(_SEA),                   like:_giftSet(_CROP,["berry"]),          hate:_giftSet(["stone","sand","goo"])},
+  david: {love:_giftSet(["meat","truffle","jerky"]), like:_giftSet(["egg","bread","cheese"]), hate:_giftSet(_FLOWER)} };
+const GIFT_FAV={ cat:"shrimp", fisher:"pearl", hamu:"diamond", louie:"tropical_fish", david:"meat" };   // each NPC's single favourite — gives an extra-big boost
+const GIFT_GAIN={fav:26,love:18,like:9,neutral:4,hate:-6};
+function giftRank(id,key){ if(GIFT_FAV[id]===key)return "fav"; const p=GIFT_PREF[id]; if(!p)return "neutral"; if(p.love.has(key))return "love"; if(p.like.has(key))return "like"; if(p.hate.has(key))return "hate"; return "neutral"; }
+const NOGIFT=new Set(["rod","silver_rod","gold_rod","net","wide_net","deep_net","axe","bait","chest","stove","drying_rack","preserve_pot","press_table","craft_bench","perfume_stand"]);
+function giftable(key){ const it=ITEMS[key]; if(!it||NOGIFT.has(key))return false; if(it.bonus)return false; if(key.startsWith("seed_"))return false; return true; }
+const GREET={
+  cat:[ "Mrrp. You're the new farmer, aren't you? Mind the rugs.", "Welcome back. The shop's open whenever you need it.", "Always good to see you, friend. Tea's brewing.", "Purrr… my favourite human. This homestead's lucky to have you." ],
+  fisher:[ "Ahoy. Try not to scare off my fish.", "Back again? The tide's been kind today.", "Good to see a friendly face on the pier.", "My finest catches are yours first — you've earned it, mate." ],
+  hamu:[ "Squeak. Browsing, or buying?", "Ah, a returning customer. Good, good.", "Always a pleasure trading with a friend.", "For my dearest friend, only the best deals. Squeak!" ],
+  louie:[ "Oh — hello. Do I know you?", "Hey, it's you again. Thanks for the fish.", "My favourite regular! Pull up a crate.", "You're the best thing to happen to this stall, truly." ],
+  david:[ "Woof! A stranger! …a friendly one, I hope?", "Hey hey! Good to see you, pal!", "My best buddy's here! Woof woof!", "You're family now, you know that? My tail won't quit!" ] };
+const GIFT_REACT={ fav:"?! My absolute favourite — you've made my whole day. Thank you!!", love:"?! You remembered — I absolutely love this. Thank you!", like:"? That's thoughtful of you — thanks!",
+  hate:"? …that's really not my thing, but I'll take it, I suppose.", neutral:"? Well… thank you, that's kind." };
+function giftReact(id,rank,key){ return itemName(key)+t(GIFT_REACT[rank]||GIFT_REACT.neutral); }   // item-name first so it composes in both languages
+function npcLine(id,text,extra){ const m=NPCMETA[id]; return Object.assign({who:m.who,name:m.name,face:m.face,col:m.col,text},extra||{}); }
 
 /* ---- ranch: animals you buy from Hamu and keep in the home pasture ---- */
 const PEN_R0=4, PEN_C0=23, PEN_C1=31;       // fenced pasture on the home map (upper-right); bottom row grows with penLvl
@@ -736,6 +909,10 @@ function carvePen(g){ if(!g)return; const R1=penR1(), pgate=Math.floor((PEN_C0+P
   for(let r=PEN_R0+1;r<=PEN_R0+2;r++)for(let c=PEN_C0+1;c<=PEN_C0+3;c++) if(g[r]&&g[r][c]) g[r][c].type="house";   // barn shelter (top-left)
   for(let r=PEN_R0+1;r<=PEN_R0+2;r++) if(g[r]&&g[r][PEN_C1-2]) g[r][PEN_C1-2].type="trough";   // water trough (top-right) — not fishable
   if(g[R1]&&g[R1][pgate]) g[R1][pgate].type="path"; if(g[R1]&&g[R1][pgate+1]) g[R1][pgate+1].type="path"; }   // gate to walk in
+// monster-free "safe" zones: home farm + pasture, and in the village the fenced town + the fisher's pen
+function inTown(r,c){ return r>=20&&r<=32&&c>=7&&c<=36; }            // inside the village fence ring
+function inFisherZone(r,c){ return r>=5&&r<=7&&c>=35&&c<=37; }       // fenced patch around Pelle the fisher
+function safeTile(r,c){ if(area==="home")return inFarm(r,c)||inPen(r,c); if(area==="village")return inTown(r,c)||inFisherZone(r,c); return false; }
 const ANIMALS={
   chicken:{name:"chicken", face:"🐔", col:"#f0e6cf", price:60,  limit:5, produce:"egg",     big:false, desc:"lays an egg each day"},
   pig:    {name:"pig",     face:"🐷", col:"#f3a6c0", price:160, limit:5, produce:"truffle", big:false, desc:"roots up a truffle each day"},
@@ -805,6 +982,10 @@ function buildOut(){ const g=[]; for(let r=0;r<OROWS;r++){ const row=[]; for(let
   for(let c=gate;c<OCOLS;c++) g[ROAD_R][c].type="road";            // then east, out to the village
   catX=(doorC+2)*TILE+TILE/2; catY=(doorR+1)*TILE+TILE/2;     // shop cat just outside the house
   return g; }
+// Hamu's village animal pen — a fenced 4×4 just east of his shop, with a gate on the west side facing him
+function carveVPen(g){ const set=(r,c,t)=>{ if(g[r]&&g[r][c])g[r][c].type=t; };
+  for(let r=21;r<=24;r++)for(let c=30;c<=33;c++) set(r,c,(r===21||r===24||c===30||c===33)?"fence":"path");
+  set(22,30,"path"); set(23,30,"path"); }   // west gate (open toward Hamu & the shop)
 function buildVillage(){ const g=[]; for(let r=0;r<VROWS;r++){ const row=[]; for(let c=0;c<VCOLS;c++){ row.push({type:"wild",crop:null}); } g.push(row); }
   const set=(r,c,t)=>{ if(g[r]&&g[r][c])g[r][c].type=t; };
   const block=(r0,c0,w,h,t)=>{ for(let r=r0;r<r0+h;r++)for(let c=c0;c<c0+w;c++) set(r,c,t); };
@@ -819,11 +1000,9 @@ function buildVillage(){ const g=[]; for(let r=0;r<VROWS;r++){ const row=[]; for
   block(18,13,3,3,"house"); set(20,14,"hdoor");
   block(31,9,3,3,"house"); set(31,10,"hdoor");
   block(31,15,3,3,"house"); set(31,16,"hdoor");
-  block(18,27,3,3,"shop"); set(20,28,"hdoor");                                    // market shops (east of street)
+  block(18,27,3,3,"shop"); set(20,28,"hdoor");                                    // east market shop — this is now Hamu's shop (he stands at its door)
   block(31,27,3,3,"shop"); set(31,28,"hdoor");
-  // Hamu's ranch stall + a little pen of animals beside it (so players see he sells livestock)
-  block(21,25,2,2,"shop"); set(22,25,"hdoor");
-  for(let r=23;r<=26;r++)for(let c=28;c<=31;c++){ set(r,c,(r===23||r===26||c===28||c===31)?"fence":"path"); }
+  carveVPen(g);                                                                   // Hamu's animal pen, right beside his shop
   block(31,21,3,3,"house"); set(31,22,"hdoor");                                   // mayor's house, south
   // roads & paved square (carved after buildings so they stay clear)
   for(let c=0;c<=24;c++) set(VROAD_R,c,"road"); set(VROAD_R,RIVER_C,"road");      // entry road from the left + bridge
@@ -833,7 +1012,8 @@ function buildVillage(){ const g=[]; for(let r=0;r<VROWS;r++){ const row=[]; for
   for(let r=30;r<=33;r++) set(r,24,"path");                                       // path south through town
   block(25,22,2,2,"pond");                                                        // fountain in the square
   [[23,18],[23,30],[29,18],[29,30]].forEach(([r,c])=>{ if(g[r][c].type==="path")set(r,c,"lamp"); });  // street lamps
-  // clear ground by the fisher on the beach
+  // fenced safe pen around the fisher on the beach (entrance on the west) so monsters can't reach him
+  [[5,35],[5,36],[5,37],[6,37],[7,35],[7,36],[7,37]].forEach(([r,c])=>set(r,c,"fence"));
   set(NPC_R,NPC_C,"wild"); set(NPC_R,NPC_C-1,"path");
   // dungeon entrance (a cave) in the north-west, with a rocky clearing around it
   for(let r=CAVE_R-1;r<=CAVE_R+2;r++)for(let c=CAVE_C-2;c<=CAVE_C+2;c++) set(r,c,"wild");
@@ -884,15 +1064,21 @@ function setScene(s){ scene=s; if(s==="out"){G=gridOut;GR=gridOut.length;GC=grid
 
 function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false;bossDefeated=false; penLvl=0; area="home"; gridHome=buildOut(); gridVillage=buildVillage(); setArea("home"); coins=40; clock=0;
   for(let i=0;i<bag.length;i++)bag[i]=null; bag[0]={key:"seed_carrot",count:6}; bag[1]={key:"seed_wheat",count:2}; selSlot=0;
-  for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; catIntroPending=false; playerName="You"; louieQuest=0; metHamu=false; dungFloor=0; dungMax=1; stats.trees=0;stats.crops=0;stats.fish=0; animals.length=0; penLvl=0; weather="sunny"; weatherDay=-1; totalEarned=0; lifeCrystals=0; _lastCoins=40; for(const k in claimed)delete claimed[k]; recalcMax();
+  for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; catIntroPending=false; playerName="You"; louieQuest=0; metHamu=false; dungFloor=0; dungMax=1; stats.trees=0;stats.crops=0;stats.fish=0; animals.length=0; penLvl=0; weather="sunny"; weatherDay=-1; totalEarned=0; lifeCrystals=0; _lastCoins=40; for(const k in claimed)delete claimed[k]; resetFriends(); recalcMax();
   setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2+TILE; player.hp=player.maxHp;player.inv=0; mobs.length=0; save(); renderBar(); syncUI(); }
 function stripOil(g){ if(!g)return; for(const row of g)for(const t of row){ if(t&&t.type==="oil")t.type="wild"; } }
-function patchVillage(g){ if(!g||!g[21]||!g[21][25]||g[21][25].type==="shop")return;   // add Hamu's stall + animal pen to older saved villages
+function patchVillage(g){ if(!g)return;
   const set=(r,c,tp)=>{ if(g[r]&&g[r][c])g[r][c].type=tp; };
-  for(let r=21;r<=22;r++)for(let c=25;c<=26;c++) set(r,c,"shop"); set(22,25,"hdoor");
-  for(let r=23;r<=26;r++)for(let c=28;c<=31;c++) set(r,c,(r===23||r===26||c===28||c===31)?"fence":"path"); }
+  if(g[6]&&g[6][37]&&g[6][37].type!=="fence"){   // add the fisher's safe pen to older saved villages (idempotent)
+    [[5,35],[5,36],[5,37],[6,37],[7,35],[7,36],[7,37]].forEach(([r,c])=>set(r,c,"fence")); set(6,36,"wild"); set(6,35,"path"); }
+  // migrate to the new Hamu layout: his shop is the big east building, the small stall is gone, the pen sits beside the shop
+  if(!(g[21]&&g[21][30]&&g[21][30].type==="fence")){            // run once, until the new pen exists
+    for(let r=21;r<=22;r++)for(let c=25;c<=26;c++) set(r,c,"path");   // clear the old 2×2 stall
+    for(let r=23;r<=26;r++)for(let c=28;c<=31;c++) set(r,c,"path");   // clear the old pen
+    if(!(g[18]&&g[18][27]&&g[18][27].type==="shop")){ for(let r=18;r<=20;r++)for(let c=27;c<=29;c++) set(r,c,"shop"); set(20,28,"hdoor"); }   // ensure the shop exists on very old saves
+    carveVPen(g); } }
 // compact save: a plain tile (no crop/chest/mining state) becomes just its type string instead of {type,crop:null,…}
-function packGrid(g){ return g.map(row=>row.map(t=>(t.crop||t.store||t.hits||t.boost||t.net||t.mach)?t:t.type)); }
+function packGrid(g){ return g.map(row=>row.map(t=>(t.crop||t.store||t.hits||t.boost||t.net||t.mach||t.display)?t:t.type)); }
 // artisan machines: each accepts certain crops -> a luxury product after N in-game days
 const MACHINE_IN={
   drying_rack:{ crop_tea:["tea_bundle",1], crop_fragrant_herb:["dried_herb",1], crop_amber_leaf:["amber_incense",2], crop_frost_herb:["frost_remedy",2] },
@@ -915,14 +1101,14 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); co
     for(let i=0;i<bag.length;i++)bag[i]=s.bag&&s.bag[i]?s.bag[i]:null; selSlot=s.selSlot||0;
     catX=(doorC=FC0+2,(FC0+4)*TILE+TILE/2); catY=(doorR=FR0+3,(FR0+4)*TILE+TILE/2); setVillageMeta();
     metCat=!!s.metCat; metFisher=!!s.metFisher; bossDefeated=!!s.bossDefeated; seenIntro=!!s.seenIntro; catIntroPending=!!s.catIntroPending;
-    playerName=s.playerName||"You"; louieQuest=s.louieQuest||0; metHamu=!!s.metHamu; dungMax=s.dungMax||1; dungFloor=0; penLvl=s.penLvl||0; carvePen(gridHome); weather=s.weather||"sunny"; weatherDay=(typeof s.weatherDay==="number")?s.weatherDay:-1; totalEarned=s.totalEarned||0; lifeCrystals=s.lifeCrystals||0; _lastCoins=coins; if(s.stats)Object.assign(stats,s.stats); if(s.claimed)Object.assign(claimed,s.claimed);
+    playerName=s.playerName||"You"; louieQuest=s.louieQuest||0; metHamu=!!s.metHamu; dungMax=s.dungMax||1; dungFloor=0; penLvl=s.penLvl||0; carvePen(gridHome); weather=s.weather||"sunny"; weatherDay=(typeof s.weatherDay==="number")?s.weatherDay:-1; totalEarned=s.totalEarned||0; lifeCrystals=s.lifeCrystals||0; _lastCoins=coins; if(s.stats)Object.assign(stats,s.stats); if(s.claimed)Object.assign(claimed,s.claimed); loadFriends(s);
     animals.length=0; if(Array.isArray(s.animals))for(const a of s.animals){ if(ANIMALS[a.kind])animals.push(a); }
     for(const sn in equip)equip[sn]=(s.equip&&s.equip[sn]&&ITEMS[s.equip[sn]])?s.equip[sn]:null; recalcMax();
     player.hunger=(typeof s.hunger==="number")?s.hunger:player.maxHunger; player.regenT=0;player.starveT=0;
     area=(s.area==="village")?"village":"home"; setArea(area);
     setScene("out"); player.x=s.px;player.y=s.py;player.hp=s.hp??player.maxHp; return true; } }catch(e){} return false; }
 function save(){ const inD=area==="dungeon"; const sArea=inD?"village":area, sx=inD?(CAVE_C+1)*TILE+TILE/2:(scene==="out"?player.x:outX), sy=inD?CAVE_R*TILE+TILE/2:(scene==="out"?player.y:outY);
-  localStorage.setItem("homestead4", JSON.stringify({v:5,area:sArea,home:packGrid(gridHome),village:packGrid(gridVillage),coins,clock,px:sx,py:sy,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger,playerName,louieQuest,metHamu,dungMax,stats,claimed,animals,penLvl,weather,weatherDay,totalEarned,lifeCrystals})); }
+  localStorage.setItem("homestead4", JSON.stringify({v:5,area:sArea,home:packGrid(gridHome),village:packGrid(gridVillage),coins,clock,px:sx,py:sy,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger,playerName,louieQuest,metHamu,dungMax,stats,claimed,animals,penLvl,weather,weatherDay,totalEarned,lifeCrystals,friend,giftDay,questIdx,questOn})); }
 function syncUI(){ document.getElementById("coins").textContent=coins; }
 
 function resize(){ const rect=document.querySelector("main").getBoundingClientRect();
@@ -935,7 +1121,42 @@ const isNight=()=>{ const ph=(clock%DAYLEN)/DAYLEN; return ph>0.52&&ph<0.96; };
 
 /* ---- sound ---- */
 let actx=null,master=null,soundOn=localStorage.getItem("hs-sound")!=="off",lastStep=0;
-function audio(){ if(actx){if(actx.state==="suspended")actx.resume();return actx;} try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;} master=actx.createGain();master.gain.value=0.28;master.connect(actx.destination);return actx; }
+const SFX_MAX=0.6;                                                            // master gain at slider 100%
+let sfxLevel=(()=>{ const v=parseFloat(localStorage.getItem("hs-sfx")); return isFinite(v)?v:0.47; })();   // 0..1 (default ≈ old 0.28 gain)
+function audio(){ if(actx){if(actx.state==="suspended")actx.resume();return actx;} try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;} master=actx.createGain();master.gain.value=sfxLevel*SFX_MAX;master.connect(actx.destination); if(musLevel>0)startMusic(); return actx; }
+function setSfx(v){ sfxLevel=Math.max(0,Math.min(1,v)); localStorage.setItem("hs-sfx",sfxLevel); if(master)master.gain.value=sfxLevel*SFX_MAX; }
+/* ---- background music: a gentle pentatonic melody over an I–V–vi–IV bass, looping (slider in Settings) ---- */
+let musLevel=(()=>{ const v=parseFloat(localStorage.getItem("hs-music")); return isFinite(v)?v:0.35; })(), musGain=null, musTimer=null, musStep=0;   // on by default at a soft level
+const MUS_MELODY=[72,79,76,72, 74,81,79,74, 76,84,79,76, 72,76,79,84];        // C-major pentatonic phrase (MIDI)
+const MUS_BASS=[48,55,57,53];                                                  // C · G · Am · F roots, one per bar (4 beats)
+const midiHz=m=>440*Math.pow(2,(m-69)/12);
+function playMus(f,tm,dur,type,vol){ const a=audio(); if(!a||!musGain)return; const o=a.createOscillator(),g=a.createGain();
+  o.type=type; o.frequency.value=f; g.gain.setValueAtTime(0.0001,tm); g.gain.exponentialRampToValueAtTime(vol,tm+0.05); g.gain.exponentialRampToValueAtTime(0.0001,tm+dur);
+  o.connect(g).connect(musGain); o.start(tm); o.stop(tm+dur+0.05); }
+function musNote(){ if(!musLevel){ stopMusic(); return; } const a=audio(); if(!a||!musGain)return; const tm=a.currentTime+0.02;
+  const slow=isNight()?1.4:1;                                                  // night plays a touch slower & softer
+  playMus(midiHz(MUS_MELODY[musStep%MUS_MELODY.length]), tm, 0.7*slow, "sine", 0.85);   // melody
+  if(musStep%4===0) playMus(midiHz(MUS_BASS[(musStep>>2)%MUS_BASS.length]), tm, 1.7*slow, "triangle", 0.6);   // bass once a bar
+  if(musStep%4===2) playMus(midiHz(MUS_BASS[(musStep>>2)%MUS_BASS.length]+7), tm, 0.9*slow, "sine", 0.3);     // soft fifth on the off-beat
+  musStep++; }
+function startMusic(){ if(musTimer||!musLevel)return; const a=audio(); if(!a)return; musGain=a.createGain(); musGain.gain.value=musLevel*0.16; musGain.connect(a.destination); musStep=0; musNote(); musTimer=setInterval(musNote,520); }
+function stopMusic(){ if(musTimer){clearInterval(musTimer);musTimer=null;} if(musGain){try{musGain.disconnect();}catch(_){}musGain=null;} }
+function setMusic(v){ musLevel=Math.max(0,Math.min(1,v)); localStorage.setItem("hs-music",musLevel); if(musGain)musGain.gain.value=musLevel*0.16; if(musLevel>0)startMusic(); else stopMusic(); }
+/* ---- weather ambience: a soft rain/wind loop that fades with the weather, plus thunder claps in a storm ---- */
+let rainSrc=null, rainGain=null, rainFilter=null, rainCur=0, thunderT=4;
+function ensureRain(){ if(rainSrc||!actx)return; const a=actx;
+  const buf=a.createBuffer(1, a.sampleRate*2, a.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*0.5;                    // 2s of white noise, looped (setup only)
+  rainSrc=a.createBufferSource(); rainSrc.buffer=buf; rainSrc.loop=true;
+  rainFilter=a.createBiquadFilter(); rainFilter.type="lowpass"; rainFilter.frequency.value=1500;
+  rainGain=a.createGain(); rainGain.gain.value=0; rainSrc.connect(rainFilter).connect(rainGain).connect(master||a.destination); try{rainSrc.start();}catch(_){}}
+function thunderClap(){ tone("sawtooth",70,30,0.8,0.3); setTimeout(()=>tone("square",55,28,0.6,0.2),130); setTimeout(()=>tone("sine",40,30,0.7,0.14),260); }
+function updateWeatherAudio(dt){ if(!actx)return; ensureRain(); if(!rainGain)return;
+  const raining = soundOn && scene==="out" && area!=="dungeon" && isRainy();
+  const want = !raining?0:(weather==="thunder"?0.5:weather==="rain"?0.34:0.18);
+  rainCur += (want-rainCur)*Math.min(1,dt*1.5); rainGain.gain.value=rainCur;
+  if(rainFilter)rainFilter.frequency.value = weather==="thunder"?2400:1500;
+  if(soundOn && scene==="out" && weather==="thunder"){ thunderT-=dt; if(thunderT<=0){ thunderT=7+Math.random()*9; thunderClap(); } } }
 function tone(type,f0,f1,dur,vol){ if(!soundOn)return; const a=audio();if(!a)return;const t=a.currentTime,o=a.createOscillator(),g=a.createGain();
   o.type=type;o.frequency.setValueAtTime(f0,t);if(f1!=null)o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),t+dur);
   g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.005);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);o.connect(g).connect(master);o.start(t);o.stop(t+dur+0.02); }
@@ -943,7 +1164,8 @@ const SND={ step(){tone("sine",150,110,0.06,0.05);},till(){tone("triangle",240,1
   water(){tone("sine",950,520,0.12,0.13);},harvest(){tone("sine",660,990,0.09,0.18);setTimeout(()=>tone("sine",990,1320,0.1,0.14),70);},
   coin(){tone("square",1200,1650,0.06,0.1);},swing(){tone("square",300,150,0.07,0.12);},hit(){tone("sawtooth",420,160,0.1,0.16);},
   chop(){tone("square",200,120,0.08,0.14);},mine(){tone("square",380,200,0.07,0.12);},place(){tone("sine",500,700,0.07,0.12);},craft(){tone("sine",600,900,0.12,0.14);setTimeout(()=>tone("sine",900,1200,0.1,0.12),80);},
-  hurt(){tone("sawtooth",200,90,0.18,0.2);},heal(){tone("sine",520,880,0.2,0.16);},door(){tone("sine",300,500,0.12,0.12);},meow(){tone("sine",700,500,0.12,0.1);setTimeout(()=>tone("sine",520,640,0.1,0.08),90);},no(){tone("sawtooth",170,120,0.1,0.12);} };
+  hurt(){tone("sawtooth",200,90,0.18,0.2);},heal(){tone("sine",520,880,0.2,0.16);},door(){tone("sine",300,500,0.12,0.12);},meow(){tone("sine",700,500,0.12,0.1);setTimeout(()=>tone("sine",520,640,0.1,0.08),90);},no(){tone("sawtooth",170,120,0.1,0.12);},
+  equip(){tone("square",520,760,0.05,0.1);setTimeout(()=>tone("triangle",760,900,0.07,0.09),50);},sleep(){tone("sine",400,180,0.5,0.12);setTimeout(()=>tone("sine",260,120,0.6,0.1),180);} };
 
 let bannerMsg="", bannerUntil=0;
 function float(x,y,text,col){ const tx=t(text); fx.push({kind:"text",x,y,text:tx,col,life:1});
@@ -963,7 +1185,7 @@ function pickKind(){ if(area==="dungeon"){ const pool=["slime","bat","boar","fro
   if(area==="home"&&seasonIdx()===2&&Math.random()<0.12)return "bear";   // autumn: bears rarely appear
   const pool=isNight()?["slime","bat","bat","boar","shade","crab"]:["slime","slime","bat","boar","crab"]; return pool[Math.random()*pool.length|0]; }
 function spawnMob(){ const RW=gridOut.length, CW=gridOut[0].length; for(let i=0;i<30;i++){ const c=1+(Math.random()*(CW-2)|0), r=1+(Math.random()*(RW-2)|0);
-  if(inFarm(r,c)||OBST.has(gridOut[r][c].type))continue; const x=c*TILE+TILE/2,y=r*TILE+TILE/2,pd=Math.hypot(x-player.x,y-player.y); if(pd<170||pd>520)continue;
+  const tt=gridOut[r][c].type; if(safeTile(r,c)||OBST.has(tt)||WATER.has(tt))continue; const x=c*TILE+TILE/2,y=r*TILE+TILE/2,pd=Math.hypot(x-player.x,y-player.y); if(pd<170||pd>520)continue;
   const k=pickKind(), K=MOBKINDS[k], hp=K.hp+(area==="dungeon"?Math.floor(dungFloor/2):0);
   mobs.push({x,y,hp,maxHp:hp,r:K.r,flash:0,kx:0,ky:0,t:Math.random()*9,col:K.col,kind:k,spd:K.spd,dmg:K.dmg,drop:K.drop,fly:K.fly}); return; } }
 const BOSSES=[
@@ -990,15 +1212,15 @@ function tryAttack(){ const range=TILE*1.6,dmg=(hasAxe?2:1)+totalBonus().atk; le
   for(const m of mobs){ const dx=m.x-player.x,dy=m.y-player.y,fwd=dx*player.fx+dy*player.fy,lat=Math.abs(dx*player.fy-dy*player.fx),dd=Math.hypot(dx,dy);
     if(dd<range&&(fwd>-10||dd<TILE*0.9)&&lat<TILE*1.1){ m.hp-=dmg;m.flash=0.18;const d=dd||1;m.kx=dx/d*7;m.ky=dy/d*7;hit=true;SND.hit();
       if(m.hp<=0){ let drop=3+(Math.random()*5|0); gainItem(m.drop||"goo",1,m.x,m.y); if(Math.random()<0.3)gainItem("meat",1,m.x,m.y); if(Math.random()<0.18)gainItem("oil",1,m.x,m.y);
-        if(area==="dungeon"){ drop+=Math.floor(dungFloor/2); if(m.boss){ drop+=50+dungFloor*3; gainItem("diamond",1,m.x,m.y); float(m.x,m.y-44,t("boss down!"),"#ffd24a"); } else if(Math.random()<0.12+dungFloor*0.004)gainItem(Math.random()<0.5?"silver":"fossil",1,m.x,m.y); }
+        if(area==="dungeon"){ drop+=Math.floor(dungFloor/2); if(m.boss){ drop+=50+dungFloor*3; gainItem("diamond",1,m.x,m.y); const rk=findRelic(); gainItem(rk,1,m.x,m.y); float(m.x,m.y-44,t("boss down!"),"#ffd24a"); float(m.x,m.y-60,"✨ "+itemName(rk)+"!","#ffe9b0"); } else if(Math.random()<0.12+dungFloor*0.004)gainItem(Math.random()<0.5?"silver":"fossil",1,m.x,m.y); }
         coins+=drop; float(m.x,m.y-30,"+"+drop+"c","#ffe27a"); burst(m.x,m.y,m.boss?"#ff9ad0":"#7be0a0",m.boss?22:12); syncUI(); } } }
   if(hit)spendHunger(1.5);
   mobs.splice(0,mobs.length,...mobs.filter(m=>m.hp>0)); return hit; }
 function talkInteract(){ if(scene!=="out"){ return; }
-  if(area==="home"&&Math.hypot(catX-player.x,catY-player.y)<TILE*1.7){ if(nearThreat())return blockTalk(); SND.meow(); if(metCat)openShop(); else {metCat=true;save();talkToCat();} return; }
-  if(area==="village"){ if(Math.hypot(npcX-player.x,npcY-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); if(metFisher)openMarket(); else {metFisher=true;save();talkToFisher();} return; }
+  if(area==="home"&&Math.hypot(catX-player.x,catY-player.y)<TILE*1.7){ if(nearThreat())return blockTalk(); SND.meow(); if(metCat)npcMenu("cat",openShop); else {metCat=true;save();talkToCat();} return; }
+  if(area==="village"){ if(Math.hypot(npcX-player.x,npcY-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); if(metFisher)npcMenu("fisher",openMarket); else {metFisher=true;save();talkToFisher();} return; }
     for(const n of VNPCS){ if(Math.hypot(n.x-player.x,n.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow();
-      if(n.role==="merchant"){ if(metHamu)openMerchant(); else {metHamu=true;save();hamuIntro();} } else if(n.role==="quest")talkLouie(); else startDialog(n.lines.map(s=>({who:"vnpc",name:n.name,face:n.face,col:n.col,text:s})),null); return; } }
+      if(n.role==="merchant"){ if(metHamu)npcMenu("hamu",openMerchant); else {metHamu=true;save();hamuIntro();} } else if(n.role==="quest")talkLouie(); else if(n.id==="david")npcMenu("david",null); else startDialog(n.lines.map(s=>({who:"vnpc",name:n.name,face:n.face,col:n.col,text:s})),null); return; } }
     for(const v of villagers){ if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); startDialog(v.lines.map(s=>({who:"vill",name:v.name,face:v.face,col:v.col,text:s})),null); return; } } }
   float(player.x,player.y-22,"no one to talk to here","#cfe0ff"); }
 function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.18;
@@ -1007,7 +1229,7 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.
   if(area==="home"){ for(const a of animals){ if(Math.hypot(a.x-player.x,a.y-player.y)<TILE*1.5){
     if(a.kind==="horse"){ openTeleport(); return; }
     if(animalReady(a)){ collectAnimal(a); return; }
-    SND.no(); float(a.x,a.y-22,t("not ready yet"),"#cfe6ff"); return; } } }
+    SND.no(); float(a.x,a.y-22,TR("not ready yet"),"#cfe6ff"); return; } } }
   // exterior — use is for working the land/fighting; talking is on its own button
   SND.swing();
   if(tryAttack()){ save(); return; }
@@ -1015,23 +1237,29 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.
   const sel=bag[selSlot];
   if(t.type==="door"){ enterHouse(); return; }
   if(t.type==="chest"){ openChest(f.r,f.c); return; }
+  if(t.type==="stand"){ const isRelic=sel&&ITEMS[sel.key]&&ITEMS[sel.key].kind==="relic";
+    if(isRelic){ if(t.display)gainItem(t.display,1,cx,cy); t.display=sel.key; removeItem(sel.key,1); SND.place(); burst(cx,cy-8,"#ffe9b0",6); float(cx,cy-18,itemName(t.display),"#ffe9b0"); save(); return; }
+    if(t.display){ const had=t.display; delete t.display; gainItem(had,1,cx,cy); SND.place(); float(cx,cy-18,TR("took")+" "+itemName(had),"#ffe9b0"); save(); return; }
+    SND.no(); float(cx,cy-12,TR("hold a collectable to display it"),"#cfe6ff"); return; }
   if(t.type==="stove"){ openStove(); return; }
   if(MACHINE_IN[t.type]){ useMachine(t,cx,cy); return; }
   if(t.type==="cave"){ enterDungeon(); return; }
   if(t.type==="stairs"){ descend(); return; }
   if(t.type==="exitup"){ leaveDungeon(); return; }
-  if(t.type==="elevator"){ float(cx,cy-12,t("checkpoint saved!"),"#9ad8ff"); leaveDungeon(); return; }
+  if(t.type==="elevator"){ float(cx,cy-12,TR("checkpoint saved!"),"#9ad8ff"); leaveDungeon(); return; }
   if(t.type==="gem"){ if(tooHungry())return; spendHunger(2); t.hits=(t.hits||4)-1; SND.mine(); burst(cx,cy-6,"#9fe6ff",6); if(t.hits<=0){ const dep=dungFloor; const r=Math.random();
-      gainItem(r<0.18?"diamond":r<0.45?(Math.random()<0.5?"red_jewel":"green_jewel"):r<0.7?"fossil":"silver",1,cx,cy); if(dep>=20&&Math.random()<0.2)gainItem("diamond",1,cx,cy); t.type="dfloor"; t.hits=0; } save(); return; }
+      gainItem(r<0.18?"diamond":r<0.45?(Math.random()<0.5?"red_jewel":"green_jewel"):r<0.7?"fossil":"silver",1,cx,cy); if(dep>=20&&Math.random()<0.2)gainItem("diamond",1,cx,cy);
+        if(Math.random()<0.07){ const rk=findRelic(); gainItem(rk,1,cx,cy); float(cx,cy-22,"✨ "+itemName(rk)+"!","#ffe9b0"); }   // rare relic in the gem veins
+        t.type="dfloor"; t.hits=0; } save(); return; }
   // place crafted item
   if(sel&&ITEMS[sel.key].kind==="place"&&PLACEABLE_ON.has(t.type)&&!t.crop&&!inFarmHouseConflict(f)){ t.type=ITEMS[sel.key].tile; if(t.type==="chest")t.store=new Array(CHESTN).fill(null); removeItem(sel.key,1); SND.place(); burst(cx,cy,itemColor(sel.key),5); save(); return; }
   // water: collect from a placed net, set a new net, or rod-fish (works on ANY water tile)
   if(WATER.has(t.type)){
-    if(t.net){ if(curDay()>t.net.day){ const sf=rollSeafood(t.net.lvl||1); gainItem(sf,1,cx,cy); addItem(t.net.key||"net",1); delete t.net; SND.water(); burst(cx,cy-6,"#bfe6f0",8); float(cx,cy-14,t("netted")+" "+itemName(sf),"#bfe6f0"); }
-        else { SND.no(); float(cx,cy-12,t("the net needs a day to fill"),"#cfe6ff"); } save(); return; }
-    if(sel&&isNet(sel.key)){ t.net={day:curDay(),lvl:ITEMS[sel.key].netLvl||1,key:sel.key}; removeItem(sel.key,1); SND.water(); burst(cx,cy,"#dfeae0",5); float(cx,cy-12,t("net set — come back tomorrow"),"#bfe6f0"); save(); return; }
+    if(t.net){ if(curDay()>t.net.day){ const sf=rollSeafood(t.net.lvl||1); gainItem(sf,1,cx,cy); addItem(t.net.key||"net",1); delete t.net; SND.water(); burst(cx,cy-6,"#bfe6f0",8); float(cx,cy-14,TR("netted")+" "+itemName(sf),"#bfe6f0"); }
+        else { SND.no(); float(cx,cy-12,TR("the net needs a day to fill"),"#cfe6ff"); } save(); return; }
+    if(sel&&isNet(sel.key)){ t.net={day:curDay(),lvl:ITEMS[sel.key].netLvl||1,key:sel.key}; removeItem(sel.key,1); SND.water(); burst(cx,cy,"#dfeae0",5); float(cx,cy-12,TR("net set — come back tomorrow"),"#bfe6f0"); save(); return; }
     if(sel&&isRod(sel.key)){ startFishing(cx,cy,sel.key); return; }
-    SND.no(); float(cx,cy-10,t("select a rod or a net"),"#cfe6ff"); return; }
+    SND.no(); float(cx,cy-10,TR("select a rod or a net"),"#cfe6ff"); return; }
   // scoop sand from the beach
   if(t.type==="sand"){ SND.mine(); burst(cx,cy,"#e9d8a6",6); gainItem("sand",1,cx,cy); save(); return; }
   // scoop oil from a seep
@@ -1047,7 +1275,8 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; } player.swing=0.
   // farm (inside fence)
   if(inFarm(f.r,f.c)&&FARMLAND.has(t.type)){
     if(area==="home"&&f.r===Math.floor(catY/TILE)&&f.c===Math.floor(catX/TILE)){ SND.no(); float(cx,cy-10,"the cat is sitting here","#ffd9a8"); return; }
-    if(t.type==="grass"||t.type==="path"||t.type==="ppath"){ if(tooHungry())return; spendHunger(1); t.type="soil"; SND.till(); burst(cx,cy,"#6b4a2b",5); }
+    if(t.type==="grass"||t.type==="path"||t.type==="ppath"){ if(tooHungry())return; spendHunger(1); t.type="soil"; SND.till(); burst(cx,cy,"#6b4a2b",5);
+        if(Math.random()<0.012){ const rk=findRelic(); gainItem(rk,1,cx,cy); float(cx,cy-20,"✨ "+itemName(rk)+"!","#ffe9b0"); SND.coin(); } }   // rare: dig up an ancient relic
     else if(t.type==="soil"){
       if(!t.crop){ if(sel&&ITEMS[sel.key].kind==="seed"){ const crop=ITEMS[sel.key].crop, C=CROPS[crop];
           if(!cropAllowed(crop)){ SND.no(); float(cx,cy-10, C.special?"Wrong season. You cannot plant this crop now.":"This crop cannot be planted in this season.","#ffd9a8"); return; }
@@ -1074,13 +1303,13 @@ function rollFish(lvl,baited){ const lucky=Math.random()<(0.07*lvl+(baited?0.12:
                   :[{k:"fish",w:30},{k:"shrimp",w:18},{k:"tropical_fish",w:16},{k:"pufferfish",w:12},{k:"eel",w:8},{k:"squid",w:6},{k:"octopus",w:3},{k:"shark",w:1}];
   let tot=pool.reduce((s,p)=>s+p.w,0),r=Math.random()*tot; for(const p of pool){ if((r-=p.w)<0)return p.k; } return "fish"; }
 function startFishing(x,y,rodKey){ const lvl=ITEMS[rodKey].rodLvl||1, baited=countItem("bait")>0; if(baited)removeItem("bait",1);
-  fishing={x,y,lvl,baited,fishY:0.5,fishTarget:0.5,ft:0,barY:0.72,barV:0,barH:0.1+0.028*(lvl-1)+(baited?0.05:0),prog:0.34,hold:false,t:0}; SND.water(); }
+  fishing={x,y,lvl,baited,fishY:0.5,fishTarget:0.5,ft:0,barY:0.6,barV:0,barH:0.16+0.03*(lvl-1)+(baited?0.06:0),prog:0.45,hold:false,t:0}; SND.water(); }   // easier: bigger catch zone, higher starting progress
 function updateFishing(dt){ const F=fishing;
-  F.ft-=dt; if(F.ft<=0){ F.fishTarget=0.05+Math.random()*0.9; F.ft=0.35+Math.random()*0.85; }
-  F.fishY+=(F.fishTarget-F.fishY)*5*dt;
-  F.barV+=(F.hold?-2.6:1.9)*dt; F.barV*=0.92; F.barY+=F.barV*dt;
+  F.ft-=dt; if(F.ft<=0){ F.fishTarget=0.15+Math.random()*0.7; F.ft=0.6+Math.random()*1.0; }   // fish wanders less far and changes direction less often
+  F.fishY+=(F.fishTarget-F.fishY)*3.5*dt;                                                       // and moves more gently
+  F.barV+=(F.hold?-2.3:1.7)*dt; F.barV*=0.92; F.barY+=F.barV*dt;
   if(F.barY<F.barH){F.barY=F.barH;F.barV=0;} if(F.barY>1-F.barH){F.barY=1-F.barH;F.barV=0;}
-  const over=Math.abs(F.fishY-F.barY)<F.barH; F.prog+=(over?0.42:-0.34)*dt;
+  const over=Math.abs(F.fishY-F.barY)<F.barH; F.prog+=(over?0.55:-0.22)*dt;                      // fills faster over the fish, drains slower when off
   if(F.prog>=1){ const k=rollFish(F.lvl,F.baited); gainItem(k,1,F.x,F.y); stats.fish++; burst(F.x,F.y-6,"#8fc7e8",12); float(F.x,F.y-14,(lang==="zh"?"釣到 ":"caught ")+itemName(k)+"!","#bfe6f0"); SND.harvest(); fishing=null; save(); return; }
   if(F.prog<=0){ float(F.x,F.y-10,"…it got away","#cfe6ff"); SND.no(); fishing=null; } }
 function drawFishing(){ const F=fishing, bw=28, top=64, h=Math.max(160,Math.min(VH-210,340)), bx=VW-44;
@@ -1104,7 +1333,8 @@ function holdTarget(){ if(scene!=="out"||!holdUse)return null; const f=facedCell
 function updateHold(){ const f=holdTarget(); if(!f){ return; } const prog=(now()-holdStart)/1.2;
   if(prog>=1&&!holdBroke){ holdBroke=true; const tt=gridOut[f.r][f.c], cx=f.c*TILE+TILE/2, cy=f.r*TILE+TILE/2;
     if(tt.net){ addItem(tt.net.key||"net",1); delete tt.net; SND.chop(); burst(cx,cy,"#dfeae0",8); float(cx,cy-12,"net picked up","#bfe6f0"); save(); return; }
-    const give=TILE2ITEM[tt.type]||"wood"; tt.type=inFarm(f.r,f.c)?"grass":"wild";
+    const give=TILE2ITEM[tt.type]||"wood"; if(tt.type==="stand"&&tt.display){ gainItem(tt.display,1,cx,cy); delete tt.display; }   // also return the displayed collectable
+    tt.type=inFarm(f.r,f.c)?"grass":"wild";
     SND.chop(); burst(cx,cy,"#d9c19a",8); gainItem(give,1,cx,cy); save(); } }
 function gotoArea(a){ setArea(a); setScene("out"); SND.door(); transCD=0.6; mobs.length=0; hover=null;
   if(a==="village"){ player.x=1*TILE+TILE/2; player.y=VROAD_R*TILE+TILE/2; player.dir="r";player.fx=1;player.fy=0; }
@@ -1120,7 +1350,7 @@ function tryBoss(){ if(!hasSword()||!hasArmor()){ SND.no(); float(player.x,playe
     {...B,text:"I came to test your reflexes. Dodge my attacks, strike when you can — survive, and the road is yours."},
     {...B,text:"Show me what you've got!"}
   ], ()=>{ scene="boss"; SND.door(); bossInit(); }); }
-function bossInit(){ document.body.classList.add("inboss"); const GY=VH-50;
+function bossInit(){ document.body.classList.add("inboss"); document.getElementById("talkBtn2").textContent="⤴"; const GY=VH-50;
   boss.gy=GY; boss.px=80; boss.py=GY; boss.pvx=0; boss.pvy=0; boss.pg=true; boss.coyote=0; boss.pdir=1; boss.atk=0; boss.pinv=0;
   boss.php=player.maxHp; boss.pmax=player.maxHp; boss.flash=0;
   boss.bx=VW-130; boss.by=GY; boss.bhp=24; boss.bmax=24; boss.t=0; boss.cd=1.6; boss.st="idle"; boss.tele=0; boss.cv=0; boss.ct=0;
@@ -1128,7 +1358,7 @@ function bossInit(){ document.body.classList.add("inboss"); const GY=VH-50;
 function bossJump(){ if(scene==="boss"&&(boss.pg||boss.coyote>0)){ boss.pvy=-470; boss.pg=false; boss.coyote=0; SND.swing(); } }
 function bossAttack(){ if(scene!=="boss"||boss.atk>0||boss.end)return; boss.atk=0.24; SND.hit();
   if(Math.abs(boss.bx-boss.px)<74&&Math.sign(boss.bx-boss.px||1)===boss.pdir&&Math.abs(boss.by-boss.py)<78){ boss.bhp-=1+totalBonus().atk; boss.bflash=0.16; } }
-function bhitPlayer(d,p){ if(boss.pinv>0||boss.end)return; boss.php-=d; boss.pinv=1.1; boss.flash=0.14; boss.pvy=-240; boss.pg=false; SND.hurt(); if(p)p.t=0; }
+function bhitPlayer(d,p){ if(boss.pinv>0||boss.end)return; boss.php-=defenseCut(d); boss.pinv=1.1; boss.flash=0.14; boss.pvy=-240; boss.pg=false; SND.hurt(); if(p)p.t=0; }
 function bossFire(){ const a=Math.atan2((boss.py-22)-(boss.by-24),boss.px-boss.bx); const ph=boss.bhp<=boss.bmax/2, spd=ph?255:225;
   for(let i=-2;i<=2;i++){ const an=a+i*0.20; boss.proj.push({x:boss.bx,y:boss.by-24,vx:Math.cos(an)*spd,vy:Math.sin(an)*spd,t:3.2}); } SND.swing(); }
 function updateBoss(dt){ const GY=boss.gy, ph=boss.bhp<=boss.bmax/2;
@@ -1166,7 +1396,7 @@ function updateBoss(dt){ const GY=boss.gy, ph=boss.bhp<=boss.bmax/2;
   if(Math.abs(boss.bx-boss.px)<40&&Math.abs(boss.by-boss.py)<48)bhitPlayer(1,null);
   if(boss.bhp<=0&&!boss.end){ boss.end=1.5; boss.win=true; }
   if(boss.php<=0&&!boss.end){ boss.end=1.2; boss.win=false; } }
-function finishBoss(win){ document.body.classList.remove("inboss"); if(win){ bossDefeated=true; save(); gotoArea("village"); float(player.x,player.y-26,"the road is clear!","#bfe6c2"); }
+function finishBoss(win){ document.body.classList.remove("inboss"); document.getElementById("talkBtn2").textContent="💬"; if(win){ bossDefeated=true; save(); gotoArea("village"); float(player.x,player.y-26,"the road is clear!","#bfe6c2"); }
   else { setArea("home"); setScene("out"); player.x=(OCOLS-3)*TILE+TILE/2; player.y=ROAD_R*TILE+TILE/2; player.dir="l";player.fx=-1;player.fy=0; player.hp=player.maxHp; transCD=0.9; float(player.x,player.y-26,"defeated… craft better gear & retry","#ff9a9a"); save(); } }
 function drawBoss(){ ctx.fillStyle="#1a1030"; ctx.fillRect(0,0,VW,VH);
   ctx.fillStyle="#2a1c3a"; ctx.fillRect(0,boss.gy+12,VW,VH-boss.gy); ctx.strokeStyle="rgba(255,255,255,.15)";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,boss.gy+12);ctx.lineTo(VW,boss.gy+12);ctx.stroke();
@@ -1203,8 +1433,8 @@ function enterHouse(){ outX=player.x;outY=player.y; SND.door(); setScene("in"); 
 function exitHouse(){ SND.door(); setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2; player.dir="d";player.fx=0;player.fy=1; transCD=0.5; save(); if(catIntroPending)catReveal(); }
 function sleep(){ const ph=(clock%DAYLEN)/DAYLEN, skip=(1-ph)*DAYLEN; clock+=skip;
   for(const row of gridHome)for(const tt of row){ const cr=tt.crop; if(cr&&cr.grow<1)cr.grow=Math.min(1,cr.grow+skip/CROPS[cr.type].dur); }   // crops grow overnight
-  player.hp=player.maxHp; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; SND.heal(); float(player.x,player.y-26,"slept · a new day · crops grew","#fff"); save(); }
-function hurt(dmg,fx0,fy0){ if(player.inv>0||scene!=="out"||dialogOpen)return; player.hp-=dmg; player.inv=1.2; SND.hurt();
+  player.hp=player.maxHp; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; SND.sleep(); float(player.x,player.y-26,"slept · a new day · crops grew","#fff"); save(); }
+function hurt(dmg,fx0,fy0){ if(player.inv>0||scene!=="out"||dialogOpen)return; player.hp-=defenseCut(dmg); player.inv=1.2; SND.hurt();
   const dx=player.x-fx0,dy=player.y-fy0,d=Math.hypot(dx,dy)||1; player.kx=dx/d*8;player.ky=dy/d*8; fx.push({kind:"flash",life:1});
   if(player.hp<=0){ faint(); } save(); }   // death (combat only — starvation can't kill) respawns at the farm
 
@@ -1212,24 +1442,34 @@ function hurt(dmg,fx0,fy0){ if(player.inv>0||scene!=="out"||dialogOpen)return; p
 const keys={}; let running=false,lastTapDir="",lastTapT=-1;
 function dirTap(d){ const t=now(); if(d===lastTapDir&&t-lastTapT<0.30)running=true; lastTapDir=d; lastTapT=t; }   // double-tap a direction to run
 function anyMove(){ return keys.u||keys.d||keys.l||keys.r; }
+/* ---- rebindable keys (arrows + space stay as permanent fallbacks; digits 1–0 stay the hotbar) ---- */
+const KEY_ACTIONS=[["up","↑ move up","w"],["down","↓ move down","s"],["left","← move left","a"],["right","→ move right","d"],
+  ["use","use / act","e"],["talk","talk","t"],["bag","bag","i"],["map","map","m"],["eat","eat","f"],["ride","ride horse","g"]];
+const ARROW_FALLBACK={up:"arrowup",down:"arrowdown",left:"arrowleft",right:"arrowright"};
+let keyMap=Object.fromEntries(KEY_ACTIONS.map(a=>[a[0],a[2]])), rebinding=null;
+try{ const s=JSON.parse(localStorage.getItem("hs-keys")||"{}"); for(const a in keyMap)if(typeof s[a]==="string")keyMap[a]=s[a]; }catch(_){}
+function saveKeys(){ localStorage.setItem("hs-keys",JSON.stringify(keyMap)); }
+function keyMatch(a,k){ return k===keyMap[a] || (ARROW_FALLBACK[a]&&k===ARROW_FALLBACK[a]) || (a==="use"&&k===" ") || (a==="bag"&&(k==="tab"||k==="b")); }
 addEventListener("keydown",e=>{ const k=e.key.toLowerCase();
+  if(rebinding!==null){ e.preventDefault(); e.stopPropagation();   // capture the next key for the slot being rebound
+    if(k==="escape")rebinding=null; else if(!/^[0-9]$/.test(k)&&k!=="tab"){ keyMap[rebinding]=k; saveKeys(); rebinding=null; } renderKeybinds(); return; }
   if(document.activeElement&&(document.activeElement.id==="cheat"||document.activeElement.id==="nameInput"))return;
-  if(scene==="boss"){ if(["arrowup","w"," "].includes(k))bossJump(); else if(["arrowleft","a"].includes(k))keys.l=1; else if(["arrowright","d"].includes(k))keys.r=1; else if(k==="e")bossAttack(); e.preventDefault(); return; }
+  if(scene==="boss"){ if(keyMatch("up",k)||k===" ")bossJump(); else if(keyMatch("left",k))keys.l=1; else if(keyMatch("right",k))keys.r=1; else if(keyMatch("use",k))bossAttack(); e.preventDefault(); return; }
   if(dialogOpen){ if(k==="e"||k===" "||k==="enter")advanceDialog(); else if(k==="delete"||k==="backspace"||k==="escape")skipDialog(); e.preventDefault(); return; }
   if(fishing){ if(k==="e"||k===" ")fishing.hold=true; e.preventDefault(); return; }   // hold space/E to reel
-  if(["arrowup","w"].includes(k)){if(!e.repeat)dirTap("u");keys.u=1;e.preventDefault();} else if(["arrowdown","s"].includes(k)){if(!e.repeat)dirTap("d");keys.d=1;e.preventDefault();}
-  else if(["arrowleft","a"].includes(k)){if(!e.repeat)dirTap("l");keys.l=1;e.preventDefault();} else if(["arrowright","d"].includes(k)){if(!e.repeat)dirTap("r");keys.r=1;e.preventDefault();}
-  else if(k==="e"||k===" "){ e.preventDefault(); if(e.repeat)return; audio(); startHold(); interact(); }
-  else if(k==="t"){ e.preventDefault(); if(e.repeat)return; audio(); talkInteract(); }
-  else if(k==="m"){ e.preventDefault(); mapOpen=!mapOpen; }
-  else if(k==="g"){ e.preventDefault(); if(e.repeat)return; audio(); openTeleport(); }
-  else if(k==="f"){ e.preventDefault(); if(e.repeat)return; audio(); eatFood(); }
-  else if(k==="i"||k==="tab"||k==="b"){ e.preventDefault(); baguiEl.classList.contains("open")?closeBag():openBag(); }
+  if(keyMatch("up",k)){if(!e.repeat)dirTap("u");keys.u=1;e.preventDefault();} else if(keyMatch("down",k)){if(!e.repeat)dirTap("d");keys.d=1;e.preventDefault();}
+  else if(keyMatch("left",k)){if(!e.repeat)dirTap("l");keys.l=1;e.preventDefault();} else if(keyMatch("right",k)){if(!e.repeat)dirTap("r");keys.r=1;e.preventDefault();}
+  else if(keyMatch("use",k)){ e.preventDefault(); if(e.repeat)return; audio(); startHold(); interact(); }
+  else if(keyMatch("talk",k)){ e.preventDefault(); if(e.repeat)return; audio(); talkInteract(); }
+  else if(keyMatch("map",k)){ e.preventDefault(); mapOpen=!mapOpen; }
+  else if(keyMatch("ride",k)){ e.preventDefault(); if(e.repeat)return; audio(); openTeleport(); }
+  else if(keyMatch("eat",k)){ e.preventDefault(); if(e.repeat)return; audio(); eatFood(); }
+  else if(keyMatch("bag",k)){ e.preventDefault(); baguiEl.classList.contains("open")?closeBag():openBag(); }
   else if(k==="escape"){ if(baguiEl.classList.contains("open"))closeBag(); if(chestEl.classList.contains("open"))closeChest(); document.querySelectorAll(".shop.open").forEach(s=>s.classList.remove("open")); }
   else if(/^[0-9]$/.test(k)){ selSlot=(k==="0")?9:(+k-1); renderBar(); } });
 addEventListener("keyup",e=>{ const k=e.key.toLowerCase();
-  if(["arrowup","w"].includes(k))keys.u=0; else if(["arrowdown","s"].includes(k))keys.d=0; else if(["arrowleft","a"].includes(k))keys.l=0; else if(["arrowright","d"].includes(k))keys.r=0;
-  else if(k==="e"||k===" "){ endHold(); if(fishing)fishing.hold=false; } if(!anyMove())running=false; });
+  if(keyMatch("up",k))keys.u=0; else if(keyMatch("down",k))keys.d=0; else if(keyMatch("left",k))keys.l=0; else if(keyMatch("right",k))keys.r=0;
+  else if(keyMatch("use",k)){ endHold(); if(fishing)fishing.hold=false; } if(!anyMove())running=false; });
 /* ---- virtual joystick (push to the edge to run) ---- */
 const joy=document.getElementById("joy"), joynub=document.getElementById("joynub"); let joyId=null;
 function joySet(dx,dy){ const R=42, d=Math.hypot(dx,dy)||0.0001; let cx=dx,cy=dy; if(d>R){cx=dx/d*R;cy=dy/d*R;}
@@ -1256,7 +1496,7 @@ actBtn.addEventListener("pointerdown",e=>{e.preventDefault();audio();if(fishing)
 actBtn.addEventListener("pointerup",e=>{e.preventDefault();if(fishing){fishing.hold=false;return;}endHold();});
 actBtn.addEventListener("pointerleave",()=>endHold()); actBtn.addEventListener("pointercancel",()=>endHold());
 document.getElementById("talkBtn").addEventListener("click",()=>{audio();talkInteract();});
-document.getElementById("talkBtn2").addEventListener("pointerdown",e=>{e.preventDefault();audio();if(dialogOpen){advanceDialog();return;}talkInteract();});
+document.getElementById("talkBtn2").addEventListener("pointerdown",e=>{e.preventDefault();audio();if(scene==="boss"){bossJump();return;}if(dialogOpen){advanceDialog();return;}talkInteract();});
 document.getElementById("mapBtn").addEventListener("click",()=>{mapOpen=!mapOpen;});
 document.getElementById("rideBtn").addEventListener("click",()=>{audio();openTeleport();});
 document.getElementById("eatBtn").addEventListener("click",()=>{audio();eatFood();});
@@ -1266,6 +1506,7 @@ cheatEl.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter")
   else if(v==="000"){ equip.sword="metal_sword"; equip.armor="metal_armor"; recalcMax(); renderBar(); float(player.x,player.y-26,"cheat: sword & armour equipped","#ffe27a"); save(); }
   else if(v==="333"){ if(!hasHorse())addAnimal("horse"); float(player.x,player.y-26,"cheat: horse delivered","#ffe27a"); save(); }
   else if(v==="$$$"){ coins+=10000; SND.coin(); syncUI(); float(player.x,player.y-26,"cheat: +10000 coins","#ffe27a"); save(); }
+  else if(v==="changeoc"){ localStorage.setItem("hs-oc","1"); const as=document.getElementById("artSection"); if(as)as.style.display=""; float(player.x,player.y-26,"cheat: character art unlocked","#ffe27a"); }
   cheatEl.value=""; cheatEl.blur(); } });
 
 /* ---- physics ---- */
@@ -1273,7 +1514,7 @@ function isObst(px,py){ const c=Math.floor(px/TILE),r=Math.floor(py/TILE); if(r<
 function blocked(px,py,h){ return isObst(px-h,py-h)||isObst(px+h,py-h)||isObst(px-h,py+h)||isObst(px+h,py+h); }
 function moveEnt(o,vx,vy,h){ if(!isFinite(vx)||!isFinite(vy))return; const nx=o.x+vx; if(!blocked(nx,o.y,h))o.x=nx; const ny=o.y+vy; if(!blocked(o.x,ny,h))o.y=ny; }
 // monsters are barred from the farm/house area (the fenced home zone)
-function mobForbid(px,py){ if(area!=="home")return false; const c=Math.floor(px/TILE),r=Math.floor(py/TILE); return inFarm(r,c); }
+function mobForbid(px,py){ const c=Math.floor(px/TILE),r=Math.floor(py/TILE); return safeTile(r,c); }
 function blockedMob(px,py,h){ return blocked(px,py,h)||mobForbid(px-h,py-h)||mobForbid(px+h,py-h)||mobForbid(px-h,py+h)||mobForbid(px+h,py+h); }
 function moveMob(o,vx,vy,h){ if(!isFinite(vx)||!isFinite(vy))return; const nx=o.x+vx; if(!blockedMob(nx,o.y,h))o.x=nx; const ny=o.y+vy; if(!blockedMob(o.x,ny,h))o.y=ny; }
 // trees & rocks regrow on empty wild ground over time (rocks slower)
@@ -1290,7 +1531,8 @@ function update(dt){ if(scene==="boss"){ updateBoss(dt); return; }
   let vx=0,vy=0; if(keys.l)vx-=1;if(keys.r)vx+=1;if(keys.u)vy-=1;if(keys.d)vy+=1; player.moving=!!(vx||vy);
   if(!player.moving)running=false; const sp=(running?224:132)*dt;
   if(vx||vy){ const m=Math.hypot(vx,vy);vx/=m;vy/=m;
-    if(Math.abs(vx)>Math.abs(vy)){player.dir=vx<0?"l":"r";player.fx=vx<0?-1:1;player.fy=0;}else{player.dir=vy<0?"u":"d";player.fy=vy<0?-1:1;player.fx=0;}
+    if(Math.abs(vx)>=Math.abs(vy)){player.dir=vx<0?"l":"r";player.fx=vx<0?-1:1;player.fy=0;}   // full 4-way facing so every block (up/down/left/right) is easy to target
+    else {player.dir=vy<0?"u":"d";player.fy=vy<0?-1:1;player.fx=0;}                              // "up"/back reuses the front sprite for now (no back art yet)
     moveEnt(player,vx*sp,vy*sp,11); if(soundOn){const t=now();if(t-lastStep>0.32){SND.step();lastStep=t;}} }
   if(Math.abs(player.kx)+Math.abs(player.ky)>0.1){ moveEnt(player,player.kx,player.ky,11); player.kx*=0.8;player.ky*=0.8; }
   if(player.inv>0)player.inv-=dt; if(player.swing>0)player.swing-=dt;
@@ -1300,9 +1542,8 @@ function update(dt){ if(scene==="boss"){ updateBoss(dt); return; }
     else if(scene==="out"&&here==="road"){ if(area==="home"&&pc>=OCOLS-1){ if(bossDefeated)gotoArea("village"); else tryBoss(); } else if(area==="village"&&pc<=0)gotoArea("home"); } }
   if(scene==="out"){ const seasonGrow=(seasonIdx()===0||seasonIdx()===2)?1.25:1;   // spring & autumn grow a bit faster
     for(let r=0;r<gridOut.length;r++)for(let c=0;c<gridOut[0].length;c++){ const cr=gridOut[r][c].crop; if(cr&&cr.grow<1){ const C=CROPS[cr.type];const s=(now()<cr.boost?2.4:1)*seasonGrow; cr.grow=Math.min(1,cr.grow+dt/C.dur*s); } }
-    const outside=!inFarm(pr,pc); const target=area==="dungeon"?Math.min(3+Math.floor(dungFloor/5),12):(isNight()?12:(outside?8:4));
-    if(area==="village")mobs.length=0;   // the town is a safe zone — no monsters
-    spawnT-=dt; if(area!=="village"&&spawnT<=0&&mobs.filter(m=>!m.boss).length<target){spawnMob();spawnT=area==="dungeon"?1.6:(isNight()?1.4:2.2);}
+    const outside=!inFarm(pr,pc); const target=area==="dungeon"?Math.min(3+Math.floor(dungFloor/5),12):area==="village"?(isNight()?9:5):(isNight()?12:(outside?8:4));   // the village wilds now have monsters (town & fisher pen stay safe)
+    spawnT-=dt; if(spawnT<=0&&mobs.filter(m=>!m.boss).length<target){spawnMob();spawnT=area==="dungeon"?1.6:(isNight()?1.4:2.2);}
     for(const mb of mobs){ mb.t+=dt;mb.flash=Math.max(0,mb.flash-dt);const dx=player.x-mb.x,dy=player.y-mb.y,d=Math.hypot(dx,dy)||1;
       if(mb.boss){ bossBehave(mb,dx/d,dy/d,d,dt); if(d<mb.r+11)hurt(2,mb.x,mb.y); continue; }   // bosses have their own AI + hit harder
       const sp=mb.spd||52; let mx=0,my=0; if(d<190){mx=dx/d;my=dy/d; if(mb.fly){const s=Math.sin(mb.t*6)*0.6;mx+=-dy/d*s;my+=dx/d*s;}}else{mx=Math.cos(mb.t*0.7);my=Math.sin(mb.t*0.9);}
@@ -1354,6 +1595,13 @@ function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE|
   else if(t.type==="chair"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#8a5a30";ctx.fillRect(x+12,y+8,6,TILE-18);ctx.fillStyle="#c08b5a";ctx.fillRect(x+12,y+18,TILE-24,12); }
   else if(t.type==="table"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#a9784a";ctx.fillRect(x+5,y+12,TILE-10,9);ctx.fillStyle="#7a542e";ctx.fillRect(x+7,y+20,4,TILE-24);ctx.fillRect(x+TILE-11,y+20,4,TILE-24); }
   else if(t.type==="lamp"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#6b4a2b";ctx.fillRect(x+TILE/2-2,y+18,4,TILE-20);const gl=0.5+0.3*Math.sin(now()*4+c);ctx.fillStyle="rgba(255,210,122,"+gl+")";ctx.beginPath();ctx.moveTo(x+TILE/2-9,y+18);ctx.lineTo(x+TILE/2+9,y+18);ctx.lineTo(x+TILE/2+6,y+7);ctx.lineTo(x+TILE/2-6,y+7);ctx.fill(); }
+  else if(t.type==="stand"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);
+    ctx.fillStyle="#8a6a3a";ctx.fillRect(x+TILE/2-11,y+TILE-11,22,8);                       // base
+    ctx.fillStyle="#a9854f";ctx.fillRect(x+TILE/2-6,y+15,12,TILE-25);                        // column
+    ctx.fillStyle="#c9ad7e";ctx.fillRect(x+TILE/2-10,y+11,20,6);                             // top plinth
+    if(t.display){ const em=itemEmoji(t.display)||"❔"; ctx.font="18px serif";ctx.textAlign="center";ctx.textBaseline="middle";
+      ctx.fillStyle="rgba(255,240,180,.4)";ctx.beginPath();ctx.arc(x+TILE/2,y+5,11,0,7);ctx.fill();   // soft glow behind the relic
+      ctx.fillText(em,x+TILE/2,y+5+Math.sin(now()*2+c)*1.5);ctx.textBaseline="alphabetic";ctx.textAlign="left"; } }
   else if(t.type==="road"){ ctx.fillStyle="rgba(0,0,0,.07)";ctx.fillRect(x+2,y+2,TILE-4,TILE-4);ctx.fillStyle="rgba(255,255,255,.16)";ctx.fillRect(x+TILE/2-7,y+TILE/2-2,14,4); }
   else if(t.type==="river"||t.type==="pond"||t.type==="sea"){ const dk=t.type==="sea"?"#2f6fb0":t.type==="river"?"#4a8fd6":"#4a8fd6";ctx.fillStyle=dk;ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="rgba(255,255,255,.16)";ctx.fillRect(x+8,y+10+Math.sin(now()*2+c)*2,14,3);ctx.fillRect(x+22,y+26+Math.cos(now()*2+r)*2,10,3); }
   if(t.net){ ctx.strokeStyle="rgba(240,248,255,.65)";ctx.lineWidth=1.4;   // net trap overlay (sits on the water tile)
@@ -1491,7 +1739,7 @@ function drawAnimal(a){ const x=a.x-camX,y=a.y-camY,A=ANIMALS[a.kind],bob=Math.s
     ctx.fillStyle="rgba(255,255,255,"+pulse+")";ctx.font="11px serif";ctx.fillText("✨",x+11,py-7); }
   if(Math.hypot(a.x-player.x,a.y-player.y)<TILE*1.5){ ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 11px Helvetica";
     const lbl=a.kind==="horse"?(lang==="zh"?"騎乘 ▸ 使用":"ride ▸ use"):(animalReady(a)?(lang==="zh"?"收集 ▸ 使用":"collect ▸ use"):t(A.name)); ctx.fillText(lbl,x,y-32+bob); } }
-const VDECOR=[{kind:"chicken",c:29,r:24},{kind:"pig",c:30,r:24},{kind:"cow",c:29,r:25}];   // decorative animals in Hamu's village pen
+const VDECOR=[{kind:"chicken",c:31,r:22},{kind:"pig",c:32,r:22},{kind:"cow",c:31,r:23}];   // decorative animals in Hamu's village pen
 function drawDecorAnimal(va){ const x=va.c*TILE+TILE/2-camX, y=va.r*TILE+TILE/2-camY, A=ANIMALS[va.kind], bob=Math.sin(now()*3+va.c)*1.5, big=A.big;
   ctx.fillStyle="rgba(0,0,0,.22)";ctx.beginPath();ctx.ellipse(x,y+12,big?13:10,4,0,0,7);ctx.fill();
   ctx.fillStyle=A.col;ctx.beginPath();ctx.ellipse(x,y+5+bob,big?13:10,big?10:8,0,0,7);ctx.fill();
@@ -1506,7 +1754,7 @@ function drawPlayer(){ const x=player.x-camX,y=player.y-camY,bob=player.moving?M
   ctx.fillStyle="#2f6dd0";ctx.beginPath();ctx.roundRect(x-8,y-4+bob,16,16,5);ctx.fill();
   ctx.fillStyle="#ffd9a8";ctx.beginPath();ctx.arc(x,y-10+bob,8,0,7);ctx.fill();
   ctx.fillStyle="#7a4a22";ctx.beginPath();ctx.arc(x,y-13+bob,8.5,Math.PI,2*Math.PI);ctx.fill();
-  ctx.fillStyle="#22303f";const ex=player.dir==="l"?-3:player.dir==="r"?3:0;if(player.dir!=="u"){ctx.beginPath();ctx.arc(x-3+ex,y-9+bob,1.4,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+3+ex*0.4,y-9+bob,1.4,0,7);ctx.fill();}
+  ctx.fillStyle="#22303f";const ex=player.dir==="l"?-3:player.dir==="r"?3:0;{ctx.beginPath();ctx.arc(x-3+ex,y-9+bob,1.4,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+3+ex*0.4,y-9+bob,1.4,0,7);ctx.fill();}   // always show the face (front sprite used for "up"/back too, until back art is added)
   ctx.globalAlpha=1; }
 function heart(x,y,full,s){ s=s||1; ctx.fillStyle=full?"#ff5b78":"rgba(255,255,255,.22)";ctx.beginPath();ctx.moveTo(x,y+9*s);ctx.bezierCurveTo(x-10*s,y+1*s,x-6*s,y-7*s,x,y-2*s);ctx.bezierCurveTo(x+6*s,y-7*s,x+10*s,y+1*s,x,y+9*s);ctx.fill();ctx.strokeStyle="rgba(0,0,0,.35)";ctx.lineWidth=1.5;ctx.stroke(); }
 // Minecraft/Stardew-style icon HUD pieces
@@ -1551,8 +1799,9 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
     for(let r=0;r<gridOut.length;r++)for(let c=0;c<gridOut[0].length;c++){ if(LIGHTS.has(gridOut[r][c].type)){ const x=c*TILE+TILE/2-camX,y=r*TILE+TILE/2-camY; if(x<-80||y<-80||x>VW+80||y>VH+80)continue; const g=ctx.createRadialGradient(x,y,4,x,y,70); g.addColorStop(0,"rgba(255,200,120,.55)");g.addColorStop(1,"rgba(255,200,120,0)"); ctx.fillStyle=g; ctx.beginPath();ctx.arc(x,y,70,0,7);ctx.fill(); } }
     ctx.globalCompositeOperation="source-over"; } }
   // dungeon: dark, lit by a glow around the player
-  if(area==="dungeon"){ ctx.fillStyle="rgba(6,4,16,.62)";ctx.fillRect(0,0,VW,VH); ctx.globalCompositeOperation="lighter";
-    const px=player.x-camX,py=player.y-camY,g=ctx.createRadialGradient(px,py,10,px,py,150); g.addColorStop(0,"rgba(120,90,160,.55)");g.addColorStop(1,"rgba(120,90,160,0)"); ctx.fillStyle=g;ctx.beginPath();ctx.arc(px,py,150,0,7);ctx.fill(); ctx.globalCompositeOperation="source-over";
+  if(area==="dungeon"){ const lit=equip.acc1==="shining_ring"||equip.acc2==="shining_ring";   // the shining ring lights up the dark dungeon
+    ctx.fillStyle=lit?"rgba(6,4,16,.5)":"rgba(6,4,16,.62)";ctx.fillRect(0,0,VW,VH); ctx.globalCompositeOperation="lighter";
+    const px=player.x-camX,py=player.y-camY,rad=lit?250:150,g=ctx.createRadialGradient(px,py,10,px,py,rad); g.addColorStop(0,lit?"rgba(255,238,170,.7)":"rgba(120,90,160,.55)");g.addColorStop(1,lit?"rgba(255,238,170,0)":"rgba(120,90,160,0)"); ctx.fillStyle=g;ctx.beginPath();ctx.arc(px,py,rad,0,7);ctx.fill(); ctx.globalCompositeOperation="source-over";
     const bossMob=mobs.find(m=>m.boss), bossLeft=dungBoss&&!!bossMob;
     dungBeacon((dungExit[1]+0.5)*TILE,(dungExit[0]+0.5)*TILE,"rgba(140,210,255,.9)","▲");
     dungBeacon((dungStairs[1]+0.5)*TILE,(dungStairs[0]+0.5)*TILE,bossLeft?"rgba(255,90,90,.9)":"rgba(255,210,120,.95)","▼");
@@ -1573,6 +1822,21 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
     ctx.fillStyle="rgba(8,14,40,.85)"; ctx.beginPath(); ctx.roundRect(bx-w/2,by-17,w,34,17); ctx.fill();
     ctx.strokeStyle="rgba(255,255,255,.35)"; ctx.lineWidth=1.5; ctx.stroke();
     ctx.fillStyle="#fff"; ctx.fillText(bannerMsg,bx,by+1); ctx.globalAlpha=1; ctx.textBaseline="alphabetic"; }
+  drawHUD();
+}
+// in-canvas status strip (coins · weather · date · time) drawn inside the game window, top-right
+function drawHUD(){ if(scene==="boss")return; if(mapOpen&&scene==="out")return;   // minimap owns the top-right corner when open
+  const sn=seasonIdx();
+  const dateStr=(lang==="zh"?SEASON_ZH[sn]+" "+dayOfSeason()+"日":SEASONS[sn]+" "+dayOfSeason());
+  const info=`${WEATHER_ICON[weather]||""} ${dateStr} · ${clockHour()}`, coinStr="💰 "+coins;
+  ctx.font="700 13px Helvetica,Arial"; ctx.textAlign="right"; ctx.textBaseline="middle";
+  const wi=ctx.measureText(info).width, wc=ctx.measureText(coinStr).width, pad=11, gap=14;
+  const boxW=wi+gap+wc+pad*2, boxH=27, bx=VW-10, by=19;
+  ctx.fillStyle="rgba(8,16,48,.72)"; ctx.beginPath(); ctx.roundRect(bx-boxW,by-boxH/2,boxW,boxH,13); ctx.fill();
+  ctx.strokeStyle="rgba(255,255,255,.22)"; ctx.lineWidth=1; ctx.stroke();
+  ctx.fillStyle="#ffe27a"; ctx.fillText(coinStr,bx-pad,by+1);
+  ctx.fillStyle="#dce8ff"; ctx.fillText(info,bx-pad-wc-gap,by+1);
+  ctx.textAlign="left"; ctx.textBaseline="alphabetic";
 }
 function drawMinimap(){ const rows=GR,cols=GC,cw=Math.max(1,Math.min(160/cols,160/rows)),W=cw*cols,H=cw*rows,ox=VW-W-12,oy=12;
   ctx.fillStyle="rgba(8,16,48,.85)"; ctx.fillRect(ox-5,oy-5,W+10,H+10); ctx.strokeStyle="rgba(255,255,255,.45)"; ctx.lineWidth=1; ctx.strokeRect(ox-5,oy-5,W+10,H+10);
@@ -1588,7 +1852,7 @@ let frameAcc=0; const FRAME_MIN=1/40;   // cap ~40fps (saves battery vs uncapped
 function frame(ts){   // browsers already pause rAF in a truly-hidden tab, so no manual hidden-guard (it can wrongly blank the canvas)
   const nw=ts/1000; const raw=lastT?nw-lastT:0; lastT=nw; frameAcc+=raw;
   if(frameAcc<FRAME_MIN){ requestAnimationFrame(frame); return; }   // throttle: skip this frame until enough time has passed
-  const dt=Math.min(0.05,frameAcc); frameAcc=0; update(dt); draw();
+  const dt=Math.min(0.05,frameAcc); frameAcc=0; update(dt); draw(); updateWeatherAudio(dt);
   if(coins>_lastCoins)totalEarned+=coins-_lastCoins; _lastCoins=coins;   // accrue total-earned (gates late-game unlocks)
   const ph=(clock%DAYLEN)/DAYLEN,sn=seasonIdx(),part=ph<0.25?"morning":ph<0.5?"noon":ph<0.72?"evening":"night";
   const ind=scene==="in"?t("indoors")+" · ":"";
@@ -1613,7 +1877,7 @@ function renderBar(){ barEl.innerHTML=""; hideBarTip();
 
 /* ---- shop / craft ---- */
 const shopEl=document.getElementById("shop");
-function shopSellables(){ return [...CKEYS.map(k=>"crop_"+k),"wood","stone","goo","coal","silver","diamond","red_jewel","green_jewel","fossil","jewelry","cherry_blossom","snow"].filter(k=>countItem(k)>0); }
+function shopSellables(){ return [...CKEYS.map(k=>"crop_"+k),"wood","stone","goo","coal","silver","diamond","red_jewel","green_jewel","fossil","jewelry","cherry_blossom","snow",...RELIC_KEYS].filter(k=>countItem(k)>0); }
 function sellStack(k){ const n=countItem(k); if(n<=0)return; const v=k.startsWith("crop_")?CROPS[k.slice(5)].sell:ITEMS[k].sell; coins+=v*n; removeItem(k,n); SND.coin(); }
 function openShop(){ renderShop(); shopEl.classList.add("open"); }
 function renderShop(){ document.getElementById("shopCoins").textContent=coins;
@@ -1690,8 +1954,8 @@ function renderEquip(){ equipRowEl.innerHTML=""; for(const [sn,gl] of EQSLOTS){ 
   if(k){ el.innerHTML=iconSpan(k); el.title=itemName(k); } else el.innerHTML=`<span class="eqg">${gl}</span>`;
   el.addEventListener("click",()=>equipSlotClick(sn)); equipRowEl.appendChild(el); } }
 function equipSlotClick(sn){ const cur=equip[sn];
-  if(held){ if(!itemFitsSlot(held.key,sn))return; equip[sn]=held.key; held.count--; if(held.count<=0)held=null; if(cur)addItem(cur,1); }
-  else if(cur){ held={key:cur,count:1}; equip[sn]=null; }
+  if(held){ if(!itemFitsSlot(held.key,sn))return; equip[sn]=held.key; held.count--; if(held.count<=0)held=null; if(cur)addItem(cur,1); SND.equip(); }
+  else if(cur){ held={key:cur,count:1}; equip[sn]=null; SND.equip(); }
   recalcMax(); renderEquip(); renderBag(); renderHeld(); save(); }
 /* crafting grid — click a cell to drop ONE held item; click a filled cell empty-handed to take it back */
 function cellClick(i){ const c=craftGrid[i];
@@ -1718,13 +1982,24 @@ const HOWTO={ wood:"chop trees", stone:"mine rocks", goo:"defeat slimes", iron:"
   fish:"fish water with a rod or net", crop_corn:"plant & harvest corn seeds (cat shop)" };
 function missingFor(R){ return Object.entries(R.cost).filter(([m,n])=>countItem(m)<n).map(([m,n])=>({m,short:n-countItem(m)})); }
 function clueText(miss){ return miss.map(x=>`${itemName(x.m)} ×${x.short} — ${howOf(x.m)}`).join(lang==="zh"?"、":"; "); }
-/* recipe book — click a row to auto-fill the grid from your bag */
-function renderRecipes(){ recipeListEl.innerHTML=RECIPES.map(R=>{
-    const parts=Object.entries(R.cost).map(([m,n])=>{ const ok=countItem(m)>=n; return `<span style="color:${ok?'#bfe6c2':'#ff9a9a'}">${n} ${itemName(m)}</span>`; }).join(" + ");
-    const miss=missingFor(R), title=R.once?t("Sturdy Axe"):itemName(R.give), owned=R.once==="axe"&&hasAxe;
-    const clue=(miss.length&&!owned)?`<span class="clue">${t("get")} ${clueText(miss)}</span>`:"";
-    const ic=R.once?`<span class="emo" style="font-size:20px">🪓</span>`:iconSpan(R.give);
-    return `<div class="item" data-fill="${R.key}">${ic}<div><b>${title}${owned?" · "+t("owned"):""}</b><span>${t("needs")} ${parts}</span>${clue}</div></div>`; }).join(""); }
+/* recipe book — a clickable icon palette; tap an icon to see what it needs & auto-load the grid */
+function recipeName(R){ return R.once?t("Sturdy Axe"):itemName(R.give); }
+function recipeIcoHTML(R){ return R.once?`<span class="emo" style="font-size:20px">🪓</span>`:iconSpan(R.give); }
+function recipeIcon(R){ const owned=R.once==="axe"&&hasAxe, aff=!owned&&!missingFor(R).length;
+    return `<button type="button" class="ricon ${owned?'owned':aff?'aff':'dim'}" data-fill="${R.key}" title="${recipeName(R)}">${recipeIcoHTML(R)}</button>`; }
+function renderRecipes(){ let html="";
+  for(const c of RECIPE_CATS){ const rs=RECIPES.filter(R=>RECIPE_CAT_OF[R.key]===c.id); if(!rs.length)continue;
+    html+=`<div class="rbcat"><span class="rbcatic">${c.ic}</span>${t(c.label)}</div><div class="rbicons">${rs.map(recipeIcon).join("")}</div>`; }
+  const other=RECIPES.filter(R=>!RECIPE_CAT_OF[R.key]);
+  if(other.length)html+=`<div class="rbcat"><span class="rbcatic">📦</span>${t("other")}</div><div class="rbicons">${other.map(recipeIcon).join("")}</div>`;
+  recipeListEl.innerHTML=html; if(selRecipe)markSelRecipe(); }
+let selRecipe=null;
+function markSelRecipe(){ recipeListEl.querySelectorAll(".ricon.sel").forEach(b=>b.classList.remove("sel")); if(!selRecipe)return; const b=recipeListEl.querySelector(`.ricon[data-fill="${selRecipe}"]`); if(b)b.classList.add("sel"); }
+function showRecipeDetail(key){ selRecipe=key; markSelRecipe(); const R=RECIPES.find(x=>x.key===key), det=document.getElementById("recipeDetail"); if(!R||!det)return;
+  const owned=R.once==="axe"&&hasAxe, miss=missingFor(R);
+  const parts=Object.entries(R.cost).map(([m,n])=>{ const ok=countItem(m)>=n; return `<span style="color:${ok?'#bfe6c2':'#ff9a9a'}">${n} ${itemName(m)}</span>`; }).join(" + ");
+  const status=owned?` · ${t("owned")}`:miss.length?` · <span style="color:#ff9a9a">${t("✗ still need")} ${clueText(miss)}</span>`:` · <span style="color:#8ef0a0">${t("✓ ready — click the result to craft")}</span>`;
+  det.innerHTML=`${recipeIcoHTML(R)}<span><b>${recipeName(R)}</b> — ${t("needs")} ${parts}${status}</span>`; }
 function fillFromRecipe(key){ const R=RECIPES.find(x=>x.key===key); if(!R||(R.once==="axe"&&hasAxe))return;
   const miss=missingFor(R); if(miss.length){ craftHintEl.textContent=t("need")+" "+clueText(miss); return; }
   returnGridToBag(); let i=0; for(const [m,n] of Object.entries(R.cost)) for(let j=0;j<n&&i<9;j++){ if(removeItem(m,1))craftGrid[i++]={key:m,count:1}; }
@@ -1735,7 +2010,7 @@ document.getElementById("bagBtn").addEventListener("click",()=>{ baguiEl.classLi
 document.getElementById("bagClose").addEventListener("click",closeBag);
 baguiEl.addEventListener("pointerdown",e=>{ if(e.target===baguiEl)closeBag(); });
 baguiEl.addEventListener("pointermove",e=>{ if(held){ heldEl.style.left=e.clientX+"px"; heldEl.style.top=e.clientY+"px"; } });
-recipeListEl.addEventListener("click",e=>{ const row=e.target.closest&&e.target.closest("[data-fill]"); if(row)fillFromRecipe(row.dataset.fill); });
+recipeListEl.addEventListener("click",e=>{ const cell=e.target.closest&&e.target.closest("[data-fill]"); if(!cell)return; showRecipeDetail(cell.dataset.fill); fillFromRecipe(cell.dataset.fill); });
 
 /* ---- storage chest ---- */
 const chestEl=document.getElementById("chest"), chestGridEl=document.getElementById("chestGrid"), chestBagEl=document.getElementById("chestBag"), chestPackEl=document.getElementById("chestPack");
@@ -1839,9 +2114,14 @@ function renderQuests(){ document.getElementById("questBody").innerHTML=MISSIONS
     const btn=cl?`<button disabled>${t("claimed")}</button>`:done?`<button data-claim="${m.id}">${t("claim")} +${m.reward}c</button>`:`<button disabled>${m.done?"✗":p+"/"+m.goal}</button>`;
     const sub=m.hint?t(m.hint):`${p}/${m.goal}`;
     return `<div class="item"><div><b>${t(m.desc)}</b><span>${t("reward")}: ${m.reward}c · ${sub}</span></div>${btn}</div>`; }).join("")
-    +(louieQuest===1?`<div class="item">${iconSpan("fish")}<div><b>${t("Louie: bring 100 fish")}</b><span>${countItem("fish")}/100 · ${t("deliver to Louie in the village")}</span></div></div>`:"")
-    +(louieQuest===2?`<div class="item">${iconSpan("fish")}<div><b>${t("Louie: bring 100 fish")}</b><span>✓ ${t("claimed")}</span></div></div>`:"")
-    +`<div class="item"><div><span>${t("more quests coming from the village NPCs soon")}</span></div></div>`; }
+    +(louieQuest===1?`<div class="item">${iconSpan("fish")}<div><b>${t("Louie: bring fish")}</b><span>${countItem("fish")}/${LOUIE_GOAL} · ${t("deliver to Louie in the village")}</span></div></div>`:"")
+    +(louieQuest===2?`<div class="item">${iconSpan("fish")}<div><b>${t("Louie: bring fish")}</b><span>✓ ${t("claimed")}</span></div></div>`:"")
+    +["cat","fisher","hamu","david"].map(id=>{ const qs=NPC_QUESTS[id], qi=questIdx[id]||0, nm=t(NPCMETA[id].name), face=NPCMETA[id].face;
+        if(qi>=qs.length) return `<div class="item"><span class="emo" style="font-size:20px">${face}</span><div><b>${nm}</b><span>✓ ${t("all quests done")}</span></div></div>`;
+        const q=qs[qi];
+        if(questOn[id]){ const have=Math.min(countItem(q.ask),q.n); return `<div class="item">${iconSpan(q.ask)}<div><b>${nm}: ${t("bring")} ${q.n} ${itemName(q.ask)}</b><span>${have}/${q.n} · ${t("deliver to")} ${nm}</span></div></div>`; }
+        return `<div class="item"><span class="emo" style="font-size:20px">${face}</span><div><b>${nm}</b><span>📋 ${t("has a new quest — go and talk")}</span></div></div>`;
+      }).join(""); }
 function openQuests(){ renderQuests(); questsEl.classList.add("open"); }
 questsEl.addEventListener("click",e=>{ const id=e.target.dataset&&e.target.dataset.claim; if(!id)return; const m=MISSIONS.find(x=>x.id===id);
   if(m&&questProg(m)>=m.goal&&!claimed[m.id]){ claimed[m.id]=true; coins+=m.reward; SND.coin(); float(player.x,player.y-24,"+"+m.reward+"c","#ffe27a"); syncUI(); save(); } renderQuests(); });
@@ -1888,10 +2168,24 @@ function renderArtUploads(){ const C=[["player","🧑 You (standing)"],["cat","�
     return `<div class="artrow"><div class="thumb">${has?`<img src="${artData[id]}">`:"🖼"}</div><div class="nm">${nm}</div><label>${has?"change":"upload"}<input type="file" accept="image/*" data-art="${id}"></label>${has?`<button class="setrow" data-artdel="${id}" style="padding:6px 10px;border-radius:999px;background:rgba(255,120,120,.25);border:1.5px solid rgba(255,140,140,.5);color:#fff;font-weight:700">✕</button>`:""}</div>`; }).join("");
   html+=`<div class="artrow"><div class="thumb">${walkData.length?`<img src="${walkData[0]}">`:"🚶"}</div><div class="nm">🚶 Walk frames · ${walkData.length}<br><span style="font-size:10px;opacity:.6">add as many as you like — more = smoother</span></div><label>add<input type="file" accept="image/*" multiple data-walk="1"></label>${walkData.length?`<button data-walkclear="1" style="padding:6px 10px;border-radius:999px;background:rgba(255,120,120,.25);border:1.5px solid rgba(255,140,140,.5);color:#fff;font-weight:700">clear</button>`:""}</div>`;
   document.getElementById("artUploads").innerHTML=html; }
-function openSettings(){ renderArtUploads(); document.getElementById("tutToggle").checked=tutOn; settingsEl.classList.add("open"); }
+function keyLabel(k){ return k===" "?"Space":k==="arrowup"?"↑":k==="arrowdown"?"↓":k==="arrowleft"?"←":k==="arrowright"?"→":k.length===1?k.toUpperCase():k.charAt(0).toUpperCase()+k.slice(1); }
+function renderKeybinds(){ const el=document.getElementById("keybinds"); if(!el)return; el.innerHTML="";
+  for(const [a,label] of KEY_ACTIONS){ const row=document.createElement("div"); row.className="kbrow";
+    const nm=document.createElement("span"); nm.textContent=label;
+    const btn=document.createElement("button"); btn.className="kbkey"+(rebinding===a?" wait":""); btn.textContent=rebinding===a?"press…":keyLabel(keyMap[a]);
+    btn.addEventListener("click",()=>{ rebinding=rebinding===a?null:a; renderKeybinds(); });
+    row.appendChild(nm); row.appendChild(btn); el.appendChild(row); } }
+function openSettings(){ renderArtUploads(); document.getElementById("tutToggle").checked=tutOn;
+  document.getElementById("sfxVol").value=Math.round(sfxLevel*100); document.getElementById("musVol").value=Math.round(musLevel*100);
+  document.getElementById("artSection").style.display=localStorage.getItem("hs-oc")==="1"?"":"none";   // character-art changer stays hidden until the "changeoc" cheat unlocks it
+  rebinding=null; renderKeybinds(); settingsEl.classList.add("open"); }
 document.getElementById("settingsBtn").addEventListener("click",openSettings);
-document.getElementById("settingsClose").addEventListener("click",()=>settingsEl.classList.remove("open"));
-settingsEl.addEventListener("pointerdown",e=>{ if(e.target===settingsEl)settingsEl.classList.remove("open"); });
+document.getElementById("settingsClose").addEventListener("click",()=>{ rebinding=null; settingsEl.classList.remove("open"); });
+settingsEl.addEventListener("pointerdown",e=>{ if(e.target===settingsEl){ rebinding=null; settingsEl.classList.remove("open"); } });
+document.getElementById("sfxVol").addEventListener("input",e=>{ audio(); setSfx(e.target.value/100); SND.coin(); });
+document.getElementById("musVol").addEventListener("input",e=>{ audio(); setMusic(e.target.value/100); });
+document.getElementById("fsBtn").addEventListener("click",()=>{ try{ if(document.fullscreenElement)document.exitFullscreen(); else document.documentElement.requestFullscreen(); }catch(_){ } });
+document.getElementById("keyReset").addEventListener("click",()=>{ rebinding=null; keyMap=Object.fromEntries(KEY_ACTIONS.map(a=>[a[0],a[2]])); saveKeys(); renderKeybinds(); });
 settingsEl.addEventListener("change",e=>{ const tg=e.target, d=tg.dataset||{};
   if(d.art){ const f=tg.files&&tg.files[0]; if(f)downscaleFile(f,du=>{ artData[d.art]=du; saveArt(); buildArt(); renderArtUploads(); }); }
   else if(d.walk){ const fs=[...(tg.files||[])]; (function next(i){ if(i>=fs.length){ saveArt(); buildArt(); renderArtUploads(); return; } downscaleFile(fs[i],du=>{ walkData.push(du); next(i+1); }); })(0); }
@@ -1940,7 +2234,7 @@ marketEl.addEventListener("pointerdown",e=>{ if(e.target===marketEl)marketEl.cla
 const merchEl=document.getElementById("merchant");
 function merchPrice(k){ const b=k.startsWith("crop_")?CROPS[k.slice(5)].sell:ITEMS[k].sell; return Math.ceil(b*1.25); }
 function merchSellables(){ return [...CKEYS.map(k=>"crop_"+k),"wood","stone","goo","coal","silver","gold","iron","diamond","red_jewel","green_jewel","fossil","fish","tropical_fish","pufferfish","squid","octopus","shark","shrimp","eel","sand","glass","oil","jewelry","egg","milk","truffle","cheese","crab","lobster","oyster","urchin","pearl","cherry_blossom",
-  "tea_bundle","dried_herb","amber_incense","frost_remedy","sweet_preserve","apple_preserve","melon_jam","pea_preserve","flower_oil","pumpkin_oil","citrus_extract","flower_sachet","spice_sachet","blossom_incense","perfume","sakura_perfume","moon_elixir","snow_essence"].filter(k=>countItem(k)>0); }
+  "tea_bundle","dried_herb","amber_incense","frost_remedy","sweet_preserve","apple_preserve","melon_jam","pea_preserve","flower_oil","pumpkin_oil","citrus_extract","flower_sachet","spice_sachet","blossom_incense","perfume","sakura_perfume","moon_elixir","snow_essence",...RELIC_KEYS].filter(k=>countItem(k)>0); }
 function merchSell(k){ const n=countItem(k); if(n<=0)return; coins+=merchPrice(k)*n; removeItem(k,n); SND.coin(); }
 function openMerchant(){ renderMerchant(); merchEl.classList.add("open"); }
 function buyAnimal(kind){ const A=ANIMALS[kind]; if(!A){ return; }
@@ -1973,7 +2267,7 @@ function openTeleport(){ if(scene!=="out"||area==="dungeon"){ SND.no(); return; 
   document.getElementById("teleList").innerHTML=dests.map(([d,l])=>`<div class="item"><div><b>${l}</b></div><button data-tele="${d}">${t("go")}</button></div>`).join("");
   teleEl.classList.add("open"); }
 teleEl.addEventListener("click",e=>{ const d=e.target.dataset&&e.target.dataset.tele; if(!d)return; teleEl.classList.remove("open");
-  let p; if(d==="farm"){ setArea("home"); p=findClear(gridHome,doorR+2,doorC); } else { setArea("village"); p=findClear(gridVillage,Math.floor(VROWS/2),Math.floor(VCOLS/2)-3); }
+  let p; if(d==="farm"){ setArea("home"); p=findClear(gridHome,doorR+2,doorC); } else { setArea("village"); const hm=VNPCS.find(n=>n.id==="hamu"); p=findClear(gridVillage,(hm?hm.r:24)+1,hm?hm.c:26); }   // arrive next to Hamu, inside the fenced town
   setScene("out"); player.x=p.c*TILE+TILE/2; player.y=p.r*TILE+TILE/2; player.dir="d";player.fx=0;player.fy=1;
   SND.door(); transCD=0.6; mobs.length=0; shots.length=0; hover=null; save(); });
 document.getElementById("teleClose").addEventListener("click",()=>teleEl.classList.remove("open"));
@@ -2015,7 +2309,7 @@ function typeLine(text){ clearInterval(typeTimer); fullText=text; vnText.textCon
   typeTimer=setInterval(()=>{ vnText.textContent=text.slice(0,++i); if(i>=text.length){clearInterval(typeTimer);typeTimer=null;} },18); }
 function showChoices(choices){ vnHint.style.display="none"; vnChoices.innerHTML="";
   choices.forEach(c=>{ const b=document.createElement("button"); b.textContent=t(c.label);
-    b.addEventListener("click",()=>{ const after=dlg&&dlg.onDone; endDialog(); if(c.go==="trade"&&after)after(); }); vnChoices.appendChild(b); }); }
+    b.addEventListener("click",()=>{ const after=dlg&&dlg.onDone; const fn=c.fn; endDialog(); if(fn){fn();return;} if(c.go==="trade"&&after)after(); }); vnChoices.appendChild(b); }); }
 function startDialog(seq,onDone){ dlg={seq,i:-1,onDone}; dialogOpen=true; vnEl.classList.add("open"); advanceDialog(); }
 function advanceDialog(){ if(!dlg)return;
   const cur=dlg.i>=0?dlg.seq[dlg.i]:null;
@@ -2038,22 +2332,76 @@ function talkToFisher(){ startDialog([
   {who:"player",text:"Nice to meet you! Got any gear for me?"},
   {who:"fisher",text:"A rod and a net, aye. And I'll pay good coin for fish, ore and sand.",choices:[{label:"Show me",go:"trade"},{label:"Just passing"}]}
 ], openMarket); }
-/* Louie the blue cat — first quest: bring 100 fish */
-const LOUIE_REWARD=250;
+/* Louie the blue cat — first quest: bring some fish */
+const LOUIE_REWARD=250, LOUIE_GOAL=30;
 function talkLouie(){ const L="louie",nm="Louie",fc="🐱",cl="#5aa0e6";
   if(louieQuest===0){ louieQuest=1; save(); startDialog([
     {who:L,name:nm,face:fc,col:cl,text:"Hey there! Name's Louie. I run the fish stall — or I will, once I have stock."},
-    {who:L,name:nm,face:fc,col:cl,text:"Bring me 100 fish and I'll pay you "+LOUIE_REWARD+" coins. Catch them with a rod or net from any water."},
-    {who:"player",text:"100 fish… you're on."} ],null); return; }
-  if(louieQuest===1){ if(countItem("fish")>=100){ removeItem("fish",100); coins+=LOUIE_REWARD; louieQuest=2; SND.coin(); syncUI(); save();
-      startDialog([{who:L,name:nm,face:fc,col:cl,text:"A hundred fish! You're a legend. Here's your "+LOUIE_REWARD+" coins — the stall's open thanks to you."}],null); }
-    else startDialog([{who:L,name:nm,face:fc,col:cl,text:"Still need fish — "+countItem("fish")+" of 100 so far. Keep at it!"}],null); return; }
-  startDialog([{who:L,name:nm,face:fc,col:cl,text:"Fresh fish, all day! Thanks again for stocking me up."}],null); }
+    {who:L,name:nm,face:fc,col:cl,text:t("Bring me ")+LOUIE_GOAL+t(" fish and I'll pay you ")+LOUIE_REWARD+t(" coins. Catch them with a rod or net from any water.")},
+    {who:"player",text:t("Sounds good — you're on.")} ],null); return; }
+  if(louieQuest===1){ if(countItem("fish")>=LOUIE_GOAL){ removeItem("fish",LOUIE_GOAL); coins+=LOUIE_REWARD; louieQuest=2; SND.coin(); syncUI(); save();
+      startDialog([{who:L,name:nm,face:fc,col:cl,text:t("Fish delivered! You're a legend. Here's your ")+LOUIE_REWARD+t(" coins — the stall's open thanks to you.")}],null); }
+    else startDialog([{who:L,name:nm,face:fc,col:cl,text:t("Still need fish — ")+countItem("fish")+t(" of ")+LOUIE_GOAL+t(" so far. Keep at it!")}],null); return; }
+  npcMenu("louie",null); }
 function hamuIntro(){ const H="hamu",nm="Hamu",fc="🐹",cl="#f49ac6"; startDialog([
   {who:H,name:nm,face:fc,col:cl,text:"Squeak! Hamu's the name — trading's my game. I'll pay top coin for your goods."},
   {who:H,name:nm,face:fc,col:cl,text:"I also raise farm animals! Buy a chicken, pig, cow or horse and they'll live in the pasture by your home."},
   {who:H,name:nm,face:fc,col:cl,text:"They make milk, eggs and truffles each day — and a horse lets you fast-travel. Come trade any time!"}
 ], openMerchant); }
+/* ---- friendship: greeting menu (level-based line + trade/gift/bye), gift picker, and the Friends roster ---- */
+function curQuest(id){ const qs=NPC_QUESTS[id]; if(!qs)return null; const qi=questIdx[id]||0; return qi<qs.length?qs[qi]:null; }
+function npcQuestChoice(id){ const q=curQuest(id); if(!q)return null;
+  if(questOn[id]){ const have=countItem(q.ask)>=q.n; return {label:(have?"✅ ":"📋 ")+t("Deliver")+" "+q.n+" "+itemName(q.ask), fn:()=>turnInQuest(id)}; }
+  return {label:"📋 "+t("Quest")+": "+q.n+" "+itemName(q.ask), fn:()=>offerQuest(id)}; }
+function offerQuest(id){ const q=curQuest(id); if(!q)return; questOn[id]=true; save();
+  startDialog([ npcLine(id, t(q.text)), npcLine(id, t("Bring me")+" "+q.n+" "+itemName(q.ask)+" "+t("for")+" "+q.reward+" "+t("coins")+".") ], null); }
+function turnInQuest(id){ const q=curQuest(id); if(!q)return;
+  if(countItem(q.ask)<q.n){ startDialog([ npcLine(id, t("Still need")+" "+(q.n-countItem(q.ask))+" "+itemName(q.ask)+"…") ], null); return; }
+  removeItem(q.ask,q.n); coins+=q.reward; if(q.item)gainItem(q.item,q.itemN||1,player.x,player.y);
+  questIdx[id]=(questIdx[id]||0)+1; questOn[id]=false; friend[id]=Math.min(FRIEND_MAX,(friend[id]||0)+10);   // quests also build friendship
+  SND.coin(); syncUI(); renderBar(); save();
+  startDialog([ npcLine(id, t(q.thanks)+"  (+"+q.reward+" "+t("coins")+(q.item?", "+(q.itemN||1)+" "+itemName(q.item):"")+")") ], null); }
+function npcMenu(id,onTrade){ const greet=GREET[id][friendLevel(id)-1]; const choices=[];
+  if(onTrade)choices.push({label:"Let's trade",go:"trade"});
+  const qc=npcQuestChoice(id); if(qc)choices.push(qc);
+  choices.push({label:"🎁 Give a gift",fn:()=>openGift(id)});
+  choices.push({label:"Bye"});
+  startDialog([ npcLine(id,greet,{choices}) ], onTrade); }
+let giftTarget=null;
+const giftEl=document.getElementById("giftui");
+function friendHearts(id){ const lv=friendLevel(id); return "♥".repeat(lv)+"♡".repeat(4-lv); }
+function openGift(id){ giftTarget=id; renderGift(); giftEl.classList.add("open"); }
+function renderGift(){ const id=giftTarget; if(!id)return; const m=NPCMETA[id];
+  document.getElementById("giftName").textContent=t(m.name);
+  document.getElementById("giftTier").textContent=friendHearts(id)+" · "+t(friendTier(id))+" (Lv "+friendLevel(id)+")";
+  document.getElementById("giftBarFill").style.width=(friend[id]||0)+"%";
+  const gifted=giftDay[id]===curDay();
+  document.getElementById("giftStatus").textContent= gifted ? t("You already gave a gift today — come back tomorrow.") : t("Pick something from your bag to give.");
+  const seen={}, order=[]; for(const s of bag){ if(s&&giftable(s.key)){ if(!(s.key in seen)){seen[s.key]=0;order.push(s.key);} seen[s.key]+=s.count; } }
+  const grid=document.getElementById("giftGrid"); grid.innerHTML="";
+  if(!order.length){ grid.innerHTML=`<div class="giftnone">${t("Nothing giftable in your bag right now.")}</div>`; return; }
+  for(const k of order){ const cell=document.createElement("button"); cell.type="button"; cell.className="giftcell"+(gifted?" off":""); cell.title=itemName(k);
+    cell.innerHTML=iconSpan(k)+`<span class="gn">${seen[k]}</span>`;
+    if(!gifted)cell.addEventListener("click",()=>doGift(id,k)); grid.appendChild(cell); } }
+function doGift(id,key){ if(giftDay[id]===curDay()||countItem(key)<1){ renderGift(); return; }
+  removeItem(key,1); giftDay[id]=curDay(); const rank=giftRank(id,key);
+  friend[id]=Math.max(0,Math.min(FRIEND_MAX,(friend[id]||0)+GIFT_GAIN[rank]));
+  (rank==="hate"?SND.no:SND.coin)(); renderBar(); save(); giftEl.classList.remove("open");
+  startDialog([ npcLine(id,giftReact(id,rank,key)) ], null); }
+giftEl.addEventListener("pointerdown",e=>{ if(e.target===giftEl)giftEl.classList.remove("open"); });
+document.getElementById("giftClose").addEventListener("click",()=>giftEl.classList.remove("open"));
+const friendsEl=document.getElementById("friends");
+function renderFriends(){ document.getElementById("friendsBody").innerHTML=FRIEND_IDS.map(id=>{ const m=NPCMETA[id];
+    const loves=[...GIFT_PREF[id].love].filter(k=>k!==GIFT_FAV[id]).slice(0,3).map(itemName).join(", ");
+    const fav=GIFT_FAV[id]?`<div class="floves">⭐ ${t("favourite")}: ${itemName(GIFT_FAV[id])}</div>`:"";
+    return `<div class="frow"><div class="fface" style="background:${m.col}">${m.face}</div>
+      <div class="fmain"><div class="fhead"><b>${t(m.name)}</b><span>${friendHearts(id)} ${t(friendTier(id))}</span></div>
+      <div class="fbbar"><div class="fbfill" style="width:${friend[id]||0}%"></div></div>
+      ${fav}<div class="floves">${t("loves")}: ${loves}</div></div></div>`; }).join(""); }
+function openFriends(){ renderFriends(); friendsEl.classList.add("open"); }
+document.getElementById("friendsBtn").addEventListener("click",openFriends);
+document.getElementById("friendsClose").addEventListener("click",()=>friendsEl.classList.remove("open"));
+friendsEl.addEventListener("pointerdown",e=>{ if(e.target===friendsEl)friendsEl.classList.remove("open"); });
 /* opening story (plays once, inside the house) — skippable */
 function startIntro(){ setScene("in"); const mc=Math.floor(GC/2); player.x=mc*TILE+TILE/2; player.y=(GR-2)*TILE+TILE/2; player.dir="u";player.fx=0;player.fy=-1; transCD=1.2;
   startDialog([
@@ -2102,9 +2450,9 @@ const freshStart=!load(); if(freshStart) reset(); else { renderBar(); syncUI(); 
 applyLang();
 // add a top-right ✕ to every panel so phone players can close without scrolling to the bottom
 document.querySelectorAll(".shop > .card").forEach(card=>{ if(card.querySelector(".xclose"))return; const b=document.createElement("button"); b.className="xclose"; b.type="button"; b.textContent="✕";
-  b.addEventListener("click",e=>{ e.stopPropagation(); const cl=card.querySelector(".close"); if(cl)cl.click(); else card.parentElement.classList.remove("open"); });
+  b.addEventListener("click",e=>{ e.stopPropagation(); const cls=card.querySelectorAll(".close"); const cl=cls[cls.length-1]; if(cl)cl.click(); else card.parentElement.classList.remove("open"); });   // last .close is the real "close" (some cards have other .close-styled buttons first, e.g. reset/pack-up)
   card.insertBefore(b,card.firstChild); });
-document.querySelectorAll(".shop").forEach(sh=>{ sh.addEventListener("pointerdown",e=>{ if(e.target!==sh)return; const cl=sh.querySelector(".card>.close"); if(cl)cl.click(); else sh.classList.remove("open"); }); });   // tap backdrop to close
+document.querySelectorAll(".shop").forEach(sh=>{ sh.addEventListener("pointerdown",e=>{ if(e.target!==sh)return; const cls=sh.querySelectorAll(".card>.close"); const cl=cls[cls.length-1]; if(cl)cl.click(); else sh.classList.remove("open"); }); });   // tap backdrop to close (last .close = the real close button)
 resize(); requestAnimationFrame(frame); if(freshStart)openNameModal(maybeIntro); else maybeIntro();
 })();
 </script>
