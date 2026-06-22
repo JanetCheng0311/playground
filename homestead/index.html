@@ -816,6 +816,7 @@ const RECIPE_CAT_OF={}; RECIPE_CATS.forEach(c=>c.keys.forEach(k=>{RECIPE_CAT_OF[
 
 const FR0=4,FC0=4; let farmFR1=15, farmFC1=18, houseLvl=0, farmLvl=0, hasAxe=false;
 let scene="out", area="home", G, GR, GC, GW, GH, gridOut, gridHome, gridVillage, gridIn, doorR, doorC, transCD=0;
+let homeFurn={};   // furniture/machines the player placed inside the house — persists across visits (key "r,c" → tile object)
 let catX=0, catY=0, npcX=0, npcY=0;
 const player={x:0,y:0,dir:"d",fx:0,fy:1,moving:false,hp:5,maxHp:5,inv:0,kx:0,ky:0,swing:0,hunger:100,maxHunger:100,regenT:0,starveT:0};
 const equip={sword:null,armor:null,hat:null,chest:null,pants:null,shoes:null,acc1:null,acc2:null};
@@ -1144,10 +1145,12 @@ function buildIn(){ const w=9+houseLvl*2, h=7+houseLvl; const g=[];
   const mc=Math.floor(w/2); for(let c=Math.max(1,mc-1);c<=Math.min(w-2,mc+1);c++) g[h-1][c].type="mat";
   g[1][1].type="bed"; g[1][2].type="bed";
   g[1][w-2].type="stove";   // the kitchen — always in your house
+  for(const k in homeFurn){ const p=k.split(",").map(Number); const r=p[0],c=p[1];   // restore the player's placed furniture/machines
+    if(g[r]&&g[r][c]&&g[r][c].type==="floor") g[r][c]=homeFurn[k]; else delete homeFurn[k]; }
   return {g,w,h}; }
 function setScene(s){ scene=s; if(s==="out"){G=gridOut;GR=gridOut.length;GC=gridOut[0].length;} else {const io=buildIn();gridIn=io.g;G=gridIn;GR=io.h;GC=io.w;} GW=GC*TILE; GH=GR*TILE; }
 
-function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false;bossDefeated=false; penLvl=0; area="home"; gridHome=buildOut(); gridVillage=buildVillage(); setArea("home"); coins=40; clock=0;
+function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false;bossDefeated=false; penLvl=0; area="home"; homeFurn={}; gridHome=buildOut(); gridVillage=buildVillage(); setArea("home"); coins=40; clock=0;
   for(let i=0;i<bag.length;i++)bag[i]=null; bag[0]={key:"seed_carrot",count:6}; bag[1]={key:"seed_wheat",count:2}; selSlot=0;
   for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; catIntroPending=false; playerName="You"; louieQuest=0; metHamu=false; dungFloor=0; dungMax=1; stats.trees=0;stats.crops=0;stats.fish=0; animals.length=0; penLvl=0; weather="sunny"; weatherDay=-1; totalEarned=0; lifeCrystals=0; _lastCoins=40; for(const k in claimed)delete claimed[k]; resetFriends(); relicSeen={}; recalcMax();
   setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2+TILE; player.hp=player.maxHp;player.inv=0; mobs.length=0; save(); renderBar(); syncUI(); }
@@ -1186,14 +1189,14 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); co
     for(let i=0;i<bag.length;i++)bag[i]=s.bag&&s.bag[i]?s.bag[i]:null; selSlot=s.selSlot||0;
     catX=(doorC=FC0+2,(FC0+4)*TILE+TILE/2); catY=(doorR=FR0+3,(FR0+4)*TILE+TILE/2); setVillageMeta();
     metCat=!!s.metCat; metFisher=!!s.metFisher; bossDefeated=!!s.bossDefeated; seenIntro=!!s.seenIntro; catIntroPending=!!s.catIntroPending;
-    playerName=s.playerName||"You"; louieQuest=s.louieQuest||0; metHamu=!!s.metHamu; dungMax=s.dungMax||1; dungFloor=0; penLvl=s.penLvl||0; carvePen(gridHome); weather=s.weather||"sunny"; weatherDay=(typeof s.weatherDay==="number")?s.weatherDay:-1; totalEarned=s.totalEarned||0; lifeCrystals=s.lifeCrystals||0; _lastCoins=coins; if(s.stats)Object.assign(stats,s.stats); if(s.claimed)Object.assign(claimed,s.claimed); loadFriends(s); relicSeen=(s.relicSeen&&typeof s.relicSeen==="object")?s.relicSeen:{};
+    playerName=s.playerName||"You"; louieQuest=s.louieQuest||0; metHamu=!!s.metHamu; dungMax=s.dungMax||1; dungFloor=0; penLvl=s.penLvl||0; carvePen(gridHome); weather=s.weather||"sunny"; weatherDay=(typeof s.weatherDay==="number")?s.weatherDay:-1; totalEarned=s.totalEarned||0; lifeCrystals=s.lifeCrystals||0; _lastCoins=coins; if(s.stats)Object.assign(stats,s.stats); if(s.claimed)Object.assign(claimed,s.claimed); loadFriends(s); relicSeen=(s.relicSeen&&typeof s.relicSeen==="object")?s.relicSeen:{}; homeFurn=(s.homeFurn&&typeof s.homeFurn==="object")?s.homeFurn:{};
     animals.length=0; if(Array.isArray(s.animals))for(const a of s.animals){ if(ANIMALS[a.kind])animals.push(a); }
     for(const sn in equip)equip[sn]=(s.equip&&s.equip[sn]&&ITEMS[s.equip[sn]])?s.equip[sn]:null; recalcMax();
     player.hunger=(typeof s.hunger==="number")?s.hunger:player.maxHunger; player.regenT=0;player.starveT=0;
     area=(s.area==="village")?"village":"home"; setArea(area);
     setScene("out"); player.x=s.px;player.y=s.py;player.hp=s.hp??player.maxHp; return true; } }catch(e){} return false; }
 function save(){ const inD=area==="dungeon"; const sArea=inD?"village":area, sx=inD?(CAVE_C+1)*TILE+TILE/2:(scene==="out"?player.x:outX), sy=inD?CAVE_R*TILE+TILE/2:(scene==="out"?player.y:outY);
-  localStorage.setItem("homestead4", JSON.stringify({v:5,area:sArea,home:packGrid(gridHome),village:packGrid(gridVillage),coins,clock,px:sx,py:sy,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger,playerName,louieQuest,metHamu,dungMax,stats,claimed,animals,penLvl,weather,weatherDay,totalEarned,lifeCrystals,friend,giftDay,questIdx,questOn,relicSeen})); }
+  localStorage.setItem("homestead4", JSON.stringify({v:5,area:sArea,home:packGrid(gridHome),village:packGrid(gridVillage),coins,clock,px:sx,py:sy,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger,playerName,louieQuest,metHamu,dungMax,stats,claimed,animals,penLvl,weather,weatherDay,totalEarned,lifeCrystals,friend,giftDay,questIdx,questOn,relicSeen,homeFurn})); }
 function syncUI(){ const e=document.getElementById("coins"); if(e)e.textContent=coins; }   // coins/date/time now live in the in-canvas HUD strip
 
 function resize(){ const rect=document.querySelector("main").getBoundingClientRect();
@@ -1319,7 +1322,19 @@ function talkInteract(){ if(scene!=="out"){ return; }
 function interact(){ if(scene==="boss"){ bossAttack(); return; }
   if(player.sitting){ player.sitting=false; SND.step(); return; }   // already seated → stand up
   player.swing=0.18;
-  if(scene==="in"){ const f=facedCell(); if(!f)return; const t=gridIn[f.r][f.c]; if(t.type==="bed")sleep(); else if(t.type==="mat")exitHouse(); else if(t.type==="stove")openStove(); else if(SITTABLE.has(t.type))toggleSit(f); return; }
+  if(scene==="in"){ const f=facedCell(); if(!f)return; const t=gridIn[f.r][f.c]; const cx=f.c*TILE+TILE/2,cy=f.r*TILE+TILE/2; const sel=bag[selSlot];
+    if(t.type==="bed"){ sleep(); return; }
+    if(t.type==="mat"){ exitHouse(); return; }
+    if(t.type==="stove"){ openStove(); return; }
+    if(SITTABLE.has(t.type)){ toggleSit(f); return; }
+    if(t.type==="chest"){ openChest(f.r,f.c); return; }
+    if(MACHINE_IN[t.type]){ useMachine(t,cx,cy); return; }
+    if(t.type==="stand"){ const isRelic=sel&&ITEMS[sel.key]&&ITEMS[sel.key].kind==="relic";
+      if(isRelic){ if(t.display)gainItem(t.display,1,cx,cy); t.display=sel.key; removeItem(sel.key,1); SND.place(); burst(cx,cy-8,"#ffe9b0",6); float(cx,cy-18,itemName(t.display),"#ffe9b0",true); save(); return; }
+      if(t.display){ const had=t.display; delete t.display; gainItem(had,1,cx,cy); SND.place(); float(cx,cy-18,TR("took")+" "+itemName(had),"#ffe9b0",true); save(); return; }
+      SND.no(); float(cx,cy-12,TR("hold a collectable to display it"),"#cfe6ff",true); return; }
+    if(sel&&ITEMS[sel.key].kind==="place"&&PLACEABLE_ON.has(t.type)&&!t.crop){ t.type=ITEMS[sel.key].tile; if(t.type==="chest")t.store=new Array(CHESTN).fill(null); homeFurn[f.r+","+f.c]=t; removeItem(sel.key,1); SND.place(); burst(cx,cy,itemColor(sel.key),5); save(); return; }   // place furniture/machines indoors (persists across visits)
+    return; }
   // pasture animals: collect their daily produce, or hop on the horse to fast-travel
   if(area==="home"){ for(const a of animals){ if(Math.hypot(a.x-player.x,a.y-player.y)<TILE*1.5){
     if(a.kind==="horse"){ openTeleport(); return; }
@@ -1431,12 +1446,13 @@ function rollSeafood(lvl){ lvl=lvl||1; const r=Math.random()-(lvl-1)*0.06;
 let holdUse=false, holdStart=0, holdBroke=false;
 function startHold(){ if(holdUse)return; holdUse=true; holdStart=now(); holdBroke=false; }
 function endHold(){ holdUse=false; holdBroke=false; }
-function holdTarget(){ if(scene!=="out"||!holdUse)return null; const f=facedCell(); if(!f)return null; const tt=gridOut[f.r][f.c]; return (BREAKABLE.has(tt.type)||(WATER.has(tt.type)&&tt.net))?f:null; }
+function holdTarget(){ if((scene!=="out"&&scene!=="in")||!holdUse)return null; const f=facedCell(); if(!f)return null; const tt=G[f.r][f.c]; return (BREAKABLE.has(tt.type)||(WATER.has(tt.type)&&tt.net))?f:null; }
 function updateHold(){ const f=holdTarget(); if(!f){ return; } const prog=(now()-holdStart)/1.2;
-  if(prog>=1&&!holdBroke){ holdBroke=true; const tt=gridOut[f.r][f.c], cx=f.c*TILE+TILE/2, cy=f.r*TILE+TILE/2;
+  if(prog>=1&&!holdBroke){ holdBroke=true; const tt=G[f.r][f.c], cx=f.c*TILE+TILE/2, cy=f.r*TILE+TILE/2;
     if(tt.net){ addItem(tt.net.key||"net",1); delete tt.net; SND.chop(); burst(cx,cy,"#dfeae0",8); float(cx,cy-12,"net picked up","#bfe6f0"); save(); return; }
     const give=TILE2ITEM[tt.type]||"wood"; if(tt.type==="stand"&&tt.display){ gainItem(tt.display,1,cx,cy); delete tt.display; }   // also return the displayed collectable
-    tt.type=inFarm(f.r,f.c)?"grass":"wild";
+    if(scene==="in")delete homeFurn[f.r+","+f.c];
+    tt.type = scene==="in" ? "floor" : (inFarm(f.r,f.c)?"grass":"wild");
     SND.chop(); burst(cx,cy,"#d9c19a",8); gainItem(give,1,cx,cy); save(); } }
 function gotoArea(a){ setArea(a); setScene("out"); SND.door(); transCD=0.6; mobs.length=0; hover=null;
   if(a==="village"){ player.x=1*TILE+TILE/2; player.y=VROAD_R*TILE+TILE/2; player.dir="r";player.fx=1;player.fy=0; }
@@ -1756,12 +1772,22 @@ function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE|
     ctx.fillStyle="rgba(18,8,38,.85)";ctx.beginPath();ctx.roundRect(cxm-34,y-30,68,19,7);ctx.fill();ctx.strokeStyle="rgba(180,120,255,"+gl+")";ctx.lineWidth=1.5;ctx.stroke();
     ctx.fillStyle="#d9c2ff";ctx.font="700 10px Helvetica,Arial";ctx.textAlign="center";ctx.fillText("⛏ "+(lang==="zh"?"地城":"DUNGEON"),cxm,y-17);
     if(near){ ctx.fillStyle="rgba(255,255,255,.9)";ctx.font="700 9px Helvetica";ctx.fillText("▸ use",cxm,y-4); } }
-  else if(MACHINE_IN[t.type]){ ctx.fillStyle=scene==="in"?"#caa46a":"#7ec850";ctx.fillRect(x,y,TILE,TILE);   // artisan machine
-    ctx.fillStyle=ITEMS[t.type].color;ctx.beginPath();ctx.roundRect(x+5,y+9,TILE-10,TILE-13,5);ctx.fill();
-    ctx.font="18px serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(ICON[t.type]||"⚙️",x+TILE/2,y+TILE/2+3);ctx.textBaseline="alphabetic";
-    if(t.mach){ if(curDay()>=t.mach.done){ ctx.font="13px serif";ctx.textAlign="center";ctx.fillText("✨",x+TILE-9,y+9+Math.sin(now()*4)*1.5); }
-      else { ctx.fillStyle="rgba(0,0,0,.45)";ctx.fillRect(x+5,y+TILE-7,TILE-10,4); ctx.fillStyle="#ffd24a"; const dl=t.mach.done-curDay(); ctx.font="700 9px Helvetica";ctx.textAlign="center";ctx.fillText(dl+"d",x+TILE-8,y+TILE-3);
-        const wob=2+Math.sin(now()*5)*1; ctx.fillStyle="rgba(255,233,176,.6)";ctx.beginPath();ctx.arc(x+8,y+7,wob,0,7);ctx.fill(); } } }
+  else if(MACHINE_IN[t.type]){ ctx.fillStyle=scene==="in"?"#caa46a":"#7ec850";ctx.fillRect(x,y,TILE,TILE);   // artisan machine — drawn bigger than its tile, shows what's inside
+    const cm=x+TILE/2;
+    ctx.fillStyle="rgba(0,0,0,.22)";ctx.beginPath();ctx.ellipse(cm,y+TILE-3,17,5,0,0,7);ctx.fill();                       // shadow
+    ctx.fillStyle=ITEMS[t.type].color;ctx.beginPath();ctx.roundRect(cm-18,y-12,36,TILE+8,8);ctx.fill();                  // tall body
+    ctx.fillStyle="rgba(255,255,255,.14)";ctx.beginPath();ctx.roundRect(cm-18,y-12,36,8,8);ctx.fill();                   // top sheen
+    ctx.fillStyle="rgba(0,0,0,.16)";ctx.fillRect(cm-18,y+5,36,2);
+    ctx.font="22px serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(ICON[t.type]||"⚙️",cm,y-2);ctx.textBaseline="alphabetic";   // machine icon up top
+    if(t.mach){ const ready=curDay()>=t.mach.done, bob=Math.sin(now()*(ready?6:2.5)+c)*(ready?2:1);
+      ctx.fillStyle="rgba(14,11,7,.7)";ctx.beginPath();ctx.roundRect(cm-14,y+12,28,20,5);ctx.fill();                     // window into the machine
+      ctx.strokeStyle=ready?"rgba(120,235,150,.95)":"rgba(255,205,110,.75)";ctx.lineWidth=1.6;ctx.stroke();
+      ctx.font="16px serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(itemEmoji(t.mach.out)||"❔",cm,y+22+bob);ctx.textBaseline="alphabetic";   // SHOW the product being made
+      ctx.textAlign="center";
+      if(ready){ ctx.font="13px serif";ctx.fillText("✨",cm+16,y+1+Math.sin(now()*4)*2); ctx.fillStyle="#9af0a8";ctx.font="800 9px Helvetica";ctx.fillText(lang==="zh"?"完成":"READY",cm,y+TILE+8); }
+      else { const dl=t.mach.done-curDay(); ctx.fillStyle="#ffd24a";ctx.font="800 10px Helvetica";ctx.fillText(dl+"d",cm,y+TILE+8);
+        ctx.fillStyle="rgba(255,255,255,.32)";ctx.beginPath();ctx.arc(cm+Math.sin(now()*2+c)*4,y-16-((now()*9+c*7)%14),3,0,7);ctx.fill(); } }   // rising steam
+    else if(scene==="in"||Math.hypot(player.x-(c*TILE+TILE/2),player.y-(r*TILE+TILE/2))<TILE*2.2){ ctx.fillStyle="#fff";ctx.font="700 9px Helvetica";ctx.textAlign="center";ctx.fillText((lang==="zh"?"放入材料":"add item")+" ▸ use",cm,y+TILE+8); } }
   else if(t.type==="snowman"){ ctx.fillStyle=scene==="in"?"#caa46a":"#cfe6e0";ctx.fillRect(x,y,TILE,TILE);
     ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(x+TILE/2,y+TILE-12,9,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+TILE/2,y+TILE-24,6.5,0,7);ctx.fill();
     ctx.fillStyle="#22303f";ctx.beginPath();ctx.arc(x+TILE/2-2.5,y+TILE-25,1.2,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+TILE/2+2.5,y+TILE-25,1.2,0,7);ctx.fill();
@@ -1906,7 +1932,7 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
   if(scene==="out"&&area==="village"){ ents.push({y:npcY,d:drawNpc}); villagers.forEach(v=>ents.push({y:v.y,d:()=>drawVillager(v)})); VNPCS.forEach(n=>ents.push({y:n.y,d:()=>drawCritter(n)})); VDECOR.forEach(va=>ents.push({y:va.r*TILE+TILE/2,d:()=>drawDecorAnimal(va)})); }
   ents.sort((a,b)=>a.y-b.y); ents.forEach(e=>e.d());
   for(const s of shots){ const sx=s.x-camX,sy=s.y-camY; ctx.fillStyle="#c46aff";ctx.beginPath();ctx.arc(sx,sy,5,0,7);ctx.fill(); ctx.fillStyle="rgba(255,255,255,.6)";ctx.beginPath();ctx.arc(sx-1,sy-1,2,0,7);ctx.fill(); }
-  if(holdUse&&scene==="out"){ const hf=facedCell(); if(hf&&BREAKABLE.has(G[hf.r][hf.c].type)){ const prog=Math.min(1,(now()-holdStart)/1.2),hx=hf.c*TILE-camX+TILE/2,hy=hf.r*TILE-camY+TILE/2;
+  if(holdUse&&(scene==="out"||scene==="in")){ const hf=facedCell(); if(hf&&BREAKABLE.has(G[hf.r][hf.c].type)){ const prog=Math.min(1,(now()-holdStart)/1.2),hx=hf.c*TILE-camX+TILE/2,hy=hf.r*TILE-camY+TILE/2;
     ctx.strokeStyle="rgba(0,0,0,.4)";ctx.lineWidth=3;ctx.beginPath();ctx.arc(hx,hy,15,0,7);ctx.stroke();
     ctx.strokeStyle="#ffd23b";ctx.beginPath();ctx.arc(hx,hy,15,-Math.PI/2,-Math.PI/2+prog*2*Math.PI);ctx.stroke(); } }
   for(const p of fx){ if(p.kind==="flash"){ctx.fillStyle=`rgba(255,40,40,${p.life*0.3})`;ctx.fillRect(0,0,VW,VH);continue;}ctx.globalAlpha=Math.max(0,p.life);if(p.kind==="text"){ctx.font="800 16px Helvetica,Arial";ctx.textAlign="center";ctx.lineWidth=3.5;ctx.strokeStyle="rgba(0,0,0,.7)";ctx.strokeText(p.text,p.x-camX,p.y-camY);ctx.fillStyle=p.col;ctx.fillText(p.text,p.x-camX,p.y-camY);}else{ctx.fillStyle=p.col;ctx.fillRect(p.x-camX-2,p.y-camY-2,4,4);}ctx.globalAlpha=1; }
@@ -2152,7 +2178,7 @@ function renderChest(){ if(!curChest)return;
   chestGridEl.innerHTML=""; for(let i=0;i<CHESTN;i++)chestGridEl.appendChild(genSlot(curChest,i,()=>{ moveStack(curChest,i); renderChest(); renderHeld(); }));
   chestBagEl.innerHTML=""; for(let i=0;i<BAGN;i++)chestBagEl.appendChild(genSlot(bag,i,()=>{ moveStack(bag,i); renderChest(); renderBar(); renderHeld(); }));
   chestPackEl.disabled=curChest.some(s=>s); chestPackEl.textContent=curChest.some(s=>s)?t("empty the chest first"):t("pack up"); }
-function openChest(r,c){ const tile=gridOut[r][c]; if(!tile.store)tile.store=new Array(CHESTN).fill(null);
+function openChest(r,c){ const tile=G[r][c]; if(!tile.store)tile.store=new Array(CHESTN).fill(null);   // G = active grid (works indoors & out)
   curChest=tile.store; curChestR=r; curChestC=c; renderChest(); chestEl.classList.add("open"); }
 function closeChest(){ if(held){ addItem(held.key,held.count); held=null; renderHeld(); } chestEl.classList.remove("open"); curChest=null; renderBar(); save(); }
 chestPackEl.addEventListener("click",()=>{ if(!curChest||curChest.some(s=>s))return; const tile=gridOut[curChestR][curChestC];
