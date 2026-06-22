@@ -1780,9 +1780,10 @@ function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE|
     ctx.fillStyle="rgba(0,0,0,.16)";ctx.fillRect(cm-18,y+5,36,2);
     ctx.font="22px serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(ICON[t.type]||"⚙️",cm,y-2);ctx.textBaseline="alphabetic";   // machine icon up top
     if(t.mach){ const ready=curDay()>=t.mach.done, bob=Math.sin(now()*(ready?6:2.5)+c)*(ready?2:1);
-      ctx.fillStyle="rgba(14,11,7,.7)";ctx.beginPath();ctx.roundRect(cm-14,y+12,28,20,5);ctx.fill();                     // window into the machine
-      ctx.strokeStyle=ready?"rgba(120,235,150,.95)":"rgba(255,205,110,.75)";ctx.lineWidth=1.6;ctx.stroke();
-      ctx.font="16px serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(itemEmoji(t.mach.out)||"❔",cm,y+22+bob);ctx.textBaseline="alphabetic";   // SHOW the product being made
+      ctx.globalAlpha=1;
+      ctx.fillStyle="rgba(255,251,240,.95)";ctx.beginPath();ctx.roundRect(cm-15,y+10,30,23,7);ctx.fill();              // bright window so the product stands out
+      ctx.strokeStyle=ready?"#4ecb66":"#caa24a";ctx.lineWidth=2;ctx.stroke();
+      ctx.font="21px serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(itemEmoji(t.mach.out)||"❔",cm,y+22+bob);ctx.textBaseline="alphabetic";   // SHOW the product, full size & opacity
       ctx.textAlign="center";
       if(ready){ ctx.font="13px serif";ctx.fillText("✨",cm+16,y+1+Math.sin(now()*4)*2); ctx.fillStyle="#9af0a8";ctx.font="800 9px Helvetica";ctx.fillText(lang==="zh"?"完成":"READY",cm,y+TILE+8); }
       else { const dl=t.mach.done-curDay(); ctx.fillStyle="#ffd24a";ctx.font="800 10px Helvetica";ctx.fillText(dl+"d",cm,y+TILE+8);
@@ -1925,7 +1926,7 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
   updateCamera();   // keep the view centred on the player every frame, even while a dialogue/intro freezes update()
   for(let r=0;r<GR;r++)for(let c=0;c<GC;c++) drawTile(r,c);
   const f=facedCell(); if(f){ const tt=G[f.r][f.c].type; const fsel=bag[selSlot]; const farm=scene==="out"&&inFarm(f.r,f.c)&&FARMLAND.has(tt);
-    const gather=scene==="out"&&(tt==="tree"||tt==="rock"||tt==="iron"||tt==="gold"||tt==="sand"||tt==="oil"||(WATER.has(tt)&&fsel&&ITEMS[fsel.key].kind==="tool")); const inr=scene==="in"&&["bed","mat","stove"].includes(tt);
+    const gather=scene==="out"&&(tt==="tree"||tt==="rock"||tt==="iron"||tt==="gold"||tt==="sand"||tt==="oil"||(WATER.has(tt)&&fsel&&ITEMS[fsel.key].kind==="tool")); const inr=scene==="in"&&tt!=="wall";   // indoors: show the aim cursor on any tile you can act on
     if(farm||gather||inr){ ctx.strokeStyle="rgba(255,255,255,0.7)";ctx.lineWidth=2;ctx.strokeRect(f.c*TILE-camX+2,f.r*TILE-camY+2,TILE-4,TILE-4); } }
   const ents=[...(scene==="out"?mobs.map(m=>({y:m.y,d:()=>drawMob(m)})):[]),{y:player.y,d:drawPlayer}];
   if(scene==="out"&&area==="home"){ ents.push({y:catY,d:drawCat}); animals.forEach(a=>ents.push({y:a.y,d:()=>drawAnimal(a)})); if(!bossDefeated)ents.push({y:ROAD_R*TILE+TILE/2,d:drawGuardian}); }
