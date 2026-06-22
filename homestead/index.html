@@ -83,6 +83,19 @@
   .giftcell.off{opacity:.45;cursor:default}
   .giftcell .gn{position:absolute;right:3px;bottom:1px;font-size:11px;font-weight:800;text-shadow:0 1px 2px #000,0 0 2px #000}
   .giftnone{opacity:.6;font-size:13px;padding:10px 0}
+  .collshelf{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin:4px 0 12px}
+  .collcell{aspect-ratio:1;border-radius:11px;border:1.5px solid rgba(255,255,255,.22);background:rgba(0,0,0,.22);cursor:pointer;display:grid;place-items:center;font-size:24px;box-shadow:inset 0 2px 6px rgba(0,0,0,.4);transition:border-color .12s,transform .08s}
+  .collcell:hover{border-color:rgba(255,255,255,.55)}
+  .collcell.lock{opacity:.55;font-size:19px}
+  .collcell.sel{border-color:#ffd23b;background:rgba(255,210,59,.16);transform:translateY(-1px)}
+  .colldetail{min-height:96px;border-radius:14px;border:1.5px solid rgba(255,255,255,.22);background:rgba(0,0,0,.26);padding:13px 15px;display:flex;gap:13px;align-items:center}
+  .colldetail .cdi{font-size:40px;flex:0 0 auto;width:54px;text-align:center}
+  .colldetail .cdt{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .colldetail .cdt b{font-size:16px}
+  .colldetail .cdt .cdd{font-size:12.5px;opacity:.85;line-height:1.35}
+  .colldetail .cdt .cdh{font-size:12px;color:#ffd23b;font-weight:700}
+  .colldetail .cdt .cds{font-size:11.5px;opacity:.6}
+  .colldetail.empty{justify-content:center;opacity:.6;font-size:13px}
   .frow{display:flex;gap:12px;align-items:center;padding:11px 0;border-top:1px solid rgba(255,255,255,.14)}
   .fface{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:23px;flex:0 0 auto}
   .fmain{flex:1;min-width:0}
@@ -346,8 +359,8 @@
 </div></div>
 <div class="shop" id="coll"><div class="card">
   <h2>🗿 Collection <span class="c" style="margin-left:auto;font-size:14px" id="collCount"></span></h2>
-  <p style="font-size:12px;opacity:.7;margin:-2px 0 6px">Rare ancient relics — dig them up while tilling or find them deep in the dungeon. Sell them high, or show them off on a display stand.</p>
-  <div id="collBody"></div>
+  <div id="collShelf" class="collshelf"></div>
+  <div id="collDetail" class="colldetail"></div>
   <button class="close" id="collClose">close</button>
 </div></div>
 <div id="vn"><div class="box">
@@ -453,6 +466,10 @@ const ITEMS={
   shining_ring:{kind:"gear",slot:"acc",color:"#fff0a8",name:"shining ring",bonus:{atk:2,maxhp:2,regen:1},filter:"brightness(1.3) saturate(1.6) drop-shadow(0 0 2px #ffe27a)"},   // dungeon ring: lights the dark + strong combat boost
   iron_stew:{kind:"food",color:"#8a939c",name:"iron stew",food:60,buff:{bonus:{maxhp:3},dur:150},eff:"+3 hearts for 2.5 min"}, rage_skewer:{kind:"food",color:"#c23a2a",name:"rage skewer",food:50,buff:{bonus:{atk:2},dur:150},eff:"+2 attack for 2.5 min"},
   mending_broth:{kind:"food",color:"#5fae6a",name:"mending broth",food:55,buff:{bonus:{regen:2},dur:180},eff:"fast heal for 3 min"}, feast_platter:{kind:"food",color:"#d8913f",name:"feast platter",food:70,buff:{bonus:{maxhp:2,atk:1,speed:20},dur:120},eff:"+2 hearts, +1 attack & faster, 2 min"},
+  omelette:{kind:"food",color:"#f0c24a",name:"omelette",food:46,buff:{bonus:{regen:1},dur:120},eff:"heals faster for 2 min"}, veggie_medley:{kind:"food",color:"#6fb04a",name:"veggie medley",food:50,buff:{bonus:{speed:18},dur:120},eff:"faster for 2 min"},
+  creamy_chowder:{kind:"food",color:"#e8dcc0",name:"creamy chowder",food:58,buff:{bonus:{maxhp:2},dur:120},eff:"+2 hearts for 2 min"}, truffle_roast:{kind:"food",color:"#7a4a2a",name:"truffle roast",food:66,buff:{bonus:{atk:2},dur:150},eff:"+2 attack for 2.5 min"},
+  shrimp_skewer:{kind:"food",color:"#f0926a",name:"shrimp skewer",food:46,buff:{bonus:{atk:1},dur:120},eff:"+1 attack for 2 min"}, pumpkin_pie:{kind:"food",color:"#d98a3a",name:"pumpkin pie",food:60,buff:{bonus:{maxhp:1,regen:2},dur:150},eff:"+1 heart & fast heal, 2.5 min"},
+  egg_sandwich:{kind:"food",color:"#e8c878",name:"egg sandwich",food:44,buff:{bonus:{regen:1},dur:120},eff:"heals faster for 2 min"}, fruit_parfait:{kind:"food",color:"#e69ab0",name:"fruit parfait",food:42,buff:{bonus:{speed:18},dur:120},eff:"faster for 2 min"},
   egg:{kind:"food",color:"#f3e6c0",name:"egg",food:12,sell:6}, milk:{kind:"food",color:"#f4f0e6",name:"milk",food:16,sell:10}, truffle:{kind:"mat",color:"#5a4634",name:"truffle",sell:60},
   omelette:{kind:"food",color:"#f6cf5a",name:"omelette",food:48}, cheese:{kind:"food",color:"#f0c54a",name:"cheese",food:30,sell:30},
   // seafood from net traps
@@ -532,6 +549,7 @@ const NAME_ZH={ wood:"木材", stone:"石頭", goo:"黏液", iron:"鐵礦", gold
   oillamp:"油燈", rod:"釣竿", net:"漁網", metal_sword:"金屬劍", metal_armor:"金屬盔甲", chest:"箱子",
   berry:"莓果", meat:"肉", cap:"布帽", vest:"皮背心", legguards:"護腿", boots:"輕快靴", ring:"治療戒指", charm:"力量護符",
   bread:"麵包", pie:"莓果派", salad:"花園沙拉", hearty_stew:"豐盛燉湯", power_roast:"力量烤肉", swift_salad:"迅捷青蔬", stove:"爐灶",
+  omelette:"煎蛋捲", veggie_medley:"蔬菜燴", creamy_chowder:"奶油濃湯", truffle_roast:"松露烤肉", shrimp_skewer:"鮮蝦串", pumpkin_pie:"南瓜派", egg_sandwich:"雞蛋三明治", fruit_parfait:"水果芭菲",
   coal:"煤炭", silver:"銀", diamond:"鑽石", red_jewel:"紅寶石", green_jewel:"綠寶石", fossil:"化石", jewelry:"珠寶",
   elixir:"靈藥", steel:"鋼錠", crown:"皇冠", gold_sword:"黃金劍", plate_armor:"板甲", war_helm:"鋼盔", crystal_ring:"水晶戒指", war_charm:"戰爭護符", jerky:"肉乾", fish_stew:"魚湯",
   leather_armor:"皮甲", gold_armor:"黃金盔甲", diamond_armor:"鑽石盔甲", frost_plate:"冰霜板甲", diamond_helm:"鑽石頭盔", chain_vest:"鎖子甲", gold_greaves:"黃金護腿", winged_boots:"飛翼靴",
@@ -703,6 +721,7 @@ const ICON={ wood:"🪵", stone:"🪨", goo:"🟢", iron:"🔩", gold:"🪙", fi
   bench:"🪑", stool:"🪑", bookshelf:"📚", plant:"🪴", fountain:"⛲", barrel:"🛢️", clock:"🕰️", bluerug:"🟦",
   rod:"🎣", net:"🥅", metal_sword:"🗡️", metal_armor:"🛡️", chest:"🧰", berry:"🫐", meat:"🍖", cap:"🧢", vest:"🦺", legguards:"👖", boots:"👢", ring:"💍", charm:"🔮",
   bread:"🍞", pie:"🥧", salad:"🥗", hearty_stew:"🍲", power_roast:"🍗", swift_salad:"🥬", stove:"🔥",
+  omelette:"🍳", veggie_medley:"🥘", creamy_chowder:"🥣", truffle_roast:"🍖", shrimp_skewer:"🍤", pumpkin_pie:"🎃", egg_sandwich:"🥪", fruit_parfait:"🍨",
   coal:"⚫", silver:"🥈", diamond:"💎", red_jewel:"🔴", green_jewel:"💚", fossil:"🦴", jewelry:"📿",
   elixir:"🧴", steel:"⚙️", crown:"👑", gold_sword:"⚔️", plate_armor:"🛡️", war_helm:"🪖", crystal_ring:"💠", war_charm:"🧿", jerky:"🥓", fish_stew:"🍛",
   leather_armor:"🧥", gold_armor:"🥇", diamond_armor:"🔰", frost_plate:"❄️", diamond_helm:"⛑️", chain_vest:"👕", gold_greaves:"🩳", winged_boots:"🥾",
@@ -2197,7 +2216,18 @@ const STOVE_RECIPES=[
   {give:"iron_stew", cost:{meat:2,crop_pumpkin:1}, eff:"+3 hearts for 2.5 min"},
   {give:"rage_skewer", cost:{meat:1,fish:1}, eff:"+2 attack for 2.5 min"},
   {give:"mending_broth", cost:{fish:2,berry:2}, eff:"fast heal for 3 min"},
-  {give:"feast_platter", cost:{meat:3,crop_corn:1,crop_pumpkin:1}, eff:"+2 hearts, +1 attack & faster, 2 min"} ];
+  {give:"feast_platter", cost:{meat:3,crop_corn:1,crop_pumpkin:1}, eff:"+2 hearts, +1 attack & faster, 2 min"},
+  {give:"bread", cost:{crop_wheat:2}, eff:"heals faster for 2 min"},
+  {give:"pie", cost:{berry:3,crop_wheat:1}, eff:"+1 heart & fast heal, 2.5 min"},
+  {give:"fish_stew", cost:{fish:2,crop_corn:1}, eff:"+1 heart & fast heal, 2.5 min"},
+  {give:"omelette", cost:{egg:2}, eff:"heals faster for 2 min"},
+  {give:"egg_sandwich", cost:{egg:1,crop_wheat:1}, eff:"heals faster for 2 min"},
+  {give:"veggie_medley", cost:{crop_carrot:1,crop_corn:1,crop_pumpkin:1}, eff:"faster for 2 min"},
+  {give:"fruit_parfait", cost:{berry:2,milk:1}, eff:"faster for 2 min"},
+  {give:"creamy_chowder", cost:{milk:1,fish:1,crop_corn:1}, eff:"+2 hearts for 2 min"},
+  {give:"pumpkin_pie", cost:{crop_pumpkin:1,egg:1,milk:1}, eff:"+1 heart & fast heal, 2.5 min"},
+  {give:"shrimp_skewer", cost:{shrimp:2}, eff:"+1 attack for 2 min"},
+  {give:"truffle_roast", cost:{truffle:1,meat:1}, eff:"+2 attack for 2.5 min"} ];
 function openStove(){ renderStove(); stoveEl.classList.add("open"); }
 function renderStove(){ document.getElementById("stoveList").innerHTML=STOVE_RECIPES.map((R,i)=>{ const cs=Object.entries(R.cost).map(([m,n])=>`${n} ${itemName(m)}`).join(" + ");
     const can=Object.entries(R.cost).every(([m,n])=>countItem(m)>=n);
@@ -2600,11 +2630,22 @@ document.getElementById("friendsClose").addEventListener("click",()=>friendsEl.c
 friendsEl.addEventListener("pointerdown",e=>{ if(e.target===friendsEl)friendsEl.classList.remove("open"); });
 /* ---- Collection: every relic, found or still a mystery ---- */
 const collEl=document.getElementById("coll");
+const RELIC_DESC={ relic_fan:"An ornate folding fan from a long-lost court.", relic_scroll:"A brittle scroll inked with faded, forgotten script.", relic_compass:"A tarnished brass compass that still points true north.", relic_mask:"A carved tribal mask worn in ancient rites.", relic_hourglass:"An old hourglass whose sand never seems to run out.", relic_vase:"A delicate antique vase, miraculously unbroken.", relic_lamp:"A dented genie lamp. Care to give it a rub?", relic_telescope:"A brass telescope for charting far-off stars.", relic_clock:"An antique clock, still faithfully ticking.", relic_dragon:"A jade dragon carving, cool and smooth to the touch.", relic_skull:"A crystal skull that glimmers with an inner light.", relic_idol:"A weathered moai statue, heavy with old secrets." };
+const RELIC_DESC_ZH={ relic_fan:"來自失落宮廷的華麗摺扇。", relic_scroll:"墨跡斑駁、字句早已被遺忘的脆弱卷軸。", relic_compass:"鏽蝕的黃銅羅盤，依然準確指向北方。", relic_mask:"古老儀式中佩戴的雕刻部落面具。", relic_hourglass:"古老的沙漏，裡頭的沙彷彿永遠流不完。", relic_vase:"精緻的古董花瓶，奇蹟般完好無缺。", relic_lamp:"凹陷的神燈。要不要擦一擦？", relic_telescope:"用來觀測遙遠星辰的黃銅望遠鏡。", relic_clock:"古董時鐘，至今仍忠實地走著。", relic_dragon:"翡翠雕成的龍，觸感冰涼光滑。", relic_skull:"閃爍著內在光芒的水晶骷髏。", relic_idol:"飽經風霜的摩艾石像，藏著古老的祕密。" };
+function relicDesc(k){ return (lang==="zh"&&RELIC_DESC_ZH[k])?RELIC_DESC_ZH[k]:(RELIC_DESC[k]||""); }
+function relicHow(){ return lang==="zh"?"極少數情況下從翻土、地城寶石礦脈或地城寶箱中取得。":"Rarely dug from tilled soil, mined from dungeon gem veins, or found in dungeon treasure chests."; }
+function collShowDetail(k){ const d=document.getElementById("collDetail");
+  if(!k){ d.className="colldetail empty"; d.textContent=(lang==="zh"?"點選上方的圖示查看詳情":"Tap a relic above to see its details"); return; }
+  d.className="colldetail"; const seen=!!relicSeen[k]||countItem(k)>0;
+  if(!seen){ d.innerHTML=`<div class="cdi">🔒</div><div class="cdt"><b>? ? ?</b><span class="cdd">${lang==="zh"?"尚未發現 — 繼續翻土與深入地城來解鎖它。":"Not found yet — keep tilling and delving to discover it."}</span></div>`; return; }
+  d.innerHTML=`<div class="cdi">${itemEmoji(k)||"❔"}</div><div class="cdt"><b>${itemName(k)}</b><span class="cdd">${relicDesc(k)}</span><span class="cdh">${lang==="zh"?"取得方式":"How to get"}: ${relicHow()}</span><span class="cds">${t("sells")} ${ITEMS[k].sell}c · ${t("you have")} ${countItem(k)}</span></div>`; }
 function renderColl(){ const found=RELIC_KEYS.filter(k=>relicSeen[k]||countItem(k)>0).length;
   document.getElementById("collCount").textContent=found+"/"+RELIC_KEYS.length;
-  document.getElementById("collBody").innerHTML=RELIC_KEYS.slice().reverse().map(k=>{ const seen=!!relicSeen[k]||countItem(k)>0, it=ITEMS[k];
-    if(!seen) return `<div class="item" style="opacity:.5"><span class="emo" style="font-size:20px">🔒</span><div><b>? ? ?</b><span>${t("not found yet")}</span></div></div>`;
-    return `<div class="item">${iconSpan(k)}<div><b>${itemName(k)}</b><span>${t("sells")} ${it.sell}c · ${t("you have")} ${countItem(k)}</span></div></div>`; }).join(""); }
+  document.getElementById("collShelf").innerHTML=RELIC_KEYS.map(k=>{ const seen=!!relicSeen[k]||countItem(k)>0;
+    return `<button type="button" class="collcell ${seen?"":"lock"}" data-coll="${k}">${seen?(itemEmoji(k)||"❔"):"🔒"}</button>`; }).join("");
+  collShowDetail(null); }
+document.getElementById("collShelf").addEventListener("click",e=>{ const b=e.target.closest("[data-coll]"); if(!b)return;
+  document.getElementById("collShelf").querySelectorAll(".collcell").forEach(c=>c.classList.remove("sel")); b.classList.add("sel"); collShowDetail(b.dataset.coll); });
 function openColl(){ renderColl(); collEl.classList.add("open"); }
 document.getElementById("collBtn").addEventListener("click",openColl);
 document.getElementById("collClose").addEventListener("click",()=>collEl.classList.remove("open"));
