@@ -5,11 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="description" content="A cozy survival-farm game — farm, fight slimes, gather wood & stone, craft and build, trade with a shop cat.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%230033ff'/%3E%3Crect x='10' y='34' width='44' height='20' fill='%237ec850'/%3E%3Crect x='22' y='12' width='20' height='24' fill='%23fff'/%3E%3Cpath d='M20 14 L32 4 L44 14 Z' fill='%23ff7e7e'/%3E%3C/svg%3E">
+<!-- PWA: installable + offline on PC / Android / iOS -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0a2acc">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Homestead">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <title>Homestead — Playground</title>
 <style>
   :root{ --blue:#0033ff; --white:#fff; }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  html,body{height:100%;overflow:hidden}
+  html,body{height:100%;overflow:hidden;overscroll-behavior:none}
   body{background:var(--blue);color:var(--white);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
     user-select:none;-webkit-user-select:none;touch-action:none;min-height:100dvh;display:flex;flex-direction:column}
   header{display:flex;align-items:baseline;gap:12px;padding:8px clamp(10px,3vw,30px);font-size:13px;font-weight:500;flex:0 0 auto;flex-wrap:wrap}
@@ -2733,6 +2741,12 @@ document.querySelectorAll(".shop > .card").forEach(card=>{ if(card.querySelector
 document.querySelectorAll(".shop").forEach(sh=>{ sh.addEventListener("pointerdown",e=>{ if(e.target!==sh)return; const cls=sh.querySelectorAll(".card>.close"); const cl=cls[cls.length-1]; if(cl)cl.click(); else sh.classList.remove("open"); }); });   // tap backdrop to close (last .close = the real close button)
 resize(); requestAnimationFrame(frame); if(freshStart)openNameModal(maybeIntro); else maybeIntro();
 })();
+</script>
+<script>
+/* PWA: register the service worker so the game installs to the home screen and runs offline. */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
+}
 </script>
 </body>
 </html>
