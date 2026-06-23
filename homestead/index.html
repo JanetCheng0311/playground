@@ -105,7 +105,8 @@
   .colldetail .cdt .cds{font-size:11.5px;opacity:.6}
   .colldetail.empty{justify-content:center;opacity:.6;font-size:13px}
   .frow{display:flex;gap:12px;align-items:center;padding:11px 0;border-top:1px solid rgba(255,255,255,.14)}
-  .fface{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:23px;flex:0 0 auto}
+  .fface{position:relative;overflow:hidden;width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:23px;flex:0 0 auto}
+  .ffimg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:auto}
   .fmain{flex:1;min-width:0}
   .fhead{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px;gap:8px;align-items:baseline}
   .fhead span{font-size:11.5px;opacity:.9;color:#ffd2dd;font-weight:700;white-space:nowrap}
@@ -2695,7 +2696,8 @@ const friendsEl=document.getElementById("friends");
 function renderFriends(){ document.getElementById("friendsBody").innerHTML=FRIEND_IDS.map(id=>{ const m=NPCMETA[id];
     const loves=[...GIFT_PREF[id].love].filter(k=>k!==GIFT_FAV[id]).slice(0,3).map(itemName).join(", ");
     const fav=GIFT_FAV[id]?`<div class="floves">⭐ ${t("favourite")}: ${itemName(GIFT_FAV[id])}</div>`:"";
-    return `<div class="frow"><div class="fface" style="background:${m.col}">${m.face}</div>
+    const faceSrc=artData[id]||("art/"+id+".png");   // the player's drawn character art (uploaded override, else the drop-in PNG)
+    return `<div class="frow"><div class="fface" style="background:${m.col}">${m.face}<img class="ffimg" src="${faceSrc}" alt="" onerror="this.remove()"></div>
       <div class="fmain"><div class="fhead"><b>${t(m.name)}</b><span>${friendHearts(id)} ${t(friendTier(id))}</span></div>
       <div class="fbbar"><div class="fbfill" style="width:${friend[id]||0}%"></div></div>
       ${fav}<div class="floves">${t("loves")}: ${loves}</div></div></div>`; }).join(""); }
