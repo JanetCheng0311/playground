@@ -215,6 +215,16 @@
   #vnSkip em{font-style:normal;opacity:.6;font-weight:400}
   #vn .box{position:relative}
   @media (max-width:820px){ .pad{display:flex} .hint{display:none} .bar{padding-bottom:124px} #vn{bottom:120px} #talkBtn{display:none} }
+  #installNote{opacity:.85;font-size:13.5px;margin:4px 0 12px;line-height:1.5}
+  #installPick{display:flex;flex-direction:column;gap:8px;margin:0 0 10px}
+  .iplat{display:block;width:100%;padding:11px 14px;font-size:15px;border-radius:12px;cursor:pointer;text-align:left;
+    background:rgba(255,255,255,.08);color:#fff;border:1.5px solid rgba(255,255,255,.22);transition:border-color .12s,background .12s}
+  .iplat:hover{border-color:rgba(255,216,107,.7)}
+  .iplat.on{border-color:#ffd86b;background:rgba(255,216,107,.18)}
+  .iplat.ipnow{text-align:center;font-weight:700;background:linear-gradient(#ffe08a,#f3b13a);color:#5a3d00;border-color:#ffce5a}
+  #installNow{margin:2px 0 8px}
+  .isteps{text-align:left;margin:2px 0 0;padding-left:22px;line-height:1.55;font-size:14px}
+  .isteps li{margin:5px 0}
 </style>
 </head>
 <body>
@@ -227,6 +237,7 @@
   <button id="tutBtn">📖 Guide</button>
   <button id="collBtn">🗿 Collection</button>
   <button id="settingsBtn">⚙ Settings</button>
+  <button id="installBtn">📲 Get App</button>
   <button id="langBtn">中文</button>
   <a href="../">playground</a>
   <input type="file" id="impFile" accept="application/json,.json" style="display:none">
@@ -333,6 +344,18 @@
   <h2 id="nameTitle">What's your name?</h2>
   <input id="nameInput" maxlength="16" placeholder="your name" autocomplete="off" spellcheck="false">
   <button class="close" id="nameOk">OK</button>
+</div></div>
+<div class="shop" id="install"><div class="card" style="width:min(380px,100%);text-align:center">
+  <h2>📲 Install Homestead</h2>
+  <p id="installNote">Play offline &amp; full-screen, like a real app. Pick your device:</p>
+  <div id="installPick">
+    <button class="iplat" data-plat="ios">🍏 iPhone / iPad</button>
+    <button class="iplat" data-plat="android">🤖 Android</button>
+    <button class="iplat" data-plat="desktop">💻 Windows / Mac</button>
+  </div>
+  <div id="installNow"></div>
+  <div id="installSteps"></div>
+  <button class="close" id="installClose">close</button>
 </div></div>
 <div class="shop" id="market"><div class="card">
   <h2>🎣 Pelle the Fisher <span class="c">coins <b id="mktCoins">0</b></span></h2>
@@ -597,6 +620,21 @@ const HOWTO_ZH={ wood:"砍樹", stone:"開採岩石", goo:"打敗史萊姆", iro
   glass:"用 2 個沙製作", oil:"榨 2 個玉米、打史萊姆，或向漁夫購買", fish:"用釣竿或漁網釣魚", crop_corn:"種植並採收玉米（貓商店）" };
 const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金幣","save file":"儲存","load file":"載入","sound":"音效","muted":"靜音","new game":"新遊戲","playground":"遊樂場",
   "💬 Talk":"💬 對話","🎒 Bag":"🎒 背包","🗺 Map":"🗺 地圖","？ Help":"？ 說明",
+  "📲 Get App":"📲 安裝App","📲 Install Homestead":"📲 安裝 Homestead",
+  "Play offline & full-screen, like a real app. Pick your device:":"離線、全螢幕遊玩，就像真正的App。選擇你的裝置：",
+  "✓ Already installed — you're playing the app!":"✓ 已安裝 — 你正在以App遊玩！","✨ Install now — one tap":"✨ 立即安裝 — 一鍵完成",
+  "🍏 iPhone / iPad":"🍏 iPhone / iPad","🤖 Android":"🤖 Android","💻 Windows / Mac":"💻 Windows / Mac",
+  "Open this page in Safari (Chrome can't install on iPhone).":"用 Safari 開啟本頁（iPhone 上的 Chrome 無法安裝）。",
+  "Tap the Share button — the square with an ↑ arrow.":"點下方的「分享」鍵 — 有向上箭頭 ↑ 的方框。",
+  "Scroll down and tap “Add to Home Screen”.":"向下捲動，點「加入主畫面」。",
+  "Tap “Add” — Homestead lands on your home screen.":"點「加入」— Homestead 就會出現在你的主畫面。",
+  "Open this page in Chrome.":"用 Chrome 開啟本頁。","Tap the ⋮ menu at the top-right.":"點右上角的 ⋮ 選單。",
+  "Tap “Install app” (or “Add to Home screen”).":"點「安裝應用程式」（或「加到主畫面」）。",
+  "Confirm — Homestead installs like an app.":"確認 — Homestead 會像App一樣安裝。",
+  "Open this page in Chrome or Edge.":"用 Chrome 或 Edge 開啟本頁。",
+  "Click the install icon ⊕ at the right end of the address bar.":"點網址列右端的安裝圖示 ⊕。",
+  "Or open the ⋮ menu and choose “Install Homestead”.":"或開啟 ⋮ 選單，選「安裝 Homestead」。",
+  "Click “Install” — it opens in its own window.":"點「安裝」— 它會在獨立視窗中開啟。",
   "WASD/arrows move (double-tap a direction to run) · 1–0 pick item · E/Space to act (till, chop/mine, fish, fight, place) · hold use ~1.5s to remove anything you placed · press T to talk to the cat/fisher · M for the map · I for bag & crafting":"WASD/方向鍵移動（連按兩下方向衝刺）· 1–0 選物品 · E/空白鍵 動作（翻土、砍伐/開採、釣魚、戰鬥、放置）· 長按使用約1.5秒可拆除你放置的東西 · 按 T 與貓/漁夫對話 · M 開地圖 · I 開背包與製作",
   "🐾 Whiskers' Shop":"🐾 小鬍子商店","buy seeds":"購買種子","buy furniture":"購買家具","sell":"販售","upgrades":"升級","close":"關閉",
   "Backpack":"背包","hotbar · keys 1–0":"快捷欄 · 按鍵 1–0","🔨 Crafting table":"🔨 工作台","drop items into the grid to craft":"把物品放進格子來製作","recipe book":"配方書","📖 recipe book":"📖 配方書",
@@ -770,7 +808,8 @@ function applyLang(){ localStorage.setItem("hs-lang",lang);
   if(document.getElementById("merchant").classList.contains("open"))renderMerchant();
   if(document.getElementById("friends").classList.contains("open"))renderFriends();
   if(document.getElementById("coll").classList.contains("open"))renderColl();
-  if(document.getElementById("giftui").classList.contains("open"))renderGift(); }
+  if(document.getElementById("giftui").classList.contains("open"))renderGift();
+  if(document.getElementById("install").classList.contains("open"))openInstall(); }
 
 const RECIPES=[
   {key:"salve", give:"salve", cost:{goo:2}, desc:"restores 2 hearts (use it from your bag)"},
@@ -2730,6 +2769,32 @@ impFile.addEventListener("change",e=>{ const file=e.target.files[0]; if(!file)re
       if(load()){ renderBar(); syncUI(); float(player.x,player.y-26,"save loaded!","#fff"); } else throw 0;
     }catch(err){ alert("That doesn't look like a Homestead save file."); } impFile.value=""; };
   rd.readAsText(file); });
+/* ---- Get-the-App / PWA install ---- */
+let _deferredPrompt=null, _curPlat="desktop";
+const installEl=document.getElementById("install");
+addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); _deferredPrompt=e; if(installEl.classList.contains("open"))selectPlat(_curPlat); });   // Chrome/Edge/Android: stash the native prompt so we can fire it on demand
+addEventListener("appinstalled",()=>{ _deferredPrompt=null; if(installEl.classList.contains("open"))openInstall(); });
+function isStandalone(){ return (matchMedia&&matchMedia("(display-mode: standalone)").matches) || navigator.standalone===true; }
+function detectPlat(){ const ua=navigator.userAgent||""; if(/iPad|iPhone|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1))return "ios"; if(/Android/i.test(ua))return "android"; return "desktop"; }
+function platSteps(p){
+  if(p==="ios")return ["Open this page in Safari (Chrome can't install on iPhone).","Tap the Share button — the square with an ↑ arrow.","Scroll down and tap “Add to Home Screen”.","Tap “Add” — Homestead lands on your home screen."];
+  if(p==="android")return ["Open this page in Chrome.","Tap the ⋮ menu at the top-right.","Tap “Install app” (or “Add to Home screen”).","Confirm — Homestead installs like an app."];
+  return ["Open this page in Chrome or Edge.","Click the install icon ⊕ at the right end of the address bar.","Or open the ⋮ menu and choose “Install Homestead”.","Click “Install” — it opens in its own window."];
+}
+function selectPlat(p){ _curPlat=p;
+  installEl.querySelectorAll("#installPick .iplat").forEach(b=>b.classList.toggle("on",b.dataset.plat===p));
+  const now=document.getElementById("installNow");
+  if(_deferredPrompt&&p!=="ios"&&!isStandalone()){ now.innerHTML="<button id='installNowBtn' class='iplat ipnow'></button>"; const nb=document.getElementById("installNowBtn"); nb.textContent=t("✨ Install now — one tap"); nb.onclick=doNativeInstall; }
+  else now.innerHTML="";
+  document.getElementById("installSteps").innerHTML="<ol class='isteps'>"+platSteps(p).map(s=>"<li>"+t(s)+"</li>").join("")+"</ol>";
+}
+function doNativeInstall(){ if(!_deferredPrompt)return; const dp=_deferredPrompt; dp.prompt(); dp.userChoice.then(()=>{ _deferredPrompt=null; }).catch(()=>{}); }
+function openInstall(){ const note=document.getElementById("installNote");
+  note.textContent=isStandalone()?t("✓ Already installed — you're playing the app!"):t("Play offline & full-screen, like a real app. Pick your device:");
+  selectPlat(detectPlat()); installEl.classList.add("open"); }
+document.getElementById("installBtn").addEventListener("click",()=>{ try{audio();}catch(_){} openInstall(); });
+document.getElementById("installClose").addEventListener("click",()=>installEl.classList.remove("open"));
+installEl.querySelectorAll("#installPick .iplat").forEach(b=>b.addEventListener("click",()=>{ try{audio();}catch(_){} selectPlat(b.dataset.plat); }));
 document.getElementById("langBtn").addEventListener("click",()=>{ lang=lang==="zh"?"en":"zh"; applyLang(); });
 setInterval(save,5000);
 const freshStart=!load(); if(freshStart) reset(); else { renderBar(); syncUI(); }
