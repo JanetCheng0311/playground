@@ -1765,6 +1765,8 @@ cheatEl.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter")
   else if(v==="$$$"){ coins+=10000; SND.coin(); syncUI(); float(player.x,player.y-26,"cheat: +10000 coins","#ffe27a"); save(); }
   else if(v==="changeoc"){ localStorage.setItem("hs-oc","1"); const as=document.getElementById("artSection"); if(as)as.style.display=""; float(player.x,player.y-26,"cheat: character art unlocked","#ffe27a"); }
   else if(v==="bright"){ dungBright=!dungBright; float(player.x,player.y-26,"cheat: dungeon light "+(dungBright?"ON":"OFF"),"#ffe27a"); }
+  else if(/^boss[1-5]$/.test(v)){ const n=+v.slice(4); dungFloor=n*10; dungBoss=true; gotoDungeon(); float(player.x,player.y-26,"cheat: "+BOSSES[n-1].name+" (floor "+dungFloor+")","#ffe27a"); }   // jump straight into each dungeon floor-boss to test it
+  else if(v==="bossr"||v==="boss6"){ if(scene!=="boss"){ if(!hasSword())equip.sword="metal_sword"; if(!hasArmor())equip.armor="metal_armor"; recalcMax(); renderBar(); scene="boss"; SND.door(); bossInit(); float(player.x,player.y-26,"cheat: Road Guardian","#ffe27a"); } }   // start the Road Guardian side-view fight (auto-gears you)
   cheatEl.value=""; cheatEl.blur(); } });
 
 /* ---- physics ---- */
