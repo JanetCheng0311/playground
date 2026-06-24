@@ -1253,9 +1253,13 @@ function openDungChest(tt,cx,cy){ const fl=dungFloor||1, c0=80+fl*7+(Math.random
   gainItem(item,n,cx,cy); tt.type="dfloor"; tt.hits=0;
   SND.coin(); setTimeout(()=>SND.harvest(),90); burst(cx,cy,"#ffe27a",18); burst(cx,cy-6,"#ffd84a",10);
   float(cx,cy-24,TR("✨ Treasure!")+" +"+c0+"c","#ffe27a"); save(); }
-function gotoDungeon(){ gridDung=buildDungeon(dungFloor); setArea("dungeon"); setScene("out"); mobs.length=0; shots.length=0; spawnT=0; hover=null;
-  player.x=2.5*TILE; player.y=2.5*TILE; player.dir="d";player.fx=0;player.fy=1; transCD=0.4; if(dungBoss)spawnBoss(); save(); }
-function enterDungeon(){ dungFloor=(dungMax>=50)?Math.floor(dungMax/50)*50:1; dungBoss=false; gotoDungeon();
+function gotoDungeon(skipBoss){ gridDung=buildDungeon(dungFloor); setArea("dungeon"); mobs.length=0; shots.length=0; spawnT=0; hover=null;
+  if(dungBoss&&!skipBoss){ enterDungeonBoss(); return; }   // boss floors are a dedicated Hollow-Knight-style arena fight, not a maze
+  setScene("out"); player.x=2.5*TILE; player.y=2.5*TILE; player.dir="d";player.fx=0;player.fy=1; transCD=0.4; save(); }
+function enterDungeonBoss(){ const idx=(Math.floor(dungFloor/10)-1+50*BOSSES.length)%BOSSES.length, B=BOSSES[idx];
+  const hp=Math.round((16+dungFloor*1.4)*B.hpm); bossCtx="dungeon";
+  startDialog([{who:"boss",name:B.name,face:B.face,col:B.col,text:B.quote}], ()=>{ scene="boss"; SND.door(); bossInit(B,hp); }); }   // announce, then drop into the arena
+function enterDungeon(){ dungFloor=(dungMax>=50)?Math.floor(dungMax/50)*50:1; dungBoss=false; gotoDungeon(true);   // entry never dumps you straight into a boss
   float(player.x,player.y-26,t("dungeon")+" · "+t("floor")+" "+dungFloor,"#cdb0ff"); }
 function descend(){ if(dungBoss&&mobs.some(m=>m.boss)){ SND.no(); float(player.x,player.y-22,t("defeat the floor boss!"),"#ff8f8f"); return; }
   if(dungFloor>=1000){ float(player.x,player.y-22,t("the bottom… nothing deeper"),"#cdb0ff"); return; }
@@ -1418,11 +1422,11 @@ function spawnMob(){ const RW=gridOut.length, CW=gridOut[0].length; for(let i=0;
   const k=pickKind(), K=MOBKINDS[k], hp=K.hp+(area==="dungeon"?Math.floor(dungFloor/2):0);
   mobs.push({x,y,hp,maxHp:hp,r:K.r,flash:0,kx:0,ky:0,t:Math.random()*9,col:K.col,kind:k,spd:K.spd,dmg:K.dmg,drop:K.drop,fly:K.fly}); return; } }
 const BOSSES=[
-  {name:"Stone Brute", col:"#9aa3ab", r:27, beh:"chase",  hpm:1.2, face:"🗿", quote:"You'll not pass the Stone Brute. I'll grind you to gravel!"},
-  {name:"Charger",     col:"#e07a2a", r:23, beh:"charge", hpm:0.9, face:"🐗", quote:"Think you're quick? Let's see you dodge THIS!"},
-  {name:"Hexer",       col:"#9a5af0", r:22, beh:"shoot",  hpm:0.8, face:"🔮", quote:"Foolish mortal… my hexes will unmake you."},
-  {name:"Brood Mother",col:"#2aa0a0", r:25, beh:"summon", hpm:1.0, face:"🕷️", quote:"My children are hungry, little one… come closer."},
-  {name:"Wraith King", col:"#d23a7a", r:26, beh:"blink",  hpm:1.0, face:"💀", quote:"I am the Wraith King. Your journey ends here."} ];
+  {name:"Stone Brute", col:"#9aa3ab", r:27, hpm:1.2, face:"🗿", atks:["slam","charge","dive","slam"],      quote:"You'll not pass the Stone Brute. I'll grind you to gravel!"},
+  {name:"Charger",     col:"#e07a2a", r:23, hpm:0.9, face:"🐗", atks:["charge","dive","charge","spread"],   quote:"Think you're quick? Let's see you dodge THIS!"},
+  {name:"Hexer",       col:"#9a5af0", r:22, hpm:0.8, face:"🔮", atks:["spread","rain","dive","spread"],     quote:"Foolish mortal… my hexes will unmake you."},
+  {name:"Brood Mother",col:"#2aa0a0", r:25, hpm:1.0, face:"🕷️", atks:["rain","spread","slam","rain"],       quote:"My children are hungry, little one… come closer."},
+  {name:"Wraith King", col:"#d23a7a", r:26, hpm:1.0, face:"💀", atks:["dive","charge","spread","rain"],      quote:"I am the Wraith King. Your journey ends here."} ];
 let shots=[];   // dungeon boss projectiles
 function spawnBoss(){ const B=BOSSES[(Math.floor(dungFloor/10)-1+50*BOSSES.length)%BOSSES.length]; const hp=Math.round((18+dungFloor*2)*B.hpm);
   const gd=gridDung, cr=gd.length>>1, cc=gd[0].length>>1;   // arena centre of the actual generated floor
@@ -1599,18 +1603,21 @@ function gotoArea(a){ setArea(a); setScene("out"); SND.door(); transCD=0.6; mobs
   float(player.x,player.y-26,a==="village"?"the village":"home sweet home","#fff"); save(); }
 
 /* ---- road boss: side-view mini-fight (needs metal sword + armour) ---- */
-const boss={};
+const boss={}; let bossCtx="road";   // "road" = village Road Guardian, "dungeon" = a dungeon floor boss (auto-descend on win)
+const ROAD_GUARDIAN_DEF={name:"Road Guardian", col:"#6a3a8a", face:"👹", atks:["charge","spread","dive","slam","rain"]};
 function tryBoss(){ if(!hasSword()||!hasArmor()){ SND.no(); float(player.x,player.y-26,"need a metal sword AND armour!","#ff8f8f"); player.x-=TILE*1.3; transCD=0.9; return; }
+  bossCtx="road";
   const B={who:"boss",name:"Road Guardian",face:"👹",col:"#8a3a6a"};
   startDialog([
     {...B,text:"Halt, traveller. I am the Road Guardian, and I have come to test your reflexes."},
     {...B,text:"Dodge my attacks, strike when you can — survive, and the road is yours."},
     {...B,text:"Show me what you've got!"}
   ], ()=>{ scene="boss"; SND.door(); bossInit(); }); }
-function bossInit(){ document.body.classList.add("inboss"); document.getElementById("talkBtn2").textContent="⤴"; const GY=VH-50;
+function bossInit(def,hp){ document.body.classList.add("inboss"); document.getElementById("talkBtn2").textContent="⤴"; const GY=VH-50;
+  boss.def=def||ROAD_GUARDIAN_DEF;
   boss.gy=GY; boss.px=80; boss.py=GY; boss.pvx=0; boss.pvy=0; boss.pg=true; boss.coyote=0; boss.pdir=1; boss.atk=0; boss.pinv=0;
   boss.php=player.maxHp; boss.pmax=player.maxHp; boss.flash=0;
-  boss.bx=VW-130; boss.by=GY; boss.bhp=24; boss.bmax=24; boss.t=0; boss.cd=1.6; boss.st="idle"; boss.tele=0; boss.cv=0; boss.ct=0;
+  boss.bx=VW-130; boss.by=GY; boss.bhp=hp||24; boss.bmax=hp||24; boss.t=0; boss.cd=1.6; boss.st="idle"; boss.tele=0; boss.cv=0; boss.ct=0;
   boss.atkType=""; boss.markX=boss.px; boss.slamUp=false; boss.slamT=0; boss.proj=[]; boss.end=0; boss.win=false; boss.bflash=0; }
 function bossJump(){ if(scene==="boss"&&(boss.pg||boss.coyote>0)){ boss.pvy=-470; boss.pg=false; boss.coyote=0; SND.swing(); } }
 function bossAttack(){ if(scene!=="boss"||boss.atk>0||boss.end)return; boss.atk=0.24; SND.hit();
@@ -1630,7 +1637,7 @@ function updateBoss(dt){ const GY=boss.gy, ph=boss.bhp<=boss.bmax/2;
   if(boss.end){ boss.end-=dt; if(boss.end<=0)finishBoss(boss.win); return; }
   // ---- boss AI ----
   if(boss.st==="idle"){ boss.bx+=((VW*0.66)-boss.bx)*1.6*dt; boss.by+=(GY-boss.by)*6*dt; boss.cd-=dt;
-    if(boss.cd<=0){ boss.atkType=["charge","spread","dive","slam","rain"][Math.floor(Math.random()*5)]; boss.st="warn"; boss.tele=ph?0.55:0.8; if(boss.atkType==="dive")boss.markX=boss.px; } }
+    if(boss.cd<=0){ const pool=boss.def.atks||["charge","spread","dive","slam","rain"]; boss.atkType=pool[Math.floor(Math.random()*pool.length)]; boss.st="warn"; boss.tele=ph?0.55:0.8; if(boss.atkType==="dive")boss.markX=boss.px; } }
   else if(boss.st==="warn"){ boss.tele-=dt;
     if(boss.atkType==="dive"){ boss.by+=((GY-110)-boss.by)*5*dt; boss.markX+=(boss.px-boss.markX)*2.4*dt; }
     if(boss.atkType==="slam"){ boss.bx+=(boss.px-boss.bx)*3*dt; boss.by+=((GY-120)-boss.by)*5*dt; }
@@ -1653,7 +1660,14 @@ function updateBoss(dt){ const GY=boss.gy, ph=boss.bhp<=boss.bmax/2;
   if(Math.abs(boss.bx-boss.px)<40&&Math.abs(boss.by-boss.py)<48)bhitPlayer(1,null);
   if(boss.bhp<=0&&!boss.end){ boss.end=1.5; boss.win=true; }
   if(boss.php<=0&&!boss.end){ boss.end=1.2; boss.win=false; } }
-function finishBoss(win){ document.body.classList.remove("inboss"); document.getElementById("talkBtn2").textContent="💬"; if(win){ bossDefeated=true; save(); gotoArea("village"); float(player.x,player.y-26,"the road is clear!","#bfe6c2"); }
+function finishBoss(win){ document.body.classList.remove("inboss"); document.getElementById("talkBtn2").textContent="💬";
+  if(bossCtx==="dungeon"){ bossCtx="road";
+    if(win){ const reward=80+dungFloor*6; coins+=reward; syncUI();
+      dungBoss=false; const ph=dungeonHearts(); dungFloor++; if(dungFloor>dungMax)dungMax=dungFloor; if(dungeonHearts()>ph)recalcMax();   // boss cleared → next floor (heart milestones still count)
+      gotoDungeon(); player.hp=Math.min(player.maxHp,player.hp+2); SND.door(); float(player.x,player.y-26,"boss cleared! +"+reward+"c · "+t("floor")+" "+dungFloor,"#bfe6c2"); save(); }
+    else { leaveDungeon(); player.hp=player.maxHp; float(player.x,player.y-26,"defeated… escaped the dungeon","#ff9a9a"); save(); }
+    return; }
+  if(win){ bossDefeated=true; save(); gotoArea("village"); float(player.x,player.y-26,"the road is clear!","#bfe6c2"); }
   else { setArea("home"); setScene("out"); player.x=(OCOLS-3)*TILE+TILE/2; player.y=ROAD_R*TILE+TILE/2; player.dir="l";player.fx=-1;player.fy=0; player.hp=player.maxHp; transCD=0.9; float(player.x,player.y-26,"defeated… craft better gear & retry","#ff9a9a"); save(); } }
 function drawBoss(){ ctx.fillStyle="#1a1030"; ctx.fillRect(0,0,VW,VH);
   ctx.fillStyle="#2a1c3a"; ctx.fillRect(0,boss.gy+12,VW,VH-boss.gy); ctx.strokeStyle="rgba(255,255,255,.15)";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,boss.gy+12);ctx.lineTo(VW,boss.gy+12);ctx.stroke();
@@ -1669,7 +1683,7 @@ function drawBoss(){ ctx.fillStyle="#1a1030"; ctx.fillRect(0,0,VW,VH);
     else { ctx.fillStyle="rgba(255,200,120,.5)";ctx.beginPath();ctx.arc(p.x,p.y,11,0,7);ctx.fill();ctx.fillStyle="#ff7a3a";ctx.beginPath();ctx.arc(p.x,p.y,6,0,7);ctx.fill(); } }
   const bw=66,bh=72,air=boss.by<boss.gy-8;
   if(air){ ctx.fillStyle="#4a2a6a";const wf=Math.sin(now()*12)*8;ctx.beginPath();ctx.ellipse(boss.bx-bw/2-6,boss.by-bh+30,16,8+wf,0.4,0,7);ctx.fill();ctx.beginPath();ctx.ellipse(boss.bx+bw/2+6,boss.by-bh+30,16,8+wf,-0.4,0,7);ctx.fill(); }
-  ctx.fillStyle=boss.bflash>0?"#fff":(boss.bhp<=boss.bmax/2?"#8a3a6a":"#6a3a8a"); ctx.beginPath();ctx.roundRect(boss.bx-bw/2,boss.by-bh,bw,bh,14);ctx.fill();
+  ctx.fillStyle=boss.bflash>0?"#fff":(boss.bhp<=boss.bmax/2?shade(boss.def.col,0.72):boss.def.col); ctx.beginPath();ctx.roundRect(boss.bx-bw/2,boss.by-bh,bw,bh,14);ctx.fill();
   ctx.fillStyle="#ffd23b"; ctx.beginPath();ctx.arc(boss.bx-12,boss.by-bh+26,6,0,7);ctx.fill();ctx.beginPath();ctx.arc(boss.bx+12,boss.by-bh+26,6,0,7);ctx.fill(); ctx.fillStyle="#1a1030";ctx.beginPath();ctx.arc(boss.bx-12,boss.by-bh+26,2.5,0,7);ctx.fill();ctx.beginPath();ctx.arc(boss.bx+12,boss.by-bh+26,2.5,0,7);ctx.fill();
   const pa=boss.pinv>0&&Math.floor(now()*16)%2===0?0.5:1; ctx.globalAlpha=pa;
   ctx.fillStyle="#2f6dd0"; ctx.beginPath();ctx.roundRect(boss.px-9,boss.py-30,18,24,5);ctx.fill(); ctx.fillStyle="#ffd9a8";ctx.beginPath();ctx.arc(boss.px,boss.py-36,8,0,7);ctx.fill();
@@ -1678,7 +1692,7 @@ function drawBoss(){ ctx.fillStyle="#1a1030"; ctx.fillRect(0,0,VW,VH);
   ctx.globalAlpha=1;
   for(let i=0;i<boss.pmax;i++){ ctx.fillStyle=i<boss.php?"#ff5b78":"rgba(255,255,255,.2)"; ctx.fillRect(16+i*20,16,15,15); }
   ctx.fillStyle="rgba(0,0,0,.45)";ctx.fillRect(VW/2-110,18,220,12); ctx.fillStyle="#c46aff";ctx.fillRect(VW/2-110,18,220*Math.max(0,boss.bhp)/boss.bmax,12);
-  ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="800 12px Helvetica";ctx.fillText(t("ROAD GUARDIAN")+(boss.bhp<=boss.bmax/2?" ⚡":""),VW/2,44);
+  ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="800 12px Helvetica";ctx.fillText((boss.def.face?boss.def.face+" ":"")+t(boss.def.name).toUpperCase()+(boss.bhp<=boss.bmax/2?" ⚡":""),VW/2,44);
   ctx.fillStyle="rgba(255,255,255,.6)";ctx.font="11px Helvetica";ctx.fillText(t("←/→ move · ↑/Space jump · E or ⟳use to slash · dodge the red charge & shots"),VW/2,VH-16);
   if(boss.end){ ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillRect(0,0,VW,VH); ctx.fillStyle=boss.win?"#bfe6c2":"#ff9a9a";ctx.font="800 28px Helvetica";ctx.fillText(boss.win?t("VICTORY!"):t("DEFEATED"),VW/2,VH/2); } }
 function drawGuardian(){ const x=(OCOLS-1)*TILE+TILE/2-camX,y=ROAD_R*TILE+TILE/2-camY,bob=Math.sin(now()*2)*1.5;
@@ -1765,7 +1779,7 @@ document.getElementById("rideBtn").addEventListener("click",()=>{audio();openTel
 document.getElementById("eatBtn").addEventListener("click",()=>{audio();eatFood();});
 /* ---- boss-test cheat: fight any boss on demand ---- */
 function testDungeonBoss(n){ dungFloor=n*10; dungBoss=true; gotoDungeon(); float(player.x,player.y-26,"cheat: "+BOSSES[n-1].name+" (floor "+dungFloor+")","#ffe27a"); }
-function testRoadBoss(){ if(scene==="boss")return; if(!hasSword())equip.sword="metal_sword"; if(!hasArmor())equip.armor="metal_armor"; recalcMax(); renderBar(); scene="boss"; SND.door(); bossInit(); float(player.x,player.y-26,"cheat: Road Guardian","#ffe27a"); }
+function testRoadBoss(){ if(scene==="boss")return; bossCtx="road"; if(!hasSword())equip.sword="metal_sword"; if(!hasArmor())equip.armor="metal_armor"; recalcMax(); renderBar(); scene="boss"; SND.door(); bossInit(); float(player.x,player.y-26,"cheat: Road Guardian","#ffe27a"); }
 const bossTestEl=document.getElementById("bosstest");
 function openBossTest(){ const pick=document.getElementById("bossPick"); pick.innerHTML="";
   BOSSES.forEach((B,i)=>{ const b=document.createElement("button"); b.type="button"; b.className="iplat"; b.textContent=B.face+"  "+B.name;
