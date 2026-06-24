@@ -923,7 +923,7 @@ const RECIPE_CATS=[
 const RECIPE_CAT_OF={}; RECIPE_CATS.forEach(c=>c.keys.forEach(k=>{RECIPE_CAT_OF[k]=c.id;}));
 
 const FR0=4,FC0=4; let farmFR1=15, farmFC1=18, houseLvl=0, farmLvl=0, hasAxe=false;
-let scene="out", area="home", G, GR, GC, GW, GH, gridOut, gridHome, gridVillage, gridIn, doorR, doorC, transCD=0;
+let scene="out", area="home", G, GR, GC, GW, GH, gridOut, gridHome, gridVillage, gridPort, gridHeart, gridIn, doorR, doorC, transCD=0;
 let homeFurn={ground:{},upper:{},cottage:{}};   // placed furniture/machines per interior room ("ground"=main floor, "upper"=2nd floor, "cottage"=2nd house); key "r,c" → tile object
 let interior="ground";   // which interior room the player is currently inside
 let catX=0, catY=0, npcX=0, npcY=0;
@@ -962,6 +962,7 @@ const BAGN=30; const bag=new Array(BAGN).fill(null);
 const ROAD_R=OROWS-4;
 // village is its own, larger map
 const VCOLS=46, VROWS=34;
+const PROWS=30, PCOLS=42, HROWS=30, HCOLS=42;   // blank new maps: Port Town & Heart of the Valley (structure TBD)
 const VROAD_R=9, RIVER_C=14, SEA_C0=39, SAND_C=38, NPC_R=6, NPC_C=36, CAVE_R=4, CAVE_C=6;
 
 const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor","chest","stove","dwall","cave","gem","trough","snowman","drying_rack","preserve_pot","press_table","craft_bench","perfume_stand","stand","dchest","bench","stool","bookshelf","plant","fountain","barrel","clock","mailbox"]);
@@ -1200,7 +1201,9 @@ function buildVillage(){ const g=[]; for(let r=0;r<VROWS;r++){ const row=[]; for
   for(let c=7;c<=35;c++){ if(g[20]&&g[20][c].type==="wild")set(20,c,"fence"); if(g[32]&&g[32][c].type==="wild")set(32,c,"fence"); }
   for(let r=20;r<=32;r++){ if(g[r][7]&&g[r][7].type==="wild")set(r,7,"fence"); if(g[r][36]&&g[r][36].type==="wild")set(r,36,"fence"); }
   setVillageMeta(); return g; }
-function setArea(a){ area=a; gridOut=(a==="home")?gridHome:(a==="village")?gridVillage:gridDung; }
+function setArea(a){ area=a; gridOut=(a==="home")?gridHome:(a==="village")?gridVillage:(a==="port")?gridPort:(a==="heart")?gridHeart:gridDung; }
+function buildPort(){ const g=[]; for(let r=0;r<PROWS;r++){ const row=[]; for(let c=0;c<PCOLS;c++){ let t="grass"; if(c>=PCOLS-4)t="sea"; else if(c===PCOLS-5)t="sand"; row.push({type:t,crop:null}); } g.push(row); } return g; }   // blank seaside field (sea on the east edge); real layout added later
+function buildHeart(){ const g=[]; for(let r=0;r<HROWS;r++){ const row=[]; for(let c=0;c<HCOLS;c++){ row.push({type:"grass",crop:null}); } g.push(row); } return g; }   // blank sacred grove; real layout added later
 /* ---- 1000-floor dungeon (entered from the village cave) ---- */
 let dungFloor=0, dungMax=1, dungBoss=false, gridDung=null, dungStairs=[19,27], dungExit=[3,2], dungBright=false;   // dungBright: "bright" cheat reveals the whole floor
 const DR=22, DC=30;
@@ -1299,7 +1302,7 @@ function buildIn(){ const id=interior, cottage=(id==="cottage"), upper=(id==="up
   return {g,w,h}; }
 function setScene(s){ scene=s; if(s==="out"){G=gridOut;GR=gridOut.length;GC=gridOut[0].length;} else {const io=buildIn();gridIn=io.g;G=gridIn;GR=io.h;GC=io.w;} GW=GC*TILE; GH=GR*TILE; }
 
-function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false;bossDefeated=false; penLvl=0; area="home"; homeFurn={ground:{},upper:{},cottage:{}}; interior="ground"; gridHome=buildOut(); gridVillage=buildVillage(); setArea("home"); coins=40; clock=0;
+function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false;bossDefeated=false; penLvl=0; area="home"; homeFurn={ground:{},upper:{},cottage:{}}; interior="ground"; gridHome=buildOut(); gridVillage=buildVillage(); gridPort=buildPort(); gridHeart=buildHeart(); setArea("home"); coins=40; clock=0;
   for(let i=0;i<bag.length;i++)bag[i]=null; bag[0]={key:"seed_carrot",count:6}; bag[1]={key:"seed_wheat",count:2}; selSlot=0;
   for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; catIntroPending=false; playerName="You"; louieQuest=0; metHamu=false; dungFloor=0; dungMax=1; stats.trees=0;stats.crops=0;stats.fish=0; animals.length=0; penLvl=0; weather="sunny"; weatherDay=-1; totalEarned=0; lifeCrystals=0; _lastCoins=40; for(const k in claimed)delete claimed[k]; resetFriends(); relicSeen={}; recalcMax();
   setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2+TILE; player.hp=player.maxHp;player.inv=0; mobs.length=0; save(); renderBar(); syncUI(); }
@@ -1333,7 +1336,7 @@ function useMachine(tt,cx,cy){ const recipes=MACHINE_IN[tt.type];
 function unpackGrid(p){ return p.map(row=>row.map(c=>typeof c==="string"?{type:c,crop:null}:c)); }
 function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); const home=s&&(s.home||s.gridOut); if(home&&home.length===OROWS){
     farmFR1=s.farmFR1||15;farmFC1=s.farmFC1||18;houseLvl=s.houseLvl||0;farmLvl=s.farmLvl||0;hasAxe=!!s.hasAxe;
-    gridHome=unpackGrid(home); ensureCottage(gridHome); ensureMailbox(gridHome); gridVillage=(s.village&&s.village.length===VROWS&&s.village[0].length===VCOLS)?unpackGrid(s.village):buildVillage(); coins=s.coins; clock=s.clock||0;
+    gridHome=unpackGrid(home); ensureCottage(gridHome); ensureMailbox(gridHome); gridVillage=(s.village&&s.village.length===VROWS&&s.village[0].length===VCOLS)?unpackGrid(s.village):buildVillage(); gridPort=buildPort(); gridHeart=buildHeart(); coins=s.coins; clock=s.clock||0;
     stripOil(gridHome); stripOil(gridVillage); patchVillage(gridVillage);   // clean oil + add Hamu's stall to older saves (keeps all progress)
     for(let i=0;i<bag.length;i++)bag[i]=s.bag&&s.bag[i]?s.bag[i]:null; selSlot=s.selSlot||0;
     catX=(doorC=FC0+2,(FC0+4)*TILE+TILE/2); catY=(doorR=FR0+3,(FR0+4)*TILE+TILE/2); setVillageMeta();
@@ -1344,7 +1347,7 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); co
     animals.length=0; if(Array.isArray(s.animals))for(const a of s.animals){ if(ANIMALS[a.kind])animals.push(a); }
     for(const sn in equip)equip[sn]=(s.equip&&s.equip[sn]&&ITEMS[s.equip[sn]])?s.equip[sn]:null; recalcMax();
     player.hunger=(typeof s.hunger==="number")?s.hunger:player.maxHunger; player.regenT=0;player.starveT=0;
-    area=(s.area==="village")?"village":"home"; setArea(area);
+    area=["village","port","heart"].includes(s.area)?s.area:"home"; setArea(area);
     setScene("out"); player.x=s.px;player.y=s.py;player.hp=s.hp??player.maxHp; return true; } }catch(e){} return false; }
 function save(){ const inD=area==="dungeon"; const sArea=inD?"village":area, sx=inD?(CAVE_C+1)*TILE+TILE/2:(scene==="out"?player.x:outX), sy=inD?CAVE_R*TILE+TILE/2:(scene==="out"?player.y:outY);
   localStorage.setItem("homestead4", JSON.stringify({v:5,area:sArea,home:packGrid(gridHome),village:packGrid(gridVillage),coins,clock,px:sx,py:sy,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger,playerName,louieQuest,metHamu,dungMax,stats,claimed,animals,penLvl,weather,weatherDay,totalEarned,lifeCrystals,friend,giftDay,questIdx,questOn,mail,npcGiftDay,tierGiven,relicSeen,homeFurn})); }
@@ -1620,8 +1623,11 @@ function updateHold(){ const f=holdTarget(); if(!f){ return; } const prog=(now()
     SND.chop(); burst(cx,cy,"#d9c19a",8); gainItem(give,1,cx,cy); save(); } }
 function gotoArea(a){ setArea(a); setScene("out"); SND.door(); transCD=0.6; mobs.length=0; hover=null;
   if(a==="village"){ player.x=1*TILE+TILE/2; player.y=VROAD_R*TILE+TILE/2; player.dir="r";player.fx=1;player.fy=0; }
+  else if(a==="port"){ player.x=1.5*TILE; player.y=(PROWS>>1)*TILE+TILE/2; player.dir="r";player.fx=1;player.fy=0; }
+  else if(a==="heart"){ player.x=1.5*TILE; player.y=(HROWS>>1)*TILE+TILE/2; player.dir="r";player.fx=1;player.fy=0; }
   else { player.x=(OCOLS-2)*TILE+TILE/2; player.y=ROAD_R*TILE+TILE/2; player.dir="l";player.fx=-1;player.fy=0; }
-  float(player.x,player.y-26,a==="village"?"the village":"home sweet home","#fff"); save(); }
+  const msg=a==="village"?"the village":a==="port"?"Port Town (blank)":a==="heart"?"Heart of the Valley (blank)":"home sweet home";
+  float(player.x,player.y-26,msg,"#fff"); save(); }
 
 /* ---- road boss: side-view mini-fight (needs metal sword + armour) ---- */
 const boss={}; let bossCtx="road";   // "road" = village Road Guardian, "dungeon" = a dungeon floor boss (auto-descend on win)
@@ -1859,6 +1865,9 @@ cheatEl.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter")
   else if(v==="$$$"){ coins+=10000; SND.coin(); syncUI(); float(player.x,player.y-26,"cheat: +10000 coins","#ffe27a"); save(); }
   else if(v==="changeoc"){ localStorage.setItem("hs-oc","1"); const as=document.getElementById("artSection"); if(as)as.style.display=""; float(player.x,player.y-26,"cheat: character art unlocked","#ffe27a"); }
   else if(v==="bright"){ dungBright=!dungBright; float(player.x,player.y-26,"cheat: dungeon light "+(dungBright?"ON":"OFF"),"#ffe27a"); }
+  else if(v==="port"){ if(scene==="out")gotoArea("port"); }     // visit the (blank) Port Town
+  else if(v==="heart"){ if(scene==="out")gotoArea("heart"); }   // visit the (blank) Heart of the Valley
+  else if(v==="home"){ if(scene==="out")gotoArea("home"); }     // jump back to the homestead
   else if(v==="bosssss"||v==="bossss"||v==="boss"){ openBossTest(); }   // pop up the boss-test menu (pick any boss to fight)
   else if(/^boss[1-5]$/.test(v)){ testDungeonBoss(+v.slice(4)); }       // shortcut: jump straight into dungeon floor-boss n
   else if(v==="bossr"||v==="boss6"){ testRoadBoss(); }                  // shortcut: Road Guardian fight
@@ -1903,7 +1912,7 @@ function update(dt){
   if(scene==="out"){ const seasonGrow=(seasonIdx()===0||seasonIdx()===2)?1.25:1;   // spring & autumn grow a bit faster
     const rainGrow=(area==="home"&&isRainy())?1.6:1;   // rain waters the whole farm — crops grow faster all day
     for(let r=0;r<gridOut.length;r++)for(let c=0;c<gridOut[0].length;c++){ const cr=gridOut[r][c].crop; if(cr&&cr.grow<1){ const C=CROPS[cr.type];const s=(now()<cr.boost?2.4:1)*seasonGrow*rainGrow; cr.grow=Math.min(1,cr.grow+dt/C.dur*s); } }
-    const outside=!inFarm(pr,pc); const target=area==="dungeon"?Math.min(3+Math.floor(dungFloor/5),12):area==="village"?(isNight()?9:5):(isNight()?12:(outside?8:4));   // the village wilds now have monsters (town & fisher pen stay safe)
+    const outside=!inFarm(pr,pc); const target=(area==="port"||area==="heart")?0:area==="dungeon"?Math.min(3+Math.floor(dungFloor/5),12):area==="village"?(isNight()?9:5):(isNight()?12:(outside?8:4));   // the new town & sacred maps stay monster-free for now
     spawnT-=dt; if(spawnT<=0&&mobs.filter(m=>!m.boss).length<target){spawnMob();spawnT=area==="dungeon"?1.6:(isNight()?1.4:2.2);}
     let psnKill=false;
     for(const mb of mobs){ mb.t+=dt;mb.flash=Math.max(0,mb.flash-dt);const dx=player.x-mb.x,dy=player.y-mb.y,d=Math.hypot(dx,dy)||1;
@@ -1916,7 +1925,7 @@ function update(dt){
     if(psnKill)mobs.splice(0,mobs.length,...mobs.filter(m=>m.hp>0));
     for(let i=shots.length-1;i>=0;i--){ const s=shots[i]; s.x+=s.vx*dt;s.y+=s.vy*dt;s.t-=dt; if(Math.hypot(s.x-player.x,s.y-player.y)<15){hurt(1,s.x,s.y);s.t=0;} if(s.t<=0)shots.splice(i,1); }
     if(area==="home")updateAnimals(dt);
-    if(area!=="dungeon"){
+    if(area==="home"||area==="village"){
     treeT-=dt; if(treeT<=0){ treeT=26+Math.random()*20; if(countTiles("tree")<60)respawnRes("tree"); }
     rockT-=dt; if(rockT<=0){ rockT=65+Math.random()*35; if(countTiles("rock")<40)respawnRes("rock"); } }
     // hunger, regen & starvation
