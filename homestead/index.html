@@ -1422,11 +1422,11 @@ function spawnMob(){ const RW=gridOut.length, CW=gridOut[0].length; for(let i=0;
   const k=pickKind(), K=MOBKINDS[k], hp=K.hp+(area==="dungeon"?Math.floor(dungFloor/2):0);
   mobs.push({x,y,hp,maxHp:hp,r:K.r,flash:0,kx:0,ky:0,t:Math.random()*9,col:K.col,kind:k,spd:K.spd,dmg:K.dmg,drop:K.drop,fly:K.fly}); return; } }
 const BOSSES=[
-  {name:"Stone Brute", col:"#9aa3ab", r:27, hpm:1.2, face:"🗿", atks:["slam","charge","dive","slam"],      quote:"You'll not pass the Stone Brute. I'll grind you to gravel!"},
-  {name:"Charger",     col:"#e07a2a", r:23, hpm:0.9, face:"🐗", atks:["charge","dive","charge","spread"],   quote:"Think you're quick? Let's see you dodge THIS!"},
-  {name:"Hexer",       col:"#9a5af0", r:22, hpm:0.8, face:"🔮", atks:["spread","rain","dive","spread"],     quote:"Foolish mortal… my hexes will unmake you."},
-  {name:"Brood Mother",col:"#2aa0a0", r:25, hpm:1.0, face:"🕷️", atks:["rain","spread","slam","rain"],       quote:"My children are hungry, little one… come closer."},
-  {name:"Wraith King", col:"#d23a7a", r:26, hpm:1.0, face:"💀", atks:["dive","charge","spread","rain"],      quote:"I am the Wraith King. Your journey ends here."} ];
+  {name:"Stone Brute", col:"#9aa3ab", r:27, hpm:1.2, face:"🗿", kind:"ground", atks:["slam","charge","summon","dive","slam"],   quote:"You'll not pass the Stone Brute. I'll grind you to gravel!"},
+  {name:"Charger",     col:"#e07a2a", r:23, hpm:0.9, face:"🐗", kind:"ground", atks:["charge","dive","summon","charge"],        quote:"Think you're quick? Let's see you dodge THIS!"},
+  {name:"Hexer",       col:"#9a5af0", r:22, hpm:0.85,face:"🔮", kind:"flyer",  atks:["spread","rain","summon","dive","spread"], quote:"Foolish mortal… my hexes will unmake you."},
+  {name:"Brood Mother",col:"#2aa0a0", r:25, hpm:1.1, face:"🕷️", kind:"swarm",  atks:["summon"],                                  quote:"My children are hungry, little one… come closer."},
+  {name:"Wraith King", col:"#d23a7a", r:26, hpm:1.0, face:"💀", kind:"flyer",  atks:["dive","charge","spread","summon","rain"], quote:"I am the Wraith King. Your journey ends here."} ];
 let shots=[];   // dungeon boss projectiles
 function spawnBoss(){ const B=BOSSES[(Math.floor(dungFloor/10)-1+50*BOSSES.length)%BOSSES.length]; const hp=Math.round((18+dungFloor*2)*B.hpm);
   const gd=gridDung, cr=gd.length>>1, cc=gd[0].length>>1;   // arena centre of the actual generated floor
@@ -1618,10 +1618,18 @@ function bossInit(def,hp){ document.body.classList.add("inboss"); document.getEl
   boss.gy=GY; boss.px=80; boss.py=GY; boss.pvx=0; boss.pvy=0; boss.pg=true; boss.coyote=0; boss.pdir=1; boss.atk=0; boss.pinv=0;
   boss.php=player.maxHp; boss.pmax=player.maxHp; boss.flash=0;
   boss.bx=VW-130; boss.by=GY; boss.bhp=hp||24; boss.bmax=hp||24; boss.t=0; boss.cd=1.6; boss.st="idle"; boss.tele=0; boss.cv=0; boss.ct=0;
-  boss.atkType=""; boss.markX=boss.px; boss.slamUp=false; boss.slamT=0; boss.proj=[]; boss.end=0; boss.win=false; boss.bflash=0; }
+  boss.atkType=""; boss.markX=boss.px; boss.slamUp=false; boss.slamT=0; boss.proj=[]; boss.adds=[]; boss.end=0; boss.win=false; boss.bflash=0;
+  boss.kind=boss.def.kind||"ground";
+  if(boss.kind==="flyer")boss.by=GY-100;   // flyers hover
+  if(boss.kind==="swarm"){ const n=3, hpEach=Math.max(3,Math.round((hp||24)/n)); boss.adds=[];   // a group of small bosses instead of one big body
+    for(let i=0;i<n;i++)boss.adds.push({x:VW*(0.34+0.18*i),y:GY,vx:0,vy:0,hp:hpEach,maxhp:hpEach,r:20,fly:false,elite:true,t:i*0.4,cd:1.6+i*0.6,flash:0,hopT:0.8});
+    boss.bmax=hpEach*n; boss.bhp=boss.bmax; } }
 function bossJump(){ if(scene==="boss"&&(boss.pg||boss.coyote>0)){ boss.pvy=-470; boss.pg=false; boss.coyote=0; SND.swing(); } }
+function mkAdd(x,y,kind){ const fly=(kind==="flyer"); return {x:x,y:fly?y:boss.gy,vx:0,vy:0,hp:1,r:10,fly:fly,elite:false,t:0,life:9,flash:0,hopT:0.5}; }   // small summoned monster
 function bossAttack(){ if(scene!=="boss"||boss.atk>0||boss.end)return; boss.atk=0.24; SND.hit();
-  if(Math.abs(boss.bx-boss.px)<74&&Math.sign(boss.bx-boss.px||1)===boss.pdir&&Math.abs(boss.by-boss.py)<78){ boss.bhp-=1+totalBonus().atk; boss.bflash=0.16; } }
+  const dmg=1+totalBonus().atk, inReach=(tx,ty)=>Math.abs(tx-boss.px)<74&&Math.sign(tx-boss.px||1)===boss.pdir&&Math.abs(ty-boss.py)<78;
+  if(boss.kind!=="swarm"&&inReach(boss.bx,boss.by)){ boss.bhp-=dmg; boss.bflash=0.16; }   // hit the main body (ground/flyer)
+  for(const a of boss.adds){ if(inReach(a.x,a.y-10)){ a.hp-=dmg; a.flash=0.15; if(a.elite)boss.bflash=0.1; } } }   // slash minions & swarm small-bosses
 function bhitPlayer(d,p){ if(boss.pinv>0||boss.end)return; boss.php-=defenseCut(d); boss.pinv=1.1; boss.flash=0.14; boss.pvy=-240; boss.pg=false; SND.hurt(); if(p)p.t=0; }
 function bossFire(){ const a=Math.atan2((boss.py-22)-(boss.by-24),boss.px-boss.bx); const ph=boss.bhp<=boss.bmax/2, spd=ph?255:225;
   for(let i=-2;i<=2;i++){ const an=a+i*0.20; boss.proj.push({x:boss.bx,y:boss.by-24,vx:Math.cos(an)*spd,vy:Math.sin(an)*spd,t:3.2}); } SND.swing(); }
@@ -1635,30 +1643,50 @@ function updateBoss(dt){ const GY=boss.gy, ph=boss.bhp<=boss.bmax/2;
   boss.pvy+=1500*dt; boss.py+=boss.pvy*dt; if(boss.py>=GY){ boss.py=GY; boss.pvy=0; if(!boss.pg)boss.pg=true; boss.coyote=0.1; } else { boss.pg=false; boss.coyote=Math.max(0,boss.coyote-dt); }
   if(boss.atk>0)boss.atk-=dt; if(boss.pinv>0)boss.pinv-=dt; if(boss.flash>0)boss.flash-=dt; if(boss.bflash>0)boss.bflash-=dt; boss.t+=dt;
   if(boss.end){ boss.end-=dt; if(boss.end<=0)finishBoss(boss.win); return; }
+  const restY=(boss.kind==="flyer")?GY-100:GY;
   // ---- boss AI ----
-  if(boss.st==="idle"){ boss.bx+=((VW*0.66)-boss.bx)*1.6*dt; boss.by+=(GY-boss.by)*6*dt; boss.cd-=dt;
+  if(boss.kind==="swarm"){   // a pack of small bosses: hop & dash at you, periodically spit minions
+    for(const a of boss.adds){ if(!a.elite)continue; a.t+=dt; a.cd-=dt; if(a.flash>0)a.flash-=dt;
+      const dx=boss.px-a.x; a.x+=Math.sign(dx)*Math.min(Math.abs(dx),100*dt);
+      a.vy+=1500*dt; a.y+=a.vy*dt; if(a.y>=GY){ a.y=GY; a.vy=0; a.hopT-=dt; if(a.hopT<=0){ a.vy=-380; a.hopT=0.9+Math.random()*0.6; } }
+      if(a.cd<=0){ a.cd=2.4+Math.random()*1.4; if(boss.adds.filter(x=>!x.elite).length<6){ boss.adds.push(mkAdd(a.x,a.y-12,"swarm")); SND.swing(); } }
+      if(Math.abs(a.x-boss.px)<20&&Math.abs(a.y-(boss.py-16))<34)bhitPlayer(1,null); }
+  } else {
+  if(boss.st==="idle"){ boss.bx+=((VW*0.66)-boss.bx)*1.6*dt; boss.by+=((restY+(boss.kind==="flyer"?Math.sin(now()*2.2)*9:0))-boss.by)*6*dt; boss.cd-=dt;
     if(boss.cd<=0){ const pool=boss.def.atks||["charge","spread","dive","slam","rain"]; boss.atkType=pool[Math.floor(Math.random()*pool.length)]; boss.st="warn"; boss.tele=ph?0.55:0.8; if(boss.atkType==="dive")boss.markX=boss.px; } }
   else if(boss.st==="warn"){ boss.tele-=dt;
     if(boss.atkType==="dive"){ boss.by+=((GY-110)-boss.by)*5*dt; boss.markX+=(boss.px-boss.markX)*2.4*dt; }
     if(boss.atkType==="slam"){ boss.bx+=(boss.px-boss.bx)*3*dt; boss.by+=((GY-120)-boss.by)*5*dt; }
     if(boss.atkType==="rain"){ boss.bx+=((VW*0.5)-boss.bx)*3*dt; boss.by+=((GY-160)-boss.by)*5*dt; }
+    if(boss.atkType==="summon"){ boss.by+=((restY-26)-boss.by)*5*dt; }
     if(boss.tele<=0){ if(boss.atkType==="charge"){ boss.st="charge"; boss.cv=(boss.px<boss.bx?-1:1)*(ph?500:430); boss.ct=1.0; }
       else if(boss.atkType==="spread"){ bossFire(); boss.st="idle"; boss.cd=ph?0.8:1.15; }
       else if(boss.atkType==="dive"){ boss.st="dive"; boss.divetx=boss.markX; }
       else if(boss.atkType==="rain"){ const n=ph?7:5; for(let i=0;i<n;i++){ boss.proj.push({x:30+Math.random()*(VW-60),y:-20-Math.random()*60,vx:0,vy:ph?380:320,t:3.4,rain:1}); } SND.swing(); boss.st="idle"; boss.cd=ph?0.7:1.0; }
+      else if(boss.atkType==="summon"){ const n=ph?2:1; for(let i=0;i<n;i++){ if(boss.adds.filter(x=>!x.elite).length<6)boss.adds.push(mkAdd(boss.bx+(i?22:-22),boss.by-8,boss.kind)); } SND.swing(); boss.st="idle"; boss.cd=ph?1.0:1.4; }
       else { boss.st="slam"; boss.slamUp=true; boss.slamT=0; } } }
-  else if(boss.st==="charge"){ boss.bx+=boss.cv*dt; boss.by+=(GY-boss.by)*8*dt; boss.ct-=dt; if(boss.bx<60||boss.bx>VW-60||boss.ct<=0){ boss.st="idle"; boss.cd=ph?0.9:1.3; } }
+  else if(boss.st==="charge"){ boss.bx+=boss.cv*dt; boss.by+=(restY-boss.by)*8*dt; boss.ct-=dt; if(boss.bx<60||boss.bx>VW-60||boss.ct<=0){ boss.st="idle"; boss.cd=ph?0.9:1.3; } }
   else if(boss.st==="dive"){ boss.bx+=(boss.divetx-boss.bx)*7*dt; boss.by+=900*dt; if(boss.by>=GY){ boss.by=GY; boss.st="idle"; boss.cd=ph?0.9:1.2; } }
   else if(boss.st==="slam"){ if(boss.slamUp){ boss.by+=((GY-130)-boss.by)*7*dt; boss.slamT+=dt; if(boss.slamT>0.45)boss.slamUp=false; }
     else { boss.by+=1100*dt; if(boss.by>=GY){ boss.by=GY; boss.proj.push({x:boss.bx,y:GY-6,vx:-300,vy:0,t:2.2,wave:1}); boss.proj.push({x:boss.bx,y:GY-6,vx:300,vy:0,t:2.2,wave:1}); SND.hit(); boss.st="idle"; boss.cd=ph?0.9:1.25; } } }
+  if(Math.abs(boss.bx-boss.px)<40&&Math.abs(boss.by-boss.py)<48)bhitPlayer(1,null);   // main-body contact
+  }
+  // ---- summoned minions (all kinds): home in on the player, contact damage ----
+  for(const a of boss.adds){ if(a.elite)continue; a.t+=dt; if(a.life)a.life-=dt; if(a.flash>0)a.flash-=dt;
+    const dx=boss.px-a.x, dyy=(boss.py-18)-a.y, d=Math.hypot(dx,dyy)||1;
+    if(a.fly){ a.x+=dx/d*82*dt; a.y+=dyy/d*82*dt; }
+    else { a.x+=Math.sign(dx)*Math.min(Math.abs(dx),66*dt); a.vy+=1500*dt; a.y+=a.vy*dt; if(a.y>=GY){ a.y=GY; a.vy=0; a.hopT-=dt; if(a.hopT<=0){ a.vy=-340; a.hopT=0.8+Math.random()*0.5; } } }
+    if(Math.abs(a.x-boss.px)<15&&Math.abs(a.y-(boss.py-16))<28)bhitPlayer(1,null); }
+  boss.adds=boss.adds.filter(a=>a.hp>0 && (a.elite || !a.life || a.life>0));
   // ---- projectiles ----
   for(const p of boss.proj){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.t-=dt;
     if(p.rain&&p.y>GY+8)p.t=0;   // falling shards burst on the ground
     if(p.wave){ if(boss.py>GY-30&&Math.abs(p.x-boss.px)<18)bhitPlayer(1,p); }
     else if(Math.abs(p.x-boss.px)<15&&Math.abs(p.y-(boss.py-22))<24)bhitPlayer(1,p); }
   boss.proj=boss.proj.filter(p=>p.t>0&&p.x>-40&&p.x<VW+40);
-  if(Math.abs(boss.bx-boss.px)<40&&Math.abs(boss.by-boss.py)<48)bhitPlayer(1,null);
-  if(boss.bhp<=0&&!boss.end){ boss.end=1.5; boss.win=true; }
+  // ---- win / lose ----
+  if(boss.kind==="swarm"){ boss.bhp=boss.adds.filter(a=>a.elite).reduce((s,a)=>s+Math.max(0,a.hp),0); if(boss.bhp<=0&&!boss.end){ boss.end=1.5; boss.win=true; } }
+  else if(boss.bhp<=0&&!boss.end){ boss.end=1.5; boss.win=true; }
   if(boss.php<=0&&!boss.end){ boss.end=1.2; boss.win=false; } }
 function finishBoss(win){ document.body.classList.remove("inboss"); document.getElementById("talkBtn2").textContent="💬";
   if(bossCtx==="dungeon"){ bossCtx="road";
@@ -1677,14 +1705,21 @@ function drawBoss(){ ctx.fillStyle="#1a1030"; ctx.fillRect(0,0,VW,VH);
     else if(boss.atkType==="spread"){ ctx.strokeStyle=`rgba(255,160,60,${fl})`;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(boss.bx,boss.by-24);ctx.lineTo(boss.px,boss.py-22);ctx.stroke(); }
     else if(boss.atkType==="dive"){ ctx.strokeStyle=`rgba(255,70,70,${fl})`;ctx.lineWidth=3;const mx=boss.markX;ctx.beginPath();ctx.moveTo(mx-13,boss.gy);ctx.lineTo(mx+13,boss.gy+10);ctx.moveTo(mx+13,boss.gy);ctx.lineTo(mx-13,boss.gy+10);ctx.stroke(); }
     else if(boss.atkType==="slam"){ ctx.fillStyle=`rgba(180,90,255,${fl})`; ctx.fillRect(0,boss.gy-6,VW,18); }
-    else if(boss.atkType==="rain"){ ctx.fillStyle=`rgba(120,90,255,${fl})`; ctx.fillRect(0,0,VW,22); for(let i=0;i<6;i++){const rx=(i+0.5)*VW/6;ctx.strokeStyle=`rgba(160,120,255,${fl})`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(rx,0);ctx.lineTo(rx,boss.gy);ctx.stroke();} } }
+    else if(boss.atkType==="rain"){ ctx.fillStyle=`rgba(120,90,255,${fl})`; ctx.fillRect(0,0,VW,22); for(let i=0;i<6;i++){const rx=(i+0.5)*VW/6;ctx.strokeStyle=`rgba(160,120,255,${fl})`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(rx,0);ctx.lineTo(rx,boss.gy);ctx.stroke();} }
+    else if(boss.atkType==="summon"){ ctx.fillStyle=`rgba(120,220,150,${fl})`;ctx.beginPath();ctx.arc(boss.bx,boss.by-24,32,0,7);ctx.fill(); } }
   if(boss.st==="dive"){ ctx.fillStyle="rgba(255,70,70,.4)";ctx.beginPath();ctx.ellipse(boss.divetx,boss.gy+6,18,5,0,0,7);ctx.fill(); }
   for(const p of boss.proj){ if(p.wave){ ctx.fillStyle="#b46aff";ctx.beginPath();ctx.moveTo(p.x-14,boss.gy+10);ctx.lineTo(p.x,boss.gy-18);ctx.lineTo(p.x+14,boss.gy+10);ctx.closePath();ctx.fill(); }
     else { ctx.fillStyle="rgba(255,200,120,.5)";ctx.beginPath();ctx.arc(p.x,p.y,11,0,7);ctx.fill();ctx.fillStyle="#ff7a3a";ctx.beginPath();ctx.arc(p.x,p.y,6,0,7);ctx.fill(); } }
-  const bw=66,bh=72,air=boss.by<boss.gy-8;
-  if(air){ ctx.fillStyle="#4a2a6a";const wf=Math.sin(now()*12)*8;ctx.beginPath();ctx.ellipse(boss.bx-bw/2-6,boss.by-bh+30,16,8+wf,0.4,0,7);ctx.fill();ctx.beginPath();ctx.ellipse(boss.bx+bw/2+6,boss.by-bh+30,16,8+wf,-0.4,0,7);ctx.fill(); }
+  if(boss.kind!=="swarm"){ const bw=66,bh=72,air=boss.by<boss.gy-8;
+  if(air){ ctx.fillStyle=shade(boss.def.col,0.55);const wf=Math.sin(now()*12)*8;ctx.beginPath();ctx.ellipse(boss.bx-bw/2-6,boss.by-bh+30,16,8+wf,0.4,0,7);ctx.fill();ctx.beginPath();ctx.ellipse(boss.bx+bw/2+6,boss.by-bh+30,16,8+wf,-0.4,0,7);ctx.fill(); }
   ctx.fillStyle=boss.bflash>0?"#fff":(boss.bhp<=boss.bmax/2?shade(boss.def.col,0.72):boss.def.col); ctx.beginPath();ctx.roundRect(boss.bx-bw/2,boss.by-bh,bw,bh,14);ctx.fill();
-  ctx.fillStyle="#ffd23b"; ctx.beginPath();ctx.arc(boss.bx-12,boss.by-bh+26,6,0,7);ctx.fill();ctx.beginPath();ctx.arc(boss.bx+12,boss.by-bh+26,6,0,7);ctx.fill(); ctx.fillStyle="#1a1030";ctx.beginPath();ctx.arc(boss.bx-12,boss.by-bh+26,2.5,0,7);ctx.fill();ctx.beginPath();ctx.arc(boss.bx+12,boss.by-bh+26,2.5,0,7);ctx.fill();
+  ctx.fillStyle="#ffd23b"; ctx.beginPath();ctx.arc(boss.bx-12,boss.by-bh+26,6,0,7);ctx.fill();ctx.beginPath();ctx.arc(boss.bx+12,boss.by-bh+26,6,0,7);ctx.fill(); ctx.fillStyle="#1a1030";ctx.beginPath();ctx.arc(boss.bx-12,boss.by-bh+26,2.5,0,7);ctx.fill();ctx.beginPath();ctx.arc(boss.bx+12,boss.by-bh+26,2.5,0,7);ctx.fill(); }
+  // summoned minions + swarm small-bosses
+  for(const a of boss.adds){ const rr=a.elite?20:11, acol=a.flash>0?"#fff":(a.elite?shade(boss.def.col,1.08):shade(boss.def.col,0.82));
+    if(a.fly){ const wf=Math.sin(now()*16+a.x)*4; ctx.fillStyle=acol; ctx.beginPath();ctx.ellipse(a.x-rr*0.7,a.y-rr*0.55,rr*0.7,rr*0.4+wf,0.5,0,7);ctx.fill();ctx.beginPath();ctx.ellipse(a.x+rr*0.7,a.y-rr*0.55,rr*0.7,rr*0.4+wf,-0.5,0,7);ctx.fill(); }
+    ctx.fillStyle=acol; ctx.beginPath();ctx.arc(a.x,a.y-rr,rr,0,7);ctx.fill();
+    ctx.fillStyle="#ffd23b";ctx.beginPath();ctx.arc(a.x-rr*0.35,a.y-rr*1.15,rr*0.18,0,7);ctx.fill();ctx.beginPath();ctx.arc(a.x+rr*0.35,a.y-rr*1.15,rr*0.18,0,7);ctx.fill();
+    if(a.elite){ ctx.fillStyle="rgba(0,0,0,.4)";ctx.fillRect(a.x-18,a.y-rr*2-7,36,4); ctx.fillStyle="#ff8f8f";ctx.fillRect(a.x-18,a.y-rr*2-7,36*Math.max(0,a.hp)/a.maxhp,4); } }
   const pa=boss.pinv>0&&Math.floor(now()*16)%2===0?0.5:1; ctx.globalAlpha=pa;
   ctx.fillStyle="#2f6dd0"; ctx.beginPath();ctx.roundRect(boss.px-9,boss.py-30,18,24,5);ctx.fill(); ctx.fillStyle="#ffd9a8";ctx.beginPath();ctx.arc(boss.px,boss.py-36,8,0,7);ctx.fill();
   if(boss.atk>0){ ctx.strokeStyle="#fff";ctx.lineWidth=4;ctx.lineCap="round";ctx.beginPath();ctx.arc(boss.px+boss.pdir*12,boss.py-22,22,-1.1,1.1);ctx.stroke();
