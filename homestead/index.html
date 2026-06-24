@@ -113,6 +113,9 @@
   .mailmain{flex:1 1 auto;min-width:0}
   .mailfrom{font-size:14px}
   .mailwhat{display:flex;align-items:center;gap:7px;opacity:.92;font-size:13.5px;margin-top:2px}
+  #bloodBtn{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:40;display:none;padding:9px 18px;border-radius:999px;font:inherit;font-weight:800;font-size:14px;color:#fff;background:linear-gradient(#ff5b78,#d32a46);border:2px solid #ffd0da;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.4);touch-action:manipulation}
+  #bloodBtn.on{display:block;animation:bloodpulse .8s ease-in-out infinite}
+  @keyframes bloodpulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.08)}}
   .fmain{flex:1;min-width:0}
   .fhead{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px;gap:8px;align-items:baseline}
   .fhead span{font-size:11.5px;opacity:.9;color:#ffd2dd;font-weight:700;white-space:nowrap}
@@ -424,6 +427,7 @@
   <div class="joy" id="joy"><div class="joynub" id="joynub"></div></div>
   <div class="actcol"><button class="act2" id="talkBtn2">💬</button><button class="act" id="actBtn">use</button></div>
 </div>
+<button id="bloodBtn">🩸 Drain</button>
 <input id="cheat" maxlength="8" placeholder="·" autocomplete="off" spellcheck="false">
 <script>
 (() => {
@@ -506,6 +510,7 @@ const ITEMS={
   steel:{kind:"mat",color:"#8a939c",name:"steel bar",sell:14}, crown:{kind:"mat",color:"#ffe27a",name:"royal crown",sell:300},
   gold_sword:{kind:"gear",slot:"sword",color:"#ffd84a",name:"golden sword",bonus:{atk:2}}, plate_armor:{kind:"gear",slot:"armor",color:"#aeb9c6",name:"plate armour",bonus:{maxhp:3}},
   war_helm:{kind:"gear",slot:"hat",color:"#9aa3ab",name:"steel helm",bonus:{maxhp:2}}, crystal_ring:{kind:"gear",slot:"acc",color:"#9fe6ff",name:"crystal ring",bonus:{regen:2}}, war_charm:{kind:"gear",slot:"acc",color:"#e8344e",name:"war charm",bonus:{atk:2}},
+  venom_blade:{kind:"gear",slot:"sword",color:"#5fbf6a",name:"venom blade",bonus:{atk:1,poison:3}}, venom_charm:{kind:"gear",slot:"acc",color:"#4fae5a",name:"venom charm",bonus:{poison:2}},
   jerky:{kind:"food",color:"#a65a36",name:"dried jerky",food:42}, fish_stew:{kind:"food",color:"#7fb0c2",name:"fish stew",food:55,buff:{bonus:{regen:2,maxhp:1},dur:150},eff:"+1 heart & fast heal, 2.5 min"},
   leather_armor:{kind:"gear",slot:"armor",color:"#a9784a",name:"leather armour",bonus:{maxhp:1}}, gold_armor:{kind:"gear",slot:"armor",color:"#ffd84a",name:"golden armour",bonus:{maxhp:4}},
   diamond_armor:{kind:"gear",slot:"armor",color:"#9fe6ff",name:"diamond armour",bonus:{maxhp:5}}, frost_plate:{kind:"gear",slot:"armor",color:"#bfe6f0",name:"frost plate",bonus:{maxhp:3,regen:1}},
@@ -871,6 +876,8 @@ const RECIPES=[
   {key:"crystal_ring", give:"crystal_ring", cost:{diamond:1,glass:1}, desc:"crystal ring (regen even faster)"},
   {key:"shining_ring", give:"shining_ring", cost:{diamond:1,gold:1,green_jewel:1}, desc:"shining ring — lights the dungeon & boosts combat (+2 atk, +2 hearts, regen)"},
   {key:"war_charm", give:"war_charm", cost:{diamond:1,red_jewel:1}, desc:"war charm (+2 attack)"},
+  {key:"venom_charm", give:"venom_charm", cost:{green_jewel:1,goo:3}, desc:"venom charm — your hits poison enemies (damage over time)"},
+  {key:"venom_blade", give:"venom_blade", cost:{iron:2,green_jewel:1,goo:2}, desc:"venom blade (+1 atk, hits poison enemies)"},
   {key:"jerky", give:"jerky", cost:{meat:2}, desc:"dried meat — filling food"},
   {key:"fish_stew", give:"fish_stew", cost:{fish:2,crop_carrot:1}, desc:"warming stew — heals faster & +1 heart"},
   {key:"crown", give:"crown", cost:{jewelry:1,diamond:1,gold:1}, desc:"a royal crown — sells for a fortune"},
@@ -903,9 +910,9 @@ const RECIPES=[
 const RECIPE_CATS=[
   {id:"food", ic:"🍳", label:"food", keys:["bread","salad","jerky","fish_stew","omelette","cheese"]},
   {id:"consum", ic:"🧪", label:"consumables", keys:["salve","elixir","bone_meal","bone_meal_f"]},
-  {id:"weapon", ic:"⚔️", label:"weapons", keys:["metal_sword","gold_sword"]},
+  {id:"weapon", ic:"⚔️", label:"weapons", keys:["metal_sword","gold_sword","venom_blade"]},
   {id:"armor", ic:"🛡️", label:"armour & gear", keys:["cap","vest","legguards","boots","metal_armor","plate_armor","war_helm","leather_armor","chain_vest","gold_armor","frost_plate","diamond_armor","diamond_helm","gold_greaves","winged_boots"]},
-  {id:"acc", ic:"💍", label:"accessories", keys:["shining_ring","ring","charm","crystal_ring","war_charm","swift_band","life_pendant","sage_amulet","titan_seal","berserk_idol","pearl_necklace"]},
+  {id:"acc", ic:"💍", label:"accessories", keys:["shining_ring","ring","charm","crystal_ring","war_charm","venom_charm","swift_band","life_pendant","sage_amulet","titan_seal","berserk_idol","pearl_necklace"]},
   {id:"mat", ic:"💎", label:"materials", keys:["glass","jewelry","oil","steel","crown"]},
   {id:"furn", ic:"🪑", label:"furniture & decor", keys:["chair","bench","stool","table","lamp","rug","bluerug","bookshelf","plant","fountain","barrel","clock","torch","fence","ppath","lantern","goldlamp","mfence","oillamp","snowman","chest","display_stand"]},
   {id:"tools", ic:"🛠", label:"tools & stations", keys:["stove","axe","drying_rack","preserve_pot","press_table","craft_bench","perfume_stand"]} ];
@@ -925,12 +932,13 @@ function lateUnlocked(){ return totalEarned>=200000; }
 function dungeonHearts(){ return Math.min(5, Math.floor((dungMax||1)/100)); }   // +1 permanent heart per 100 dungeon floors, cap +5
 const stats={trees:0,crops:0,fish:0}; const claimed={};   // mission progress + claimed quests
 const hasSword=()=>!!equip.sword, hasArmor=()=>!!equip.armor;
-function gearBonus(){ const b={atk:0,maxhp:0,regen:0,speed:0}; for(const sn in equip){ const k=equip[sn]; if(k&&ITEMS[k].bonus)for(const s in ITEMS[k].bonus)b[s]+=ITEMS[k].bonus[s]; } return b; }
+function gearBonus(){ const b={atk:0,maxhp:0,regen:0,speed:0,poison:0}; for(const sn in equip){ const k=equip[sn]; if(k&&ITEMS[k].bonus)for(const s in ITEMS[k].bonus)if(s in b)b[s]+=ITEMS[k].bonus[s]; } return b; }
 // armour defence: better gear (more maxhp from armour/accessories) softens every hit. Diminishing, capped ~70%.
 function defenseCut(dmg){ const def=gearBonus().maxhp; const red=Math.min(0.7, def*0.06); return Math.max(0.25, dmg*(1-red)); }
 let activeBuff=null;   // {bonus,until,key} from eating buff food cooked at a stove
 function buffBonus(){ return (activeBuff&&now()<activeBuff.until)?activeBuff.bonus:{}; }
-function totalBonus(){ const g=gearBonus(),f=buffBonus(),o={atk:0,maxhp:0,regen:0,speed:0}; for(const s in o)o[s]=(g[s]||0)+(f[s]||0); return o; }
+function totalBonus(){ const g=gearBonus(),f=buffBonus(),o={atk:0,maxhp:0,regen:0,speed:0,poison:0}; for(const s in o)o[s]=(g[s]||0)+(f[s]||0); return o; }
+let bloodMeter=0, _bloodFull=false; const BLOOD_MAX=100, BLOOD_PER_HIT=10, BLOOD_PER_BOSSHIT=6;   // "blood drain" lifesteal meter — fills on hits, spend full bar to heal a heart
 function recalcMax(){ player.maxHp=5+dungeonHearts()+lifeCrystals+totalBonus().maxhp; if(player.hp>player.maxHp)player.hp=player.maxHp; }   // base 5 + dungeon(≤5) + crystals(≤3) + gear/buff
 function itemFitsSlot(key,sn){ const it=ITEMS[key]; if(!it||it.kind!=="gear")return false; return (sn==="acc1"||sn==="acc2")?it.slot==="acc":it.slot===sn; }
 function spendHunger(n){ player.hunger=Math.max(0,player.hunger-n*0.25); }   // actions cost ~1/4 of before (till/plant≈0.25, chop/mine≈0.5, attack≈0.37) — gameplay shouldn't starve you
@@ -1442,15 +1450,23 @@ function bossBehave(mb,ux,uy,d,dt){ mb.cd-=dt;
 /* ---- interaction ---- */
 function facedCell(){ let c=Math.floor((player.x+player.fx*TILE)/TILE), r=Math.floor((player.y+player.fy*TILE)/TILE);
   c=Math.max(0,Math.min(GC-1,c)); r=Math.max(0,Math.min(GR-1,r)); return {r,c}; }   // snap onto the map (nearest in-bounds tile)
-function tryAttack(){ const range=TILE*1.6,dmg=(hasAxe?2:1)+totalBonus().atk; let hit=false;
+function mobDie(m){ let drop=3+(Math.random()*5|0); gainItem(m.drop||"goo",1,m.x,m.y); if(Math.random()<0.3)gainItem("meat",1,m.x,m.y); if(Math.random()<0.18)gainItem("oil",1,m.x,m.y);
+  if(area==="dungeon"){ drop+=Math.floor(dungFloor/2); if(m.boss){ drop+=50+dungFloor*3; gainItem("diamond",1,m.x,m.y); const rk=findRelic(); gainItem(rk,1,m.x,m.y); float(m.x,m.y-44,t("boss down!"),"#ffd24a"); float(m.x,m.y-60,"✨ "+itemName(rk)+"!","#ffe9b0"); } else if(Math.random()<0.12+dungFloor*0.004)gainItem(Math.random()<0.5?"silver":"fossil",1,m.x,m.y); }
+  coins+=drop; float(m.x,m.y-30,"+"+drop+"c","#ffe27a"); burst(m.x,m.y,m.boss?"#ff9ad0":"#7be0a0",m.boss?22:12); syncUI(); }
+function tryAttack(){ const range=TILE*1.6,dmg=(hasAxe?2:1)+totalBonus().atk, psn=totalBonus().poison; let hit=false;
   if(player.hunger<=0){ if(mobs.some(m=>Math.hypot(m.x-player.x,m.y-player.y)<TILE*1.7)){ tooHungry(); return true; } return false; }
   for(const m of mobs){ const dx=m.x-player.x,dy=m.y-player.y,fwd=dx*player.fx+dy*player.fy,lat=Math.abs(dx*player.fy-dy*player.fx),dd=Math.hypot(dx,dy);
     if(dd<range&&(fwd>-10||dd<TILE*0.9)&&lat<TILE*1.1){ m.hp-=dmg;m.flash=0.18;const d=dd||1;m.kx=dx/d*7;m.ky=dy/d*7;hit=true;SND.hit();
-      if(m.hp<=0){ let drop=3+(Math.random()*5|0); gainItem(m.drop||"goo",1,m.x,m.y); if(Math.random()<0.3)gainItem("meat",1,m.x,m.y); if(Math.random()<0.18)gainItem("oil",1,m.x,m.y);
-        if(area==="dungeon"){ drop+=Math.floor(dungFloor/2); if(m.boss){ drop+=50+dungFloor*3; gainItem("diamond",1,m.x,m.y); const rk=findRelic(); gainItem(rk,1,m.x,m.y); float(m.x,m.y-44,t("boss down!"),"#ffd24a"); float(m.x,m.y-60,"✨ "+itemName(rk)+"!","#ffe9b0"); } else if(Math.random()<0.12+dungFloor*0.004)gainItem(Math.random()<0.5?"silver":"fossil",1,m.x,m.y); }
-        coins+=drop; float(m.x,m.y-30,"+"+drop+"c","#ffe27a"); burst(m.x,m.y,m.boss?"#ff9ad0":"#7be0a0",m.boss?22:12); syncUI(); } } }
+      if(psn>0)m.psn={dps:psn,t:4};   // venom gear: damage-over-time
+      bloodMeter=Math.min(BLOOD_MAX,bloodMeter+(m.boss?BLOOD_PER_BOSSHIT:BLOOD_PER_HIT));   // each hit feeds the drain meter
+      if(m.hp<=0)mobDie(m); } }
   if(hit)spendHunger(1.5);
   mobs.splice(0,mobs.length,...mobs.filter(m=>m.hp>0)); return hit; }
+function drainBlood(){ const full=bloodMeter>=BLOOD_MAX; if(!full){ SND.no(); return; }
+  if(scene==="boss"){ if(boss.php>=boss.pmax)return; boss.php=Math.min(boss.pmax,boss.php+1); }
+  else { if(player.hp>=player.maxHp)return; player.hp=Math.min(player.maxHp,player.hp+1); }
+  bloodMeter=0; SND.heal(); float(player.x,player.y-30,"🩸 +1♥","#ff5b78"); }
+document.getElementById("bloodBtn").addEventListener("click",()=>{ try{audio();}catch(_){} drainBlood(); });
 function talkInteract(){ if(scene!=="out"){ return; }
   if(area==="home"&&Math.hypot(catX-player.x,catY-player.y)<TILE*1.7){ if(nearThreat())return blockTalk(); SND.meow(); if(metCat)npcMenu("cat",openShop); else {metCat=true;save();talkToCat();} return; }
   if(area==="village"){ if(Math.hypot(npcX-player.x,npcY-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); if(metFisher)npcMenu("fisher",openMarket); else {metFisher=true;save();talkToFisher();} return; }
@@ -1618,7 +1634,7 @@ function bossInit(def,hp){ document.body.classList.add("inboss"); document.getEl
   boss.gy=GY; boss.px=80; boss.py=GY; boss.pvx=0; boss.pvy=0; boss.pg=true; boss.coyote=0; boss.pdir=1; boss.atk=0; boss.pinv=0;
   boss.php=player.maxHp; boss.pmax=player.maxHp; boss.flash=0;
   boss.bx=VW-130; boss.by=GY; boss.bhp=hp||24; boss.bmax=hp||24; boss.t=0; boss.cd=1.6; boss.st="idle"; boss.tele=0; boss.cv=0; boss.ct=0;
-  boss.atkType=""; boss.markX=boss.px; boss.slamUp=false; boss.slamT=0; boss.proj=[]; boss.adds=[]; boss.end=0; boss.win=false; boss.bflash=0;
+  boss.atkType=""; boss.markX=boss.px; boss.slamUp=false; boss.slamT=0; boss.proj=[]; boss.adds=[]; boss.bpsn=null; boss.end=0; boss.win=false; boss.bflash=0;
   boss.kind=boss.def.kind||"ground";
   if(boss.kind==="flyer")boss.by=GY-100;   // flyers hover
   if(boss.kind==="swarm"){ const n=3, hpEach=Math.max(3,Math.round((hp||24)/n)); boss.adds=[];   // a group of small bosses instead of one big body
@@ -1627,9 +1643,10 @@ function bossInit(def,hp){ document.body.classList.add("inboss"); document.getEl
 function bossJump(){ if(scene==="boss"&&(boss.pg||boss.coyote>0)){ boss.pvy=-470; boss.pg=false; boss.coyote=0; SND.swing(); } }
 function mkAdd(x,y,kind){ const fly=(kind==="flyer"); return {x:x,y:fly?y:boss.gy,vx:0,vy:0,hp:1,r:10,fly:fly,elite:false,t:0,life:9,flash:0,hopT:0.5}; }   // small summoned monster
 function bossAttack(){ if(scene!=="boss"||boss.atk>0||boss.end)return; boss.atk=0.24; SND.hit();
-  const dmg=1+totalBonus().atk, inReach=(tx,ty)=>Math.abs(tx-boss.px)<74&&Math.sign(tx-boss.px||1)===boss.pdir&&Math.abs(ty-boss.py)<78;
-  if(boss.kind!=="swarm"&&inReach(boss.bx,boss.by)){ boss.bhp-=dmg; boss.bflash=0.16; }   // hit the main body (ground/flyer)
-  for(const a of boss.adds){ if(inReach(a.x,a.y-10)){ a.hp-=dmg; a.flash=0.15; if(a.elite)boss.bflash=0.1; } } }   // slash minions & swarm small-bosses
+  const dmg=1+totalBonus().atk, psn=totalBonus().poison, inReach=(tx,ty)=>Math.abs(tx-boss.px)<74&&Math.sign(tx-boss.px||1)===boss.pdir&&Math.abs(ty-boss.py)<78; let landed=false;
+  if(boss.kind!=="swarm"&&inReach(boss.bx,boss.by)){ boss.bhp-=dmg; boss.bflash=0.16; if(psn>0)boss.bpsn={dps:psn,t:4}; landed=true; }   // hit the main body (ground/flyer)
+  for(const a of boss.adds){ if(inReach(a.x,a.y-10)){ a.hp-=dmg; a.flash=0.15; if(a.elite)boss.bflash=0.1; if(psn>0)a.psn={dps:psn,t:3}; landed=true; } }   // slash minions & swarm small-bosses
+  if(landed)bloodMeter=Math.min(BLOOD_MAX,bloodMeter+BLOOD_PER_BOSSHIT); }
 function bhitPlayer(d,p){ if(boss.pinv>0||boss.end)return; boss.php-=defenseCut(d); boss.pinv=1.1; boss.flash=0.14; boss.pvy=-240; boss.pg=false; SND.hurt(); if(p)p.t=0; }
 function bossFire(){ const a=Math.atan2((boss.py-22)-(boss.by-24),boss.px-boss.bx); const ph=boss.bhp<=boss.bmax/2, spd=ph?255:225;
   for(let i=-2;i<=2;i++){ const an=a+i*0.20; boss.proj.push({x:boss.bx,y:boss.by-24,vx:Math.cos(an)*spd,vy:Math.sin(an)*spd,t:3.2}); } SND.swing(); }
@@ -1677,6 +1694,9 @@ function updateBoss(dt){ const GY=boss.gy, ph=boss.bhp<=boss.bmax/2;
     if(a.fly){ a.x+=dx/d*82*dt; a.y+=dyy/d*82*dt; }
     else { a.x+=Math.sign(dx)*Math.min(Math.abs(dx),66*dt); a.vy+=1500*dt; a.y+=a.vy*dt; if(a.y>=GY){ a.y=GY; a.vy=0; a.hopT-=dt; if(a.hopT<=0){ a.vy=-340; a.hopT=0.8+Math.random()*0.5; } } }
     if(Math.abs(a.x-boss.px)<15&&Math.abs(a.y-(boss.py-16))<28)bhitPlayer(1,null); }
+  if(boss.bpsn&&boss.bpsn.t>0){ boss.bpsn.t-=dt; boss.bhp-=boss.bpsn.dps*dt; }   // venom DoT on the main body
+  for(const a of boss.adds)if(a.psn&&a.psn.t>0){ a.psn.t-=dt; a.hp-=a.psn.dps*dt; }   // venom DoT on minions/small-bosses
+  for(let i=0;i<boss.adds.length;i++)for(let j=i+1;j<boss.adds.length;j++){ const a=boss.adds[i],b=boss.adds[j],ddx=b.x-a.x,mn=(a.r||10)+(b.r||10); if(Math.abs(ddx)<mn){ const p=(mn-Math.abs(ddx))*0.5*(ddx<0?-1:1); a.x-=p; b.x+=p; } }   // separation
   boss.adds=boss.adds.filter(a=>a.hp>0 && (a.elite || !a.life || a.life>0));
   // ---- projectiles ----
   for(const p of boss.proj){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.t-=dt;
@@ -1726,6 +1746,7 @@ function drawBoss(){ ctx.fillStyle="#1a1030"; ctx.fillRect(0,0,VW,VH);
     ctx.strokeStyle="#cfd6dd";ctx.beginPath();ctx.moveTo(boss.px,boss.py-22);ctx.lineTo(boss.px+boss.pdir*26,boss.py-26);ctx.stroke(); }
   ctx.globalAlpha=1;
   for(let i=0;i<boss.pmax;i++){ ctx.fillStyle=i<boss.php?"#ff5b78":"rgba(255,255,255,.2)"; ctx.fillRect(16+i*20,16,15,15); }
+  drawBloodBar(31,40);
   ctx.fillStyle="rgba(0,0,0,.45)";ctx.fillRect(VW/2-110,18,220,12); ctx.fillStyle="#c46aff";ctx.fillRect(VW/2-110,18,220*Math.max(0,boss.bhp)/boss.bmax,12);
   ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="800 12px Helvetica";ctx.fillText((boss.def.face?boss.def.face+" ":"")+t(boss.def.name).toUpperCase()+(boss.bhp<=boss.bmax/2?" ⚡":""),VW/2,44);
   ctx.fillStyle="rgba(255,255,255,.6)";ctx.font="11px Helvetica";ctx.fillText(t("←/→ move · ↑/Space jump · E or ⟳use to slash · dodge the red charge & shots"),VW/2,VH-16);
@@ -1766,6 +1787,7 @@ addEventListener("keydown",e=>{ const k=e.key.toLowerCase();
   if(rebinding!==null){ e.preventDefault(); e.stopPropagation();   // capture the next key for the slot being rebound
     if(k==="escape")rebinding=null; else if(!/^[0-9]$/.test(k)&&k!=="tab"){ keyMap[rebinding]=k; saveKeys(); rebinding=null; } renderKeybinds(); return; }
   if(document.activeElement&&(document.activeElement.id==="cheat"||document.activeElement.id==="nameInput"))return;
+  if(k==="q"){ e.preventDefault(); drainBlood(); return; }   // blood-drain lifesteal (works in the overworld & the boss arena)
   if(scene==="boss"){ if(keyMatch("up",k)||k===" ")bossJump(); else if(keyMatch("left",k))keys.l=1; else if(keyMatch("right",k))keys.r=1; else if(keyMatch("use",k))bossAttack(); e.preventDefault(); return; }
   if(dialogOpen){ if(k==="e"||k===" "||k==="enter")advanceDialog(); else if(k==="delete"||k==="backspace"||k==="escape")skipDialog(); e.preventDefault(); return; }
   if(fishing){ if(k==="e"||k===" ")fishing.hold=true; e.preventDefault(); return; }   // hold space/E to reel
@@ -1852,7 +1874,9 @@ function respawnRes(type){ const RW=gridOut.length,CW=gridOut[0].length;
   for(let i=0;i<25;i++){ const r=1+(Math.random()*(RW-2)|0),c=1+(Math.random()*(CW-2)|0),t=gridOut[r][c];
     if(t.type==="wild"&&!inFarm(r,c)){ const x=c*TILE+TILE/2,y=r*TILE+TILE/2; if(Math.hypot(x-player.x,y-player.y)<TILE*3)continue; t.type=type; t.hits=0; return true; } }
   return false; }
-function update(dt){ if(scene==="boss"){ updateBoss(dt); return; }
+function update(dt){
+  { const bf=bloodMeter>=BLOOD_MAX; if(bf!==_bloodFull){ _bloodFull=bf; const bb=document.getElementById("bloodBtn"); if(bb)bb.classList.toggle("on",bf); } }   // show/hide the on-screen Drain button
+  if(scene==="boss"){ updateBoss(dt); return; }
   if(fishing){ updateFishing(dt); player.moving=false; return; }   // freeze the world during the fishing minigame
   if(dialogOpen||document.querySelector(".shop.open")){ player.moving=false; keys.l=keys.r=keys.u=keys.d=0; return; }   // freeze the world (no monster attacks) while a menu/bag/dialogue is open
   if(transCD>0)transCD-=dt;
@@ -1876,10 +1900,15 @@ function update(dt){ if(scene==="boss"){ updateBoss(dt); return; }
     for(let r=0;r<gridOut.length;r++)for(let c=0;c<gridOut[0].length;c++){ const cr=gridOut[r][c].crop; if(cr&&cr.grow<1){ const C=CROPS[cr.type];const s=(now()<cr.boost?2.4:1)*seasonGrow*rainGrow; cr.grow=Math.min(1,cr.grow+dt/C.dur*s); } }
     const outside=!inFarm(pr,pc); const target=area==="dungeon"?Math.min(3+Math.floor(dungFloor/5),12):area==="village"?(isNight()?9:5):(isNight()?12:(outside?8:4));   // the village wilds now have monsters (town & fisher pen stay safe)
     spawnT-=dt; if(spawnT<=0&&mobs.filter(m=>!m.boss).length<target){spawnMob();spawnT=area==="dungeon"?1.6:(isNight()?1.4:2.2);}
+    let psnKill=false;
     for(const mb of mobs){ mb.t+=dt;mb.flash=Math.max(0,mb.flash-dt);const dx=player.x-mb.x,dy=player.y-mb.y,d=Math.hypot(dx,dy)||1;
+      if(mb.psn&&mb.psn.t>0){ mb.psn.t-=dt; mb.hp-=mb.psn.dps*dt; if(Math.random()<0.12)burst(mb.x,mb.y-6,"#7be07b",1); if(mb.hp<=0){ mobDie(mb); psnKill=true; continue; } }   // venom DoT
       if(mb.boss){ bossBehave(mb,dx/d,dy/d,d,dt); if(d<mb.r+11)hurt(2,mb.x,mb.y); continue; }   // bosses have their own AI + hit harder
       const sp=mb.spd||52; let mx=0,my=0; if(d<190){mx=dx/d;my=dy/d; if(mb.fly){const s=Math.sin(mb.t*6)*0.6;mx+=-dy/d*s;my+=dx/d*s;}}else{mx=Math.cos(mb.t*0.7);my=Math.sin(mb.t*0.9);}
       const ms=(d<190?sp:sp*0.5)*dt; moveMob(mb,mx*ms+mb.kx,my*ms+mb.ky,mb.r); mb.kx*=0.8;mb.ky*=0.8; if(d<mb.r+11)hurt(mb.dmg||1,mb.x,mb.y); }
+    for(let i=0;i<mobs.length;i++)for(let j=i+1;j<mobs.length;j++){ const a=mobs[i],b=mobs[j]; if(a.boss||b.boss)continue;   // separation: stop monsters piling onto one spot
+      const sx=b.x-a.x,sy=b.y-a.y,sd=Math.hypot(sx,sy)||1,mn=(a.r||12)+(b.r||12); if(sd<mn){ const p=(mn-sd)*0.5,ux=sx/sd,uy=sy/sd; moveMob(a,-ux*p,-uy*p,a.r||12); moveMob(b,ux*p,uy*p,b.r||12); } }
+    if(psnKill)mobs.splice(0,mobs.length,...mobs.filter(m=>m.hp>0));
     for(let i=shots.length-1;i>=0;i--){ const s=shots[i]; s.x+=s.vx*dt;s.y+=s.vy*dt;s.t-=dt; if(Math.hypot(s.x-player.x,s.y-player.y)<15){hurt(1,s.x,s.y);s.t=0;} if(s.t<=0)shots.splice(i,1); }
     if(area==="home")updateAnimals(dt);
     if(area!=="dungeon"){
@@ -2188,9 +2217,10 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
   for(let i=0;i<player.maxHp;i++) heartIcon(X0+i*SP,YH,R,i<player.hp);
   for(let i=0;i<NF;i++){ const f=Math.max(0,Math.min(1,(player.hunger-i*step)/step)); foodIcon(X0+i*SP,YF,R,f); }
   if(activeBuff&&now()<activeBuff.until){ const secs=Math.ceil(activeBuff.until-now()),by=(player.hunger<=0||(player.hunger>=50&&player.hp<player.maxHp))?YF+46:YF+26; ctx.font="700 13px Helvetica,Arial";ctx.textAlign="left";ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillText("⏫ "+itemName(activeBuff.key)+" "+secs+"s",X0-9,by+1);ctx.fillStyle="#9ad8ff";ctx.fillText("⏫ "+itemName(activeBuff.key)+" "+secs+"s",X0-10,by); }
+  drawBloodBar(X0,YF+30);
   ctx.textAlign="left"; ctx.textBaseline="alphabetic";
-  if(player.hunger<=0){ ctx.font="800 14px Helvetica,Arial"; ctx.fillStyle="rgba(0,0,0,.55)";ctx.fillText(t("starving — eat food!"),15,YF+27); ctx.fillStyle="#ff8f8f"; ctx.fillText(t("starving — eat food!"),14,YF+26); }
-  else if(player.hunger>=50&&player.hp<player.maxHp){ ctx.font="700 13px Helvetica,Arial"; ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillText(t("well fed · healing"),15,YF+27); ctx.fillStyle="#8ef0a0"; ctx.fillText(t("well fed · healing"),14,YF+26); }
+  if(player.hunger<=0){ ctx.font="800 14px Helvetica,Arial"; ctx.fillStyle="rgba(0,0,0,.55)";ctx.fillText(t("starving — eat food!"),15,YF+44); ctx.fillStyle="#ff8f8f"; ctx.fillText(t("starving — eat food!"),14,YF+43); }
+  else if(player.hunger>=50&&player.hp<player.maxHp){ ctx.font="700 13px Helvetica,Arial"; ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillText(t("well fed · healing"),15,YF+44); ctx.fillStyle="#8ef0a0"; ctx.fillText(t("well fed · healing"),14,YF+43); }
   if(mapOpen) drawMinimap();
   if(fishing) drawFishing();
   if(bannerMsg&&now()<bannerUntil){ const a=Math.min(1,(bannerUntil-now())/0.5);   // prominent centred notice
@@ -2202,6 +2232,12 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
   drawHUD();
 }
 // in-canvas status strip (coins · weather · date · time) drawn inside the game window, top-right
+function drawBloodBar(x,y){ const w=210, full=bloodMeter>=BLOOD_MAX;   // lifesteal "blood drain" meter
+  ctx.fillStyle="rgba(0,0,0,.45)"; ctx.beginPath();ctx.roundRect(x,y,w,9,4);ctx.fill();
+  const fw=Math.max(0,w*Math.min(1,bloodMeter/BLOOD_MAX)); if(fw>0){ ctx.fillStyle=full?"#ff3b5b":"#a83048"; ctx.beginPath();ctx.roundRect(x,y,fw,9,4);ctx.fill(); }
+  ctx.fillStyle="#ff8fa0";ctx.font="700 12px Helvetica";ctx.textAlign="left";ctx.textBaseline="middle";ctx.fillText("🩸",x-15,y+5);
+  if(full){ const pulse=0.55+0.45*Math.abs(Math.sin(now()*6)); ctx.globalAlpha=pulse; ctx.fillStyle="#fff";ctx.font="800 11px Helvetica";ctx.fillText("▶ "+t("Drain")+" (Q)",x+w+7,y+5); ctx.globalAlpha=1; }
+  ctx.textBaseline="alphabetic"; }
 function drawHUD(){ if(scene==="boss")return; if(mapOpen&&scene==="out")return;   // minimap owns the top-right corner when open
   const sn=seasonIdx();
   const dateStr=(lang==="zh"?SEASON_ZH[sn]+" "+dayOfSeason()+"日":SEASONS[sn]+" "+dayOfSeason());
