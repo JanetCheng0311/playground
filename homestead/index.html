@@ -223,7 +223,7 @@
   #vn .box{position:relative}
   @media (max-width:820px){ .pad{display:flex} .hint{display:none} .bar{padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 196px)} #vn{bottom:calc(env(safe-area-inset-bottom, 0px) + 150px)} #talkBtn{display:none} }
   #installNote{opacity:.85;font-size:13.5px;margin:4px 0 12px;line-height:1.5}
-  #installPick{display:flex;flex-direction:column;gap:8px;margin:0 0 10px}
+  #installPick,#bossPick{display:flex;flex-direction:column;gap:8px;margin:0 0 10px}
   .iplat{display:block;width:100%;padding:11px 14px;font-size:15px;border-radius:12px;cursor:pointer;text-align:left;
     background:rgba(255,255,255,.08);color:#fff;border:1.5px solid rgba(255,255,255,.22);transition:border-color .12s,background .12s}
   .iplat:hover{border-color:rgba(255,216,107,.7)}
@@ -383,6 +383,12 @@
   <div id="mailList"></div>
   <button class="close" id="mailCollect" style="border-color:rgba(255,216,107,.7)">Collect all</button>
   <button class="close" id="mailClose">close</button>
+</div></div>
+<div class="shop" id="bosstest"><div class="card" style="width:min(360px,100%);text-align:center">
+  <h2>🐉 Boss Test</h2>
+  <p class="inote">Pick a boss to fight (cheat).</p>
+  <div id="bossPick"></div>
+  <button class="close" id="bossClose">close</button>
 </div></div>
 <div class="shop" id="stove"><div class="card">
   <h2>🔥 Kitchen Stove</h2>
@@ -1757,6 +1763,18 @@ document.getElementById("talkBtn2").addEventListener("pointerdown",e=>{e.prevent
 document.getElementById("mapBtn").addEventListener("click",()=>{mapOpen=!mapOpen;});
 document.getElementById("rideBtn").addEventListener("click",()=>{audio();openTeleport();});
 document.getElementById("eatBtn").addEventListener("click",()=>{audio();eatFood();});
+/* ---- boss-test cheat: fight any boss on demand ---- */
+function testDungeonBoss(n){ dungFloor=n*10; dungBoss=true; gotoDungeon(); float(player.x,player.y-26,"cheat: "+BOSSES[n-1].name+" (floor "+dungFloor+")","#ffe27a"); }
+function testRoadBoss(){ if(scene==="boss")return; if(!hasSword())equip.sword="metal_sword"; if(!hasArmor())equip.armor="metal_armor"; recalcMax(); renderBar(); scene="boss"; SND.door(); bossInit(); float(player.x,player.y-26,"cheat: Road Guardian","#ffe27a"); }
+const bossTestEl=document.getElementById("bosstest");
+function openBossTest(){ const pick=document.getElementById("bossPick"); pick.innerHTML="";
+  BOSSES.forEach((B,i)=>{ const b=document.createElement("button"); b.type="button"; b.className="iplat"; b.textContent=B.face+"  "+B.name;
+    b.addEventListener("click",()=>{ bossTestEl.classList.remove("open"); testDungeonBoss(i+1); }); pick.appendChild(b); });
+  const rg=document.createElement("button"); rg.type="button"; rg.className="iplat"; rg.textContent="👹  Road Guardian";
+  rg.addEventListener("click",()=>{ bossTestEl.classList.remove("open"); testRoadBoss(); }); pick.appendChild(rg);
+  bossTestEl.classList.add("open"); }
+document.getElementById("bossClose").addEventListener("click",()=>bossTestEl.classList.remove("open"));
+bossTestEl.addEventListener("pointerdown",e=>{ if(e.target===bossTestEl)bossTestEl.classList.remove("open"); });
 const cheatEl=document.getElementById("cheat");
 cheatEl.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ const v=cheatEl.value.trim();
   if(v==="111"){ bossDefeated=true; save(); if(scene==="boss")finishBoss(true); else float(player.x,player.y-26,"cheat: road unlocked","#ffe27a"); }
@@ -1765,8 +1783,9 @@ cheatEl.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter")
   else if(v==="$$$"){ coins+=10000; SND.coin(); syncUI(); float(player.x,player.y-26,"cheat: +10000 coins","#ffe27a"); save(); }
   else if(v==="changeoc"){ localStorage.setItem("hs-oc","1"); const as=document.getElementById("artSection"); if(as)as.style.display=""; float(player.x,player.y-26,"cheat: character art unlocked","#ffe27a"); }
   else if(v==="bright"){ dungBright=!dungBright; float(player.x,player.y-26,"cheat: dungeon light "+(dungBright?"ON":"OFF"),"#ffe27a"); }
-  else if(/^boss[1-5]$/.test(v)){ const n=+v.slice(4); dungFloor=n*10; dungBoss=true; gotoDungeon(); float(player.x,player.y-26,"cheat: "+BOSSES[n-1].name+" (floor "+dungFloor+")","#ffe27a"); }   // jump straight into each dungeon floor-boss to test it
-  else if(v==="bossr"||v==="boss6"){ if(scene!=="boss"){ if(!hasSword())equip.sword="metal_sword"; if(!hasArmor())equip.armor="metal_armor"; recalcMax(); renderBar(); scene="boss"; SND.door(); bossInit(); float(player.x,player.y-26,"cheat: Road Guardian","#ffe27a"); } }   // start the Road Guardian side-view fight (auto-gears you)
+  else if(v==="bosssss"||v==="bossss"||v==="boss"){ openBossTest(); }   // pop up the boss-test menu (pick any boss to fight)
+  else if(/^boss[1-5]$/.test(v)){ testDungeonBoss(+v.slice(4)); }       // shortcut: jump straight into dungeon floor-boss n
+  else if(v==="bossr"||v==="boss6"){ testRoadBoss(); }                  // shortcut: Road Guardian fight
   cheatEl.value=""; cheatEl.blur(); } });
 
 /* ---- physics ---- */
