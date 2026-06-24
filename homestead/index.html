@@ -107,6 +107,12 @@
   .frow{display:flex;gap:12px;align-items:center;padding:11px 0;border-top:1px solid rgba(255,255,255,.14)}
   .fface{position:relative;overflow:hidden;width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:23px;flex:0 0 auto}
   .ffimg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:auto}
+  #mailNote{opacity:.85;font-size:13.5px;margin:4px 0 10px;line-height:1.5}
+  #mailList{display:flex;flex-direction:column;gap:9px;margin:8px 0;max-height:46vh;overflow-y:auto}
+  .mailrow{display:flex;align-items:center;gap:11px}
+  .mailmain{flex:1 1 auto;min-width:0}
+  .mailfrom{font-size:14px}
+  .mailwhat{display:flex;align-items:center;gap:7px;opacity:.92;font-size:13.5px;margin-top:2px}
   .fmain{flex:1;min-width:0}
   .fhead{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px;gap:8px;align-items:baseline}
   .fhead span{font-size:11.5px;opacity:.9;color:#ffd2dd;font-weight:700;white-space:nowrap}
@@ -371,6 +377,13 @@
   <div id="chestBag" class="invgrid"></div>
   <button class="close" id="chestClose">close</button>
 </div></div>
+<div class="shop" id="mailbox"><div class="card" style="width:min(400px,100%)">
+  <h2>📪 Mailbox</h2>
+  <p id="mailNote" class="inote">Gifts from your friends in town.</p>
+  <div id="mailList"></div>
+  <button class="close" id="mailCollect" style="border-color:rgba(255,216,107,.7)">Collect all</button>
+  <button class="close" id="mailClose">close</button>
+</div></div>
 <div class="shop" id="stove"><div class="card">
   <h2>🔥 Kitchen Stove</h2>
   <h3>cook buff food</h3><div id="stoveList"></div>
@@ -622,6 +635,11 @@ const HOWTO_ZH={ wood:"砍樹", stone:"開採岩石", goo:"打敗史萊姆", iro
 const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金幣","save file":"儲存","load file":"載入","sound":"音效","muted":"靜音","new game":"新遊戲","playground":"遊樂場",
   "💬 Talk":"💬 對話","🎒 Bag":"🎒 背包","🗺 Map":"🗺 地圖","？ Help":"？ 說明",
   "📲 Get App":"📲 安裝App","📲 Install Homestead":"📲 安裝 Homestead",
+  "📪 Mailbox":"📪 信箱","Gifts from your friends in town.":"鎮上朋友送來的禮物。",
+  "Gifts from your friends in town — tap Collect all.":"鎮上朋友送來的禮物 — 點「全部領取」。",
+  "No mail yet. Befriend the townsfolk and they'll send presents!":"目前沒有郵件。和鎮民交朋友，他們就會送禮物來！",
+  "Collect all":"全部領取","collected your gifts!":"已領取你的禮物！",
+  "✉ you've got mail!":"✉ 你有新郵件！","✉ a gift arrived in your mailbox!":"✉ 信箱收到一份禮物！",
   "Play offline & full-screen, like a real app. Pick your device:":"離線、全螢幕遊玩，就像真正的App。選擇你的裝置：",
   "✓ Already installed — you're playing the app!":"✓ 已安裝 — 你正在以App遊玩！","✨ Install now — one tap":"✨ 立即安裝 — 一鍵完成",
   "🍏 iPhone / iPad":"🍏 iPhone / iPad","🤖 Android":"🤖 Android","💻 Windows / Mac":"💻 Windows / Mac",
@@ -810,7 +828,8 @@ function applyLang(){ localStorage.setItem("hs-lang",lang);
   if(document.getElementById("friends").classList.contains("open"))renderFriends();
   if(document.getElementById("coll").classList.contains("open"))renderColl();
   if(document.getElementById("giftui").classList.contains("open"))renderGift();
-  if(document.getElementById("install").classList.contains("open"))openInstall(); }
+  if(document.getElementById("install").classList.contains("open"))openInstall();
+  if(document.getElementById("mailbox").classList.contains("open"))renderMailbox(); }
 
 const RECIPES=[
   {key:"salve", give:"salve", cost:{goo:2}, desc:"restores 2 hearts (use it from your bag)"},
@@ -927,7 +946,7 @@ const ROAD_R=OROWS-4;
 const VCOLS=46, VROWS=34;
 const VROAD_R=9, RIVER_C=14, SEA_C0=39, SAND_C=38, NPC_R=6, NPC_C=36, CAVE_R=4, CAVE_C=6;
 
-const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor","chest","stove","dwall","cave","gem","trough","snowman","drying_rack","preserve_pot","press_table","craft_bench","perfume_stand","stand","dchest","bench","stool","bookshelf","plant","fountain","barrel","clock"]);
+const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor","chest","stove","dwall","cave","gem","trough","snowman","drying_rack","preserve_pot","press_table","craft_bench","perfume_stand","stand","dchest","bench","stool","bookshelf","plant","fountain","barrel","clock","mailbox"]);
 const SITTABLE=new Set(["chair","bench","stool"]);   // press use to sit; move or press use again to stand
 const CHESTN=18;
 const WATER=new Set(["pond","river","sea"]);
@@ -957,10 +976,15 @@ const NPCMETA={
   louie: {who:"louie", name:"Louie",    face:"🐱", col:"#5aa0e6"},
   david: {who:"david", name:"David",    face:"🐶", col:"#e0913f"} };
 const FRIEND_IDS=["cat","fisher","hamu","louie","david"], FRIEND_MAX=100, FRIEND_TIER=["Acquaintance","Friend","Good Friend","Best Friend"];
-let friend={}, giftDay={}, questIdx={}, questOn={};
-function resetFriends(){ friend={cat:FRIEND_MAX,fisher:0,hamu:0,louie:0,david:0}; giftDay={}; questIdx={}; questOn={}; }
+let friend={}, giftDay={}, questIdx={}, questOn={}, mail=[], npcGiftDay={}, tierGiven={};
+function resetFriends(){ friend={cat:FRIEND_MAX,fisher:0,hamu:0,louie:0,david:0}; giftDay={}; questIdx={}; questOn={}; mail=[]; npcGiftDay={}; tierGiven={}; for(const k of FRIEND_IDS)tierGiven[k]=friendLevel(k); }
 function loadFriends(s){ resetFriends(); if(s&&s.friend)for(const k of FRIEND_IDS){ const v=s.friend[k]; if(typeof v==="number"&&isFinite(v))friend[k]=Math.max(0,Math.min(FRIEND_MAX,v)); } if(s&&s.giftDay&&typeof s.giftDay==="object")for(const k of FRIEND_IDS){ if(typeof s.giftDay[k]==="number")giftDay[k]=s.giftDay[k]; }
-  if(s&&s.questIdx&&typeof s.questIdx==="object")for(const k in NPC_QUESTS){ if(typeof s.questIdx[k]==="number")questIdx[k]=s.questIdx[k]; } if(s&&s.questOn&&typeof s.questOn==="object")for(const k in NPC_QUESTS){ questOn[k]=!!s.questOn[k]; } }
+  if(s&&s.questIdx&&typeof s.questIdx==="object")for(const k in NPC_QUESTS){ if(typeof s.questIdx[k]==="number")questIdx[k]=s.questIdx[k]; } if(s&&s.questOn&&typeof s.questOn==="object")for(const k in NPC_QUESTS){ questOn[k]=!!s.questOn[k]; }
+  mail=Array.isArray(s&&s.mail)?s.mail.filter(m=>m&&FRIEND_IDS.includes(m.from)&&(m.coins>0||ITEMS[m.key])).slice(0,20):[];
+  npcGiftDay={}; if(s&&s.npcGiftDay&&typeof s.npcGiftDay==="object")for(const k of FRIEND_IDS){ if(typeof s.npcGiftDay[k]==="number")npcGiftDay[k]=s.npcGiftDay[k]; }
+  tierGiven={}; if(s&&s.tierGiven&&typeof s.tierGiven==="object")for(const k of FRIEND_IDS){ if(typeof s.tierGiven[k]==="number")tierGiven[k]=s.tierGiven[k]; }
+  for(const k of FRIEND_IDS){ if(typeof tierGiven[k]!=="number")tierGiven[k]=friendLevel(k); }   // backfill: existing friendships don't dump a backlog of milestone gifts
+}
 /* ---- NPC quests: each townsfolk offers a short chain of fetch-quests for coins, items & friendship ---- */
 const NPC_QUESTS={
   cat:[ {ask:"wood", n:10, reward:60, text:"Could you bring me 10 wood? I want to fix up the shop shelves.", thanks:"Lovely sturdy stuff — thank you!"},
@@ -973,6 +997,25 @@ const NPC_QUESTS={
         {ask:"egg", n:6, reward:90, text:"I'm dreaming of an omelette — could you fetch me 6 eggs?", thanks:"Yum yum! You're the best, you know that?"} ] };
 function friendLevel(id){ const p=friend[id]||0; return p>=75?4:p>=50?3:p>=25?2:1; }
 function friendTier(id){ return FRIEND_TIER[friendLevel(id)-1]; }
+/* ---- reciprocal gifts: friends mail presents back, pricier as you grow closer; collected from the mailbox ---- */
+const BACKGIFTS={   // per-NPC gift pool by friendship level reached (2=Friend, 3=Good Friend, 4=Best Friend). "coins" entries pay money.
+  cat:   {2:[["milk",1],["bread",1],["egg",2],["coins",40]],      3:[["fish",2],["pie",1],["cheese",1],["coins",90]],            4:[["pearl",1],["truffle",1],["jewelry",1],["coins",180]]},
+  fisher:{2:[["fish",2],["sand",3],["coins",40]],                 3:[["oil",2],["glass",2],["crab",1],["coins",90]],             4:[["pearl",1],["lobster",1],["coins",200]]},
+  hamu:  {2:[["stone",6],["iron",2],["coins",60]],                3:[["silver",2],["gold",1],["coins",140]],                     4:[["diamond",1],["red_jewel",1],["green_jewel",1],["coins",260]]},
+  louie: {2:[["fish",2],["berry",2],["coins",40]],                3:[["tropical_fish",1],["oyster",1],["coins",90]],             4:[["pearl",1],["squid",1],["coins",180]]},
+  david: {2:[["meat",2],["egg",2],["coins",40]],                  3:[["jerky",1],["truffle",1],["coins",100]],                   4:[["truffle",2],["meat",4],["coins",220]]} };
+function pickBackGift(id,lvl){ const tbl=BACKGIFTS[id]||BACKGIFTS.cat; const pool=tbl[lvl]||tbl[3]||tbl[2];
+  const valid=pool.filter(g=>g[0]==="coins"||ITEMS[g[0]]); const g=valid[Math.floor(Math.random()*valid.length)]||["coins",40];
+  return g[0]==="coins"?{from:id,coins:g[1]}:{from:id,key:g[0],n:g[1]}; }
+function mailGift(id,lvl,reason){ if(mail.length>=20)return false; const m=pickBackGift(id,lvl); if(reason)m.reason=reason; mail.push(m); return true; }
+function onTierUp(id,lvl){ if(lvl<2||(tierGiven[id]||0)>=lvl)return; tierGiven[id]=lvl;   // first time an NPC reaches Friend/Good/Best, they mail a one-time thank-you
+  if(mailGift(id,lvl,"tier")){ SND.coin(); float(player.x,player.y-40,"✉ a gift arrived in your mailbox!","#ffe27a"); save(); } }
+function addFriend(id,delta){ const before=friendLevel(id); friend[id]=Math.max(0,Math.min(FRIEND_MAX,(friend[id]||0)+delta));
+  const after=friendLevel(id); for(let lv=before+1;lv<=after;lv++)onTierUp(id,lv); }
+function rollDailyMail(){ const day=curDay(); let any=false;   // each new day, every Friend+ NPC may mail a present (chance & value scale with tier)
+  for(const id of FRIEND_IDS){ const lv=friendLevel(id); if(lv<2||npcGiftDay[id]===day)continue;
+    const chance=lv>=4?0.7:lv>=3?0.45:0.25; if(Math.random()<chance){ npcGiftDay[id]=day; if(mailGift(id,lv,"daily"))any=true; } }
+  return any; }
 function _giftSet(){ const s=new Set(); for(const a of arguments)for(const k of a)s.add(k); return s; }
 const _SEA=["fish","shrimp","pufferfish","tropical_fish","oyster","urchin","squid","octopus","lobster","eel","shark","crab"],
   _GEM=["diamond","red_jewel","green_jewel","jewelry","crown","pearl","fossil","gold","silver"],
@@ -1078,6 +1121,7 @@ function rebuildFence(g){ const gate=Math.floor((FC0+farmFC1)/2);
 function buildOut(){ const g=[]; for(let r=0;r<OROWS;r++){ const row=[]; for(let c=0;c<OCOLS;c++){ row.push({type:inFarm(r,c)?"grass":"wild",crop:null}); } g.push(row); }
   for(let r=FR0+1;r<FR0+3;r++)for(let c=FC0+1;c<FC0+4;c++) g[r][c].type="house";
   doorR=FR0+3; doorC=FC0+2; g[doorR-1][doorC].type="door";
+  g[doorR][doorC+1].type="mailbox"; g[doorR][doorC+1].crop=null;   // mailbox just outside the front door — friends mail gifts here
   for(let r=FR0+1;r<FR0+3;r++)for(let c=FC0+5;c<FC0+8;c++) g[r][c].type="house"; g[FR0+2][FC0+6].type="door2";   // a 2nd house (cottage) right beside the main one
   for(let r=farmFR1-3;r<farmFR1-1;r++)for(let c=farmFC1-4;c<farmFC1-1;c++) g[r][c].type="pond";
   rebuildFence(g);
@@ -1089,6 +1133,8 @@ function buildOut(){ const g=[]; for(let r=0;r<OROWS;r++){ const row=[]; for(let
   for(let c=gate;c<OCOLS;c++) g[ROAD_R][c].type="road";            // then east, out to the village
   catX=(doorC+2)*TILE+TILE/2; catY=(doorR+1)*TILE+TILE/2;     // shop cat just outside the house
   return g; }
+function ensureMailbox(g){ if(!g)return;   // add the mailbox to older saves whose home grid predates it
+  const r=FR0+3,c=FC0+3,tt=g[r]&&g[r][c]; if(tt&&!tt.crop&&["grass","wild","soil","path","ppath"].includes(tt.type)){ tt.type="mailbox"; tt.crop=null; } }
 function ensureCottage(g){ if(!g)return;   // add the 2nd house to older saves whose farm grid predates it
   for(let r=FR0+1;r<FR0+3;r++)for(let c=FC0+5;c<FC0+8;c++){ const tt=g[r]&&g[r][c]; if(tt&&!tt.crop&&["grass","wild","soil","path","ppath"].includes(tt.type))tt.type="house"; }
   const dr=FR0+2,dc=FC0+6; if(g[dr]&&g[dr][dc]&&(g[dr][dc].type==="house"||["grass","wild","soil","path","ppath"].includes(g[dr][dc].type))){ g[dr][dc].type="door2"; g[dr][dc].crop=null; } }
@@ -1265,7 +1311,7 @@ function useMachine(tt,cx,cy){ const recipes=MACHINE_IN[tt.type];
 function unpackGrid(p){ return p.map(row=>row.map(c=>typeof c==="string"?{type:c,crop:null}:c)); }
 function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); const home=s&&(s.home||s.gridOut); if(home&&home.length===OROWS){
     farmFR1=s.farmFR1||15;farmFC1=s.farmFC1||18;houseLvl=s.houseLvl||0;farmLvl=s.farmLvl||0;hasAxe=!!s.hasAxe;
-    gridHome=unpackGrid(home); ensureCottage(gridHome); gridVillage=(s.village&&s.village.length===VROWS&&s.village[0].length===VCOLS)?unpackGrid(s.village):buildVillage(); coins=s.coins; clock=s.clock||0;
+    gridHome=unpackGrid(home); ensureCottage(gridHome); ensureMailbox(gridHome); gridVillage=(s.village&&s.village.length===VROWS&&s.village[0].length===VCOLS)?unpackGrid(s.village):buildVillage(); coins=s.coins; clock=s.clock||0;
     stripOil(gridHome); stripOil(gridVillage); patchVillage(gridVillage);   // clean oil + add Hamu's stall to older saves (keeps all progress)
     for(let i=0;i<bag.length;i++)bag[i]=s.bag&&s.bag[i]?s.bag[i]:null; selSlot=s.selSlot||0;
     catX=(doorC=FC0+2,(FC0+4)*TILE+TILE/2); catY=(doorR=FR0+3,(FR0+4)*TILE+TILE/2); setVillageMeta();
@@ -1279,7 +1325,7 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); co
     area=(s.area==="village")?"village":"home"; setArea(area);
     setScene("out"); player.x=s.px;player.y=s.py;player.hp=s.hp??player.maxHp; return true; } }catch(e){} return false; }
 function save(){ const inD=area==="dungeon"; const sArea=inD?"village":area, sx=inD?(CAVE_C+1)*TILE+TILE/2:(scene==="out"?player.x:outX), sy=inD?CAVE_R*TILE+TILE/2:(scene==="out"?player.y:outY);
-  localStorage.setItem("homestead4", JSON.stringify({v:5,area:sArea,home:packGrid(gridHome),village:packGrid(gridVillage),coins,clock,px:sx,py:sy,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger,playerName,louieQuest,metHamu,dungMax,stats,claimed,animals,penLvl,weather,weatherDay,totalEarned,lifeCrystals,friend,giftDay,questIdx,questOn,relicSeen,homeFurn})); }
+  localStorage.setItem("homestead4", JSON.stringify({v:5,area:sArea,home:packGrid(gridHome),village:packGrid(gridVillage),coins,clock,px:sx,py:sy,hp:player.hp,bag,selSlot,farmFR1,farmFC1,houseLvl,farmLvl,hasAxe,metCat,metFisher,bossDefeated,seenIntro,catIntroPending,equip,hunger:player.hunger,playerName,louieQuest,metHamu,dungMax,stats,claimed,animals,penLvl,weather,weatherDay,totalEarned,lifeCrystals,friend,giftDay,questIdx,questOn,mail,npcGiftDay,tierGiven,relicSeen,homeFurn})); }
 function syncUI(){ const e=document.getElementById("coins"); if(e)e.textContent=coins; }   // coins/date/time now live in the in-canvas HUD strip
 
 function resize(){ const rect=document.querySelector("main").getBoundingClientRect();
@@ -1434,6 +1480,7 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; }
     if(here2==="stairs"){ descend(); return; } if(here2==="exitup"){ leaveDungeon(); return; } if(here2==="elevator"){ float(player.x,player.y-12,TR("checkpoint saved!"),"#9ad8ff"); leaveDungeon(); return; } }
   if(t.type==="door"){ enterHouse("ground"); return; }
   if(t.type==="door2"){ enterHouse("cottage"); return; }
+  if(t.type==="mailbox"){ openMailbox(); return; }
   if(t.type==="chest"){ openChest(f.r,f.c); return; }
   if(t.type==="stand"){ const isRelic=sel&&ITEMS[sel.key]&&ITEMS[sel.key].kind==="relic";
     if(isRelic){ if(t.display)gainItem(t.display,1,cx,cy); t.display=sel.key; removeItem(sel.key,1); SND.place(); burst(cx,cy-8,"#ffe9b0",6); float(cx,cy-18,itemName(t.display),"#ffe9b0",true); save(); return; }
@@ -1641,7 +1688,9 @@ function goFloor(which){ SND.door(); interior=which; setScene("in");   // move b
   player.x=pc*TILE+TILE/2; player.y=(pr-1)*TILE+TILE/2; player.dir="u";player.fx=0;player.fy=-1; transCD=0.5; }   // arrive just above the stairs, facing away (no instant re-trigger)
 function sleep(){ const ph=(clock%DAYLEN)/DAYLEN, skip=(1-ph)*DAYLEN; clock+=skip;
   for(const row of gridHome)for(const tt of row){ const cr=tt.crop; if(cr&&cr.grow<1)cr.grow=Math.min(1,cr.grow+skip/CROPS[cr.type].dur); }   // crops grow overnight
-  player.hp=player.maxHp; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; SND.sleep(); float(player.x,player.y-26,"slept · a new day · crops grew","#fff"); save(); }
+  player.hp=player.maxHp; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; SND.sleep(); float(player.x,player.y-26,"slept · a new day · crops grew","#fff");
+  if(rollDailyMail())float(player.x,player.y-42,"✉ you've got mail!","#ffe27a");   // friends mail presents overnight — collect them from the mailbox
+  save(); }
 function hurt(dmg,fx0,fy0){ if(player.inv>0||scene!=="out"||dialogOpen)return; player.hp-=defenseCut(dmg); player.inv=1.2; SND.hurt();
   const dx=player.x-fx0,dy=player.y-fy0,d=Math.hypot(dx,dy)||1; player.kx=dx/d*8;player.ky=dy/d*8; fx.push({kind:"flash",life:1});
   if(player.hp<=0){ faint(); } save(); }   // death (combat only — starvation can't kill) respawns at the farm
@@ -1800,6 +1849,15 @@ function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE|
   else if(t.type==="house"){ ctx.fillStyle="#efe9df";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#d9b08c";ctx.fillRect(x,y,TILE,6);ctx.strokeStyle="rgba(0,0,0,.07)";ctx.strokeRect(x+.5,y+.5,TILE-1,TILE-1); }
   else if(t.type==="door"){ ctx.fillStyle="#efe9df";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#7a4a22";ctx.fillRect(x+TILE/2-9,y+8,18,TILE-8);ctx.fillStyle="#ffd23b";ctx.fillRect(x+TILE/2+4,y+TILE/2,3,3); }
   else if(t.type==="door2"){ ctx.fillStyle="#efe9df";ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle="#5a7a8a";ctx.fillRect(x+TILE/2-9,y+8,18,TILE-8);ctx.fillStyle="#ffd23b";ctx.fillRect(x+TILE/2+4,y+TILE/2,3,3); }   // 2nd house door (blue tint)
+  else if(t.type==="mailbox"){ const hasMail=mail.length>0;
+    ctx.fillStyle="#6b4a2b";ctx.fillRect(x+TILE/2-2,y+22,4,TILE-24);              // wooden post
+    ctx.fillStyle="#3f6fb0";ctx.fillRect(x+8,y+12,TILE-16,17);                    // mailbox body (blue)
+    ctx.fillStyle="#34619c";ctx.fillRect(x+8,y+12,TILE-16,5);                     // rounded top shade
+    ctx.fillStyle="#1f3c63";ctx.fillRect(x+11,y+22,TILE-22,3);                    // mail slot
+    ctx.fillStyle=hasMail?"#e8344e":"#9aa3ab";                                    // signal flag: red & up when mail waits, grey & down when empty
+    if(hasMail){ ctx.fillRect(x+TILE-11,y+6,3,11); ctx.fillRect(x+TILE-11,y+6,8,6); }
+    else { ctx.fillRect(x+TILE-11,y+15,3,11); ctx.fillRect(x+TILE-16,y+24,8,5); }
+    if(hasMail){ ctx.fillStyle="#fff4cf";ctx.font="700 12px Helvetica";ctx.textAlign="center";ctx.fillText("✉",x+TILE/2,y+9); } }
   else if(t.type==="stairup"||t.type==="stairdown"){ ctx.fillStyle=scene==="in"?"#caa46a":"#5a9e4e";ctx.fillRect(x,y,TILE,TILE);
     const up=t.type==="stairup"; for(let s=0;s<4;s++){ const ww=TILE-10-s*5; ctx.fillStyle=up?["#8a6a3a","#9a784a","#ab875a","#bd976a"][s]:["#bd976a","#ab875a","#9a784a","#8a6a3a"][s];
       ctx.fillRect(x+5+(up?0:(TILE-10-ww)), y+8+s*7, ww, 6); }
@@ -2283,6 +2341,27 @@ document.getElementById("chestClose").addEventListener("click",closeChest);
 chestEl.addEventListener("pointerdown",e=>{ if(e.target===chestEl)closeChest(); });
 chestEl.addEventListener("pointermove",e=>{ if(held){ heldEl.style.left=e.clientX+"px"; heldEl.style.top=e.clientY+"px"; } });
 
+/* ---- mailbox: collect the presents friends mailed back ---- */
+const mailboxEl=document.getElementById("mailbox");
+function renderMailbox(){ const list=document.getElementById("mailList"); list.innerHTML="";
+  document.getElementById("mailNote").textContent=mail.length?t("Gifts from your friends in town — tap Collect all."):t("No mail yet. Befriend the townsfolk and they'll send presents!");
+  document.getElementById("mailCollect").style.display=mail.length?"":"none";
+  for(const m of mail){ const meta=NPCMETA[m.from]; if(!meta)continue;
+    const row=document.createElement("div"); row.className="mailrow";
+    const faceSrc=artData[m.from]||("art/"+m.from+".png");
+    const icon=m.coins?`<span class="emo" style="font-size:20px">🪙</span>`:iconSpan(m.key);
+    const what=m.coins?(m.coins+" "+t("coins")):(itemName(m.key)+" ×"+m.n);
+    row.innerHTML=`<div class="fface" style="background:${meta.col}">${meta.face}<img class="ffimg" src="${faceSrc}" alt="" onerror="this.remove()"></div>`
+      +`<div class="mailmain"><div class="mailfrom"><b>${t(meta.name)}</b></div><div class="mailwhat">${icon}<span>${what}</span></div></div>`;
+    list.appendChild(row); } }
+function openMailbox(){ SND.door(); renderMailbox(); mailboxEl.classList.add("open"); }
+function collectMail(){ if(!mail.length)return;
+  for(const m of mail){ if(m.coins){ coins+=m.coins; } else if(!addItem(m.key,m.n)){ coins+=Math.max(1,(ITEMS[m.key].sell||5)*m.n); } }   // bag full → sell-value coins
+  mail=[]; SND.coin(); syncUI(); renderBar(); save(); renderMailbox(); float(player.x,player.y-30,"collected your gifts!","#cdffd0"); }
+document.getElementById("mailCollect").addEventListener("click",collectMail);
+document.getElementById("mailClose").addEventListener("click",()=>mailboxEl.classList.remove("open"));
+mailboxEl.addEventListener("pointerdown",e=>{ if(e.target===mailboxEl)mailboxEl.classList.remove("open"); });
+
 /* ---- kitchen stove: cook buff food ---- */
 const stoveEl=document.getElementById("stove");
 const STOVE_RECIPES=[
@@ -2660,7 +2739,7 @@ function offerQuest(id){ const q=curQuest(id); if(!q)return; questOn[id]=true; s
 function turnInQuest(id){ const q=curQuest(id); if(!q)return;
   if(countItem(q.ask)<q.n){ startDialog([ npcLine(id, t("Still need")+" "+(q.n-countItem(q.ask))+" "+itemName(q.ask)+"…") ], null); return; }
   removeItem(q.ask,q.n); coins+=q.reward; if(q.item)gainItem(q.item,q.itemN||1,player.x,player.y);
-  questIdx[id]=(questIdx[id]||0)+1; questOn[id]=false; friend[id]=Math.min(FRIEND_MAX,(friend[id]||0)+10);   // quests also build friendship
+  questIdx[id]=(questIdx[id]||0)+1; questOn[id]=false; addFriend(id,10);   // quests also build friendship (may trigger a tier-up gift)
   SND.coin(); syncUI(); renderBar(); save();
   startDialog([ npcLine(id, t(q.thanks)+"  (+"+q.reward+" "+t("coins")+(q.item?", "+(q.itemN||1)+" "+itemName(q.item):"")+")") ], null); }
 function npcMenu(id,onTrade){ const greet=GREET[id][friendLevel(id)-1]; const choices=[];
@@ -2687,7 +2766,7 @@ function renderGift(){ const id=giftTarget; if(!id)return; const m=NPCMETA[id];
     if(!gifted)cell.addEventListener("click",()=>doGift(id,k)); grid.appendChild(cell); } }
 function doGift(id,key){ if(giftDay[id]===curDay()||countItem(key)<1){ renderGift(); return; }
   removeItem(key,1); giftDay[id]=curDay(); const rank=giftRank(id,key);
-  friend[id]=Math.max(0,Math.min(FRIEND_MAX,(friend[id]||0)+GIFT_GAIN[rank]));
+  addFriend(id,GIFT_GAIN[rank]);
   (rank==="hate"?SND.no:SND.coin)(); renderBar(); save(); giftEl.classList.remove("open");
   startDialog([ npcLine(id,giftReact(id,rank,key)) ], null); }
 giftEl.addEventListener("pointerdown",e=>{ if(e.target===giftEl)giftEl.classList.remove("open"); });
