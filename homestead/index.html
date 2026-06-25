@@ -732,6 +732,7 @@ const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金�
   "Lovely day in the village, isn't it?":"村莊今天天氣真好，對吧？","Robin down by the sea sells fishing gear.":"海邊的羅賓有賣釣魚裝備。","Welcome to our little town!":"歡迎來到我們的小鎮！","The church bell rings at noon, they say.":"聽說教堂的鐘會在正午響起。","As mayor, I'm proud of our growing town!":"身為鎮長，我為日益繁榮的小鎮感到驕傲！","Build, farm, fish — make yourself at home.":"建造、耕作、釣魚 — 把這裡當成自己的家。",
   "Mara":"瑪拉","Tom":"湯姆","Mayor Pim":"皮姆鎮長","You":"你","Whiskers":"小鬍子","Robin":"羅賓","???":"？？？","Mrrrow.":"喵～",
   "Sukie":"蘇琪","Koya":"科亞","Cybele":"賽貝兒","Mary":"瑪麗","Alicia":"艾莉西亞","Aria":"艾莉亞","Jeannie":"珍妮","Althea":"阿爾忒亞","Edward":"愛德華",
+  "Anthony":"安東尼","Natalie":"娜塔莉","Amand":"阿曼德","Jacy":"婕希",
   // opening story
   "Home at last… the old family cottage, just as I left it.":"終於到家了…老家的小屋，跟我離開時一模一樣。",
   "The city chewed me up — months of searching and not one job. So here I am, back where I started.":"城市把我磨得精疲力盡 — 找了好幾個月，一份工作都沒有。所以我又回到了原點。",
@@ -1007,7 +1008,15 @@ const VNPCS=[
     houseDoor:[20,17], home:[21,17], work:[24,12], leisure:[28,12], sleep:[23,7]},
   {id:"david", c:20,r:23, name:"David", face:"🐶", col:"#e0913f", role:"chat", ears:"flop",
     houseDoor:[20,9], home:[21,9], work:[26,20], leisure:[28,30], sleep:[21,5],
-    lines:["Woof! Welcome to the village, friend!","Robin fishes the sea, Hamu trades, Louie's got a job for you.","Hamu's stall sells farm animals now — go grab a chicken!"]} ];
+    lines:["Woof! Welcome to the village, friend!","Robin fishes the sea, Hamu trades, Louie's got a job for you.","Hamu's stall sells farm animals now — go grab a chicken!"]},
+  {id:"anthony", c:21,r:24, name:"Anthony", face:"🐺", col:"#8a8f98", ears:"flop",
+    home:[23,32], work:[22,20], leisure:[27,20], sleep:[22,6], lines:["A good teacher learns more than the students do.","The valley revived me as much as I revive it."]},
+  {id:"natalie", c:29,r:26, name:"Natalie", face:"🐦", col:"#d98a8a", ears:"round",
+    home:[29,30], work:[25,28], leisure:[27,22], sleep:[22,6], lines:["My healing song faded with the land… it's coming back now.","Rest well, and the body mends itself."]},
+  {id:"amand",   c:27,r:14, name:"Amand", face:"🐴", col:"#c79a5a", ears:"flop",
+    home:[29,12], work:[24,30], leisure:[27,16], sleep:[23,7], lines:["Can't keep me in one place — the road's always calling.","Brought my flute. Festivals need a tune, don't they?"]},
+  {id:"jacy",    c:28,r:24, name:"Jacy", face:"🐰", col:"#e8d0d8", ears:"cat",
+    home:[29,16], work:[26,16], leisure:[28,24], sleep:[20,7], lines:["Mister Anthony says I'm the village's future!","Wanna play? …after my lessons. Probably."]} ];
 
 // PLACEHOLDER routine NPCs for the two new maps — drawn as a named circle for now (art TBD).
 // Same routine fields as the village cast: home/work/leisure anchors [r,c] + a sleep window + their houseDoor.
@@ -1021,7 +1030,9 @@ const PORT_NPCS=[
   {id:"jeannie",name:"Jeannie",face:"🐬", col:"#7fc7e8", home:[6,31], work:[5,31],  leisure:[16,24], sleep:[22,6], houseDoor:[4,29], lines:["One day I'll see the big city… but the farm needs me.","Sunny day, isn't it? It always is when you visit!"]},
   {id:"althea", name:"Althea", face:"🐬", col:"#5a9ec2", home:[7,32], work:[6,32],  leisure:[9,34],  sleep:[21,5], houseDoor:[4,29], lines:["Jeannie talks enough for the both of us.","…the sea is calmer than people. I prefer it."]} ];
 const HEART_NPCS=[
-  {id:"edward", name:"Edward", face:"🐢", col:"#6a8a4a", home:[8,3], work:[16,7], leisure:[8,5], sleep:[21,5], houseDoor:[7,3], lines:["The way to the Heart is not walked lightly.","Your grandmother loved this grove… as did I.","Tend it well, child. The valley remembers."]} ];
+  {id:"edward", name:"Edward", face:"🐢", col:"#6a8a4a", home:[8,3], work:[16,7], leisure:[8,5], sleep:[21,5], houseDoor:[7,3], lines:["The way to the Heart is not walked lightly.","Your grandmother loved this grove… as did I.","Tend it well, child. The valley remembers."]},
+  // Paco — the black panther bound to the corruption. A near-stationary sentinel by the dungeon mouth; "???" until the story reveals him.
+  {id:"paco", name:"???", face:"🐾", col:"#2b2433", home:[37,8], work:[37,8], leisure:[37,8], lines:["…","Turn back. What sleeps below is mine to hold.","…you have her eyes."]} ];
 function areaNpcs(){ return area==="village"?VNPCS:area==="port"?PORT_NPCS:area==="heart"?HEART_NPCS:[]; }   // the routine NPCs that live on the current map
 function initNpcPositions(){ for(const list of [PORT_NPCS,HEART_NPCS])for(const n of list){ n.x=n.home[1]*TILE+TILE/2; n.y=n.home[0]*TILE+TILE/2; n.inside=false; } }
 
@@ -2274,14 +2285,14 @@ function drawVillager(v){ const x=v.x-camX,y=v.y-camY,bob=Math.sin(now()*2+v.c)*
   ctx.fillStyle="#ffd9a8";ctx.beginPath();ctx.arc(x,y-9+bob,7,0,7);ctx.fill();
   ctx.fillStyle="#3a2a1a";ctx.beginPath();ctx.arc(x-2.5,y-9+bob,1.3,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+2.5,y-9+bob,1.3,0,7);ctx.fill();
   if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.7){ ctx.fillStyle="rgba(255,255,255,.9)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText(lang==="zh"?t(v.name)+" ▸ 對話":v.name+" ▸ use",x,y-20+bob); } }
-// placeholder routine NPC: a coloured circle with the character's name above it (until real art is dropped in)
+// routine NPC: draw their character art (art/<id>.png); fall back to a named coloured circle if it hasn't loaded
 function drawNpcDot(n){ const x=n.x-camX,y=n.y-camY,bob=Math.sin(now()*3+(n.home?n.home[1]:0))*1.6;
   ctx.fillStyle="rgba(0,0,0,.22)";ctx.beginPath();ctx.ellipse(x,y+13,11,4,0,0,7);ctx.fill();
-  ctx.fillStyle=n.col||"#cfa0e0";ctx.beginPath();ctx.arc(x,y+bob,13,0,7);ctx.fill();
-  ctx.strokeStyle="rgba(255,255,255,.8)";ctx.lineWidth=2;ctx.stroke();
-  ctx.fillStyle="#fff";ctx.font="700 11px Helvetica";ctx.textAlign="center";
-  ctx.fillText((lang==="zh"?t(n.name):n.name),x,y-19+bob);
-  if(Math.hypot(n.x-player.x,n.y-player.y)<TILE*1.9) ctx.fillText(lang==="zh"?"▸ 對話":"▸ use",x,y-31+bob); }
+  if(!drawSprite(artPick(n.id), x, y+13, 44, false)){
+    ctx.fillStyle=n.col||"#cfa0e0";ctx.beginPath();ctx.arc(x,y+bob,13,0,7);ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,.8)";ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle="#fff";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText((lang==="zh"?t(n.name):n.name),x,y-19+bob); }
+  if(Math.hypot(n.x-player.x,n.y-player.y)<TILE*1.9){ ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText((lang==="zh"?t(n.name)+" ▸ 對話":n.name+" ▸ use"),x,y-22); } }
 function drawCritter(n){ const x=n.x-camX,y=n.y-camY,bob=Math.sin(now()*3+n.c)*1.5;
   ctx.fillStyle="rgba(0,0,0,.22)";ctx.beginPath();ctx.ellipse(x,y+11,10,4,0,0,7);ctx.fill();
   if(!drawSprite(artPick(n.id), x, y+12, 42, false)){
@@ -2932,7 +2943,7 @@ merchEl.addEventListener("pointerdown",e=>{ if(e.target===merchEl)merchEl.classL
 /* ---- custom art (drops in by filename; falls back to built-in drawing) ---- */
 const WORLD={}, PORTRAIT={};
 function loadImg(into,who,src){ try{ const im=new Image(); im.onload=()=>{into[who]=im;}; im.onerror=()=>{into[who]=null;}; im.src=src; }catch(e){} }
-["player","cat","fisher","hamu","louie","david"].forEach(w=>loadImg(WORLD,w,"art/"+w+".png"));
+["player","cat","fisher","hamu","louie","david","sukie","koya","cybele","mary","alicia","aria","jeannie","althea","edward","anthony","natalie","amand","jacy","paco"].forEach(w=>loadImg(WORLD,w,"art/"+w+".png"));
 ["player","cat","fisher"].forEach(w=>loadImg(PORTRAIT,w,"art/portrait-"+w+".png"));
 const WORLDWALK=[];   // front walk frames: art/player-walk1.png, walk2, walk3 … auto-discovered in order
 (function loadWalk(i){ const im=new Image(); im.onload=()=>{ WORLDWALK[i]=im; loadWalk(i+1); }; im.onerror=()=>{}; im.src="art/player-walk"+(i+1)+".png"; })(0);

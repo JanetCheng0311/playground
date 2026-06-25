@@ -1,6 +1,6 @@
 /* Homestead — service worker: makes the game installable and fully playable offline.
    Bump CACHE_VERSION whenever you want every client to drop its old cache. */
-const CACHE_VERSION = 'homestead-v1';
+const CACHE_VERSION = 'homestead-v2';
 const CORE = [
   './',
   './index.html',
@@ -22,7 +22,10 @@ const CORE = [
   './art/fisher.png',
   './art/hamu.png',
   './art/louie.png',
-  './art/david.png'
+  './art/david.png',
+  './art/sukie.png','./art/koya.png','./art/cybele.png','./art/mary.png','./art/alicia.png',
+  './art/aria.png','./art/jeannie.png','./art/althea.png','./art/edward.png','./art/anthony.png',
+  './art/natalie.png','./art/amand.png','./art/jacy.png','./art/paco.png'
 ];
 
 // Precache the app shell + art so the very first offline launch works.
