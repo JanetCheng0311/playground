@@ -523,6 +523,8 @@ const ITEMS={
   gold_sword:{kind:"gear",slot:"sword",color:"#ffd84a",name:"golden sword",bonus:{atk:2}}, plate_armor:{kind:"gear",slot:"armor",color:"#aeb9c6",name:"plate armour",bonus:{maxhp:3}},
   war_helm:{kind:"gear",slot:"hat",color:"#9aa3ab",name:"steel helm",bonus:{maxhp:2}}, crystal_ring:{kind:"gear",slot:"acc",color:"#9fe6ff",name:"crystal ring",bonus:{regen:2}}, war_charm:{kind:"gear",slot:"acc",color:"#e8344e",name:"war charm",bonus:{atk:2}},
   venom_blade:{kind:"gear",slot:"sword",color:"#5fbf6a",name:"venom blade",bonus:{atk:1,poison:3}}, venom_charm:{kind:"gear",slot:"acc",color:"#4fae5a",name:"venom charm",bonus:{poison:2}},
+  venom_fang:{kind:"gear",slot:"sword",color:"#3f9e4f",name:"venom fang",bonus:{atk:2,poison:5}}, toxic_ring:{kind:"gear",slot:"acc",color:"#6fbf4a",name:"toxic ring",bonus:{poison:3}},   // stronger poison gear
+  vampire_blade:{kind:"gear",slot:"sword",color:"#a83048",name:"vampire blade",bonus:{atk:1,blood:8}}, blood_ring:{kind:"gear",slot:"acc",color:"#e8344e",name:"blood ring",bonus:{blood:6}},   // blood/lifesteal gear — hits fill the 🩸 drain meter faster
   jerky:{kind:"food",color:"#a65a36",name:"dried jerky",food:42}, fish_stew:{kind:"food",color:"#7fb0c2",name:"fish stew",food:55,buff:{bonus:{regen:2,maxhp:1},dur:150},eff:"+1 heart & fast heal, 2.5 min"},
   leather_armor:{kind:"gear",slot:"armor",color:"#a9784a",name:"leather armour",bonus:{maxhp:1}}, gold_armor:{kind:"gear",slot:"armor",color:"#ffd84a",name:"golden armour",bonus:{maxhp:4}},
   diamond_armor:{kind:"gear",slot:"armor",color:"#9fe6ff",name:"diamond armour",bonus:{maxhp:5}}, frost_plate:{kind:"gear",slot:"armor",color:"#bfe6f0",name:"frost plate",bonus:{maxhp:3,regen:1}},
@@ -618,6 +620,7 @@ const NAME_ZH={ wood:"木材", stone:"石頭", goo:"黏液", iron:"鐵礦", gold
   torch:"火把", fence:"木柵欄", ppath:"石板路", chair:"椅子", table:"桌子", lamp:"檯燈", rug:"地毯", lantern:"提燈", goldlamp:"黃金燈", mfence:"金屬柵欄",
   bench:"長椅", stool:"凳子", bookshelf:"書架", plant:"盆栽", fountain:"噴泉", barrel:"木桶", clock:"時鐘", bluerug:"藍地毯",
   oillamp:"油燈", rod:"釣竿", net:"漁網", metal_sword:"金屬劍", metal_armor:"金屬盔甲", chest:"箱子",
+  venom_blade:"毒劍", venom_charm:"毒護符", venom_fang:"劇毒獠牙", toxic_ring:"毒戒", vampire_blade:"吸血劍", blood_ring:"血戒",
   berry:"莓果", meat:"肉", cap:"布帽", vest:"皮背心", legguards:"護腿", boots:"輕快靴", ring:"治療戒指", charm:"力量護符",
   bread:"麵包", pie:"莓果派", salad:"花園沙拉", hearty_stew:"豐盛燉湯", power_roast:"力量烤肉", swift_salad:"迅捷青蔬", stove:"爐灶",
   omelette:"煎蛋捲", veggie_medley:"蔬菜燴", creamy_chowder:"奶油濃湯", truffle_roast:"松露烤肉", shrimp_skewer:"鮮蝦串", pumpkin_pie:"南瓜派", egg_sandwich:"雞蛋三明治", fruit_parfait:"水果芭菲",
@@ -728,6 +731,7 @@ const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金�
   // villagers
   "Lovely day in the village, isn't it?":"村莊今天天氣真好，對吧？","Robin down by the sea sells fishing gear.":"海邊的羅賓有賣釣魚裝備。","Welcome to our little town!":"歡迎來到我們的小鎮！","The church bell rings at noon, they say.":"聽說教堂的鐘會在正午響起。","As mayor, I'm proud of our growing town!":"身為鎮長，我為日益繁榮的小鎮感到驕傲！","Build, farm, fish — make yourself at home.":"建造、耕作、釣魚 — 把這裡當成自己的家。",
   "Mara":"瑪拉","Tom":"湯姆","Mayor Pim":"皮姆鎮長","You":"你","Whiskers":"小鬍子","Robin":"羅賓","???":"？？？","Mrrrow.":"喵～",
+  "Sukie":"蘇琪","Koya":"科亞","Cybele":"賽貝兒","Mary":"瑪麗","Alicia":"艾莉西亞","Aria":"艾莉亞","Jeannie":"珍妮","Althea":"阿爾忒亞","Edward":"愛德華",
   // opening story
   "Home at last… the old family cottage, just as I left it.":"終於到家了…老家的小屋，跟我離開時一模一樣。",
   "The city chewed me up — months of searching and not one job. So here I am, back where I started.":"城市把我磨得精疲力盡 — 找了好幾個月，一份工作都沒有。所以我又回到了原點。",
@@ -890,6 +894,10 @@ const RECIPES=[
   {key:"war_charm", give:"war_charm", cost:{diamond:1,red_jewel:1}, desc:"war charm (+2 attack)"},
   {key:"venom_charm", give:"venom_charm", cost:{green_jewel:1,goo:3}, desc:"venom charm — your hits poison enemies (damage over time)"},
   {key:"venom_blade", give:"venom_blade", cost:{iron:2,green_jewel:1,goo:2}, desc:"venom blade (+1 atk, hits poison enemies)"},
+  {key:"venom_fang", give:"venom_fang", cost:{steel:1,green_jewel:2,goo:3}, desc:"venom fang (+2 atk, stronger poison on every hit)"},
+  {key:"toxic_ring", give:"toxic_ring", cost:{green_jewel:2,goo:2}, desc:"toxic ring — adds extra poison to your hits"},
+  {key:"vampire_blade", give:"vampire_blade", cost:{iron:2,red_jewel:1,goo:1}, desc:"vampire blade — hits fill the 🩸 drain meter much faster"},
+  {key:"blood_ring", give:"blood_ring", cost:{red_jewel:1,goo:2}, desc:"blood ring — every hit banks more 🩸 drain meter"},
   {key:"jerky", give:"jerky", cost:{meat:2}, desc:"dried meat — filling food"},
   {key:"fish_stew", give:"fish_stew", cost:{fish:2,crop_carrot:1}, desc:"warming stew — heals faster & +1 heart"},
   {key:"crown", give:"crown", cost:{jewelry:1,diamond:1,gold:1}, desc:"a royal crown — sells for a fortune"},
@@ -922,9 +930,9 @@ const RECIPES=[
 const RECIPE_CATS=[
   {id:"food", ic:"🍳", label:"food", keys:["bread","salad","jerky","fish_stew","omelette","cheese"]},
   {id:"consum", ic:"🧪", label:"consumables", keys:["salve","elixir","bone_meal","bone_meal_f"]},
-  {id:"weapon", ic:"⚔️", label:"weapons", keys:["metal_sword","gold_sword","venom_blade"]},
+  {id:"weapon", ic:"⚔️", label:"weapons", keys:["metal_sword","gold_sword","venom_blade","venom_fang","vampire_blade"]},
   {id:"armor", ic:"🛡️", label:"armour & gear", keys:["cap","vest","legguards","boots","metal_armor","plate_armor","war_helm","leather_armor","chain_vest","gold_armor","frost_plate","diamond_armor","diamond_helm","gold_greaves","winged_boots"]},
-  {id:"acc", ic:"💍", label:"accessories", keys:["shining_ring","ring","charm","crystal_ring","war_charm","venom_charm","swift_band","life_pendant","sage_amulet","titan_seal","berserk_idol","pearl_necklace"]},
+  {id:"acc", ic:"💍", label:"accessories", keys:["shining_ring","ring","charm","crystal_ring","war_charm","venom_charm","toxic_ring","blood_ring","swift_band","life_pendant","sage_amulet","titan_seal","berserk_idol","pearl_necklace"]},
   {id:"mat", ic:"💎", label:"materials", keys:["glass","jewelry","oil","steel","crown"]},
   {id:"furn", ic:"🪑", label:"furniture & decor", keys:["chair","bench","stool","table","lamp","rug","bluerug","bookshelf","plant","fountain","barrel","clock","torch","fence","ppath","lantern","goldlamp","mfence","oillamp","snowman","chest","display_stand"]},
   {id:"tools", ic:"🛠", label:"tools & stations", keys:["stove","axe","drying_rack","preserve_pot","press_table","craft_bench","perfume_stand"]} ];
@@ -944,12 +952,12 @@ function lateUnlocked(){ return totalEarned>=200000; }
 function dungeonHearts(){ return Math.min(5, Math.floor((dungMax||1)/100)); }   // +1 permanent heart per 100 dungeon floors, cap +5
 const stats={trees:0,crops:0,fish:0}; const claimed={};   // mission progress + claimed quests
 const hasSword=()=>!!equip.sword, hasArmor=()=>!!equip.armor;
-function gearBonus(){ const b={atk:0,maxhp:0,regen:0,speed:0,poison:0}; for(const sn in equip){ const k=equip[sn]; if(k&&ITEMS[k].bonus)for(const s in ITEMS[k].bonus)if(s in b)b[s]+=ITEMS[k].bonus[s]; } return b; }
+function gearBonus(){ const b={atk:0,maxhp:0,regen:0,speed:0,poison:0,blood:0}; for(const sn in equip){ const k=equip[sn]; if(k&&ITEMS[k].bonus)for(const s in ITEMS[k].bonus)if(s in b)b[s]+=ITEMS[k].bonus[s]; } return b; }
 // armour defence: better gear (more maxhp from armour/accessories) softens every hit. Diminishing, capped ~70%.
 function defenseCut(dmg){ const def=gearBonus().maxhp; const red=Math.min(0.7, def*0.06); return Math.max(0.25, dmg*(1-red)); }
 let activeBuff=null;   // {bonus,until,key} from eating buff food cooked at a stove
 function buffBonus(){ return (activeBuff&&now()<activeBuff.until)?activeBuff.bonus:{}; }
-function totalBonus(){ const g=gearBonus(),f=buffBonus(),o={atk:0,maxhp:0,regen:0,speed:0,poison:0}; for(const s in o)o[s]=(g[s]||0)+(f[s]||0); return o; }
+function totalBonus(){ const g=gearBonus(),f=buffBonus(),o={atk:0,maxhp:0,regen:0,speed:0,poison:0,blood:0}; for(const s in o)o[s]=(g[s]||0)+(f[s]||0); return o; }
 let bloodMeter=0, _bloodFull=false; const BLOOD_MAX=100, BLOOD_PER_HIT=10, BLOOD_PER_BOSSHIT=6;   // "blood drain" lifesteal meter — fills on hits, spend full bar to heal a heart
 function recalcMax(){ player.maxHp=5+dungeonHearts()+lifeCrystals+totalBonus().maxhp; if(player.hp>player.maxHp)player.hp=player.maxHp; }   // base 5 + dungeon(≤5) + crystals(≤3) + gear/buff
 function itemFitsSlot(key,sn){ const it=ITEMS[key]; if(!it||it.kind!=="gear")return false; return (sn==="acc1"||sn==="acc2")?it.slot==="acc":it.slot===sn; }
@@ -1000,6 +1008,22 @@ const VNPCS=[
   {id:"david", c:20,r:23, name:"David", face:"🐶", col:"#e0913f", role:"chat", ears:"flop",
     houseDoor:[20,9], home:[21,9], work:[26,20], leisure:[28,30], sleep:[21,5],
     lines:["Woof! Welcome to the village, friend!","Robin fishes the sea, Hamu trades, Louie's got a job for you.","Hamu's stall sells farm animals now — go grab a chicken!"]} ];
+
+// PLACEHOLDER routine NPCs for the two new maps — drawn as a named circle for now (art TBD).
+// Same routine fields as the village cast: home/work/leisure anchors [r,c] + a sleep window + their houseDoor.
+const PORT_NPCS=[
+  {id:"sukie",  name:"Sukie",  face:"🦁", col:"#e0a85a", home:[9,15], work:[9,16],  leisure:[16,18], sleep:[2,8],  houseDoor:[8,15], lines:["Welcome to the seaside hotel — rest easy here.","No traveller should feel alone in my town."]},
+  {id:"koya",   name:"Koya",   face:"🦊", col:"#e0762a", home:[8,27], work:[8,27],  leisure:[13,23], sleep:[0,7],  houseDoor:[7,27], lines:["Finest wares this side of the sea — for the right price.","Money never sleeps, and neither do I, mostly."]},
+  {id:"cybele", name:"Cybele", face:"🦚", col:"#3f8fae", home:[13,6], work:[13,6],  leisure:[12,17], sleep:[2,10], houseDoor:[12,6], lines:["I 'made it' in the city. So why does it feel so hollow?","…it's good to be back, I suppose."]},
+  {id:"mary",   name:"Mary",   face:"🦢", col:"#dfe6ea", home:[25,20],work:[16,18], leisure:[12,22], sleep:[1,9],  houseDoor:[24,20],lines:["The stage is small now, but the song is the same.","Come to the festival — I'll be the swan in the spotlight."]},
+  {id:"alicia", name:"Alicia", face:"🐧", col:"#3a4a6a", home:[14,6], work:[12,22], leisure:[17,30], sleep:[22,6], houseDoor:[15,6], lines:["…","You already know the true thing. You just won't say it."]},
+  {id:"aria",   name:"Aria",   face:"🕊️", col:"#cfd6dd", home:[19,6], work:[16,24], leisure:[17,30], sleep:[23,7], houseDoor:[20,6], lines:["Put up your fists! …kidding. Mostly.","Stick with me and nothing in the deep will scare you."]},
+  {id:"jeannie",name:"Jeannie",face:"🐬", col:"#7fc7e8", home:[6,31], work:[5,31],  leisure:[16,24], sleep:[22,6], houseDoor:[4,29], lines:["One day I'll see the big city… but the farm needs me.","Sunny day, isn't it? It always is when you visit!"]},
+  {id:"althea", name:"Althea", face:"🐬", col:"#5a9ec2", home:[7,32], work:[6,32],  leisure:[9,34],  sleep:[21,5], houseDoor:[4,29], lines:["Jeannie talks enough for the both of us.","…the sea is calmer than people. I prefer it."]} ];
+const HEART_NPCS=[
+  {id:"edward", name:"Edward", face:"🐢", col:"#6a8a4a", home:[8,3], work:[16,7], leisure:[8,5], sleep:[21,5], houseDoor:[7,3], lines:["The way to the Heart is not walked lightly.","Your grandmother loved this grove… as did I.","Tend it well, child. The valley remembers."]} ];
+function areaNpcs(){ return area==="village"?VNPCS:area==="port"?PORT_NPCS:area==="heart"?HEART_NPCS:[]; }   // the routine NPCs that live on the current map
+function initNpcPositions(){ for(const list of [PORT_NPCS,HEART_NPCS])for(const n of list){ n.x=n.home[1]*TILE+TILE/2; n.y=n.home[0]*TILE+TILE/2; n.inside=false; } }
 
 /* ---- friendship: gift each townsfolk something they like to raise their friendship (4 levels). Whiskers the cat starts maxed out. ---- */
 const NPCMETA={
@@ -1381,7 +1405,7 @@ function buildIn(){ const id=interior, cottage=(id==="cottage"), upper=(id==="up
   return {g,w,h}; }
 function setScene(s){ scene=s; if(s==="out"){G=gridOut;GR=gridOut.length;GC=gridOut[0].length;} else {const io=(houseKind==="npc")?buildNpcHouse(npcHouseId):buildIn();gridIn=io.g;G=gridIn;GR=io.h;GC=io.w;} GW=GC*TILE; GH=GR*TILE; }
 
-function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false;bossDefeated=false; penLvl=0; area="home"; homeFurn={ground:{},upper:{},cottage:{}}; interior="ground"; gridHome=buildOut(); gridVillage=buildVillage(); gridPort=buildPort(); gridHeart=buildHeart(); setArea("home"); coins=40; clock=0;
+function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false;bossDefeated=false; penLvl=0; area="home"; homeFurn={ground:{},upper:{},cottage:{}}; interior="ground"; gridHome=buildOut(); gridVillage=buildVillage(); gridPort=buildPort(); gridHeart=buildHeart(); initNpcPositions(); setArea("home"); coins=40; clock=0;
   for(let i=0;i<bag.length;i++)bag[i]=null; bag[0]={key:"seed_carrot",count:6}; bag[1]={key:"seed_wheat",count:2}; selSlot=0;
   for(const sn in equip)equip[sn]=null; player.hunger=player.maxHunger; player.regenT=0;player.starveT=0; seenIntro=false; catIntroPending=false; playerName="You"; louieQuest=0; metHamu=false; dungFloor=0; dungMax=1; stats.trees=0;stats.crops=0;stats.fish=0; animals.length=0; penLvl=0; weather="sunny"; weatherDay=-1; totalEarned=0; lifeCrystals=0; _lastCoins=40; for(const k in claimed)delete claimed[k]; resetFriends(); relicSeen={}; recalcMax();
   setScene("out"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2+TILE; player.hp=player.maxHp;player.inv=0; mobs.length=0; save(); renderBar(); syncUI(); }
@@ -1415,7 +1439,7 @@ function useMachine(tt,cx,cy){ const recipes=MACHINE_IN[tt.type];
 function unpackGrid(p){ return p.map(row=>row.map(c=>typeof c==="string"?{type:c,crop:null}:c)); }
 function load(){ try{ const s=JSON.parse(localStorage.getItem("homestead4")); const home=s&&(s.home||s.gridOut); if(home&&home.length===OROWS){
     farmFR1=s.farmFR1||15;farmFC1=s.farmFC1||18;houseLvl=s.houseLvl||0;farmLvl=s.farmLvl||0;hasAxe=!!s.hasAxe;
-    gridHome=unpackGrid(home); ensureCottage(gridHome); ensureMailbox(gridHome); gridVillage=(s.village&&s.village.length===VROWS&&s.village[0].length===VCOLS)?unpackGrid(s.village):buildVillage(); gridPort=buildPort(); gridHeart=buildHeart(); coins=s.coins; clock=s.clock||0;
+    gridHome=unpackGrid(home); ensureCottage(gridHome); ensureMailbox(gridHome); gridVillage=(s.village&&s.village.length===VROWS&&s.village[0].length===VCOLS)?unpackGrid(s.village):buildVillage(); gridPort=buildPort(); gridHeart=buildHeart(); initNpcPositions(); coins=s.coins; clock=s.clock||0;
     stripOil(gridHome); stripOil(gridVillage); patchVillage(gridVillage);   // clean oil + add Hamu's stall to older saves (keeps all progress)
     for(let i=0;i<bag.length;i++)bag[i]=s.bag&&s.bag[i]?s.bag[i]:null; selSlot=s.selSlot||0;
     catX=(doorC=FC0+2,(FC0+4)*TILE+TILE/2); catY=(doorR=FR0+3,(FR0+4)*TILE+TILE/2); setVillageMeta();
@@ -1544,7 +1568,7 @@ function tryAttack(){ const range=TILE*1.6,dmg=(hasAxe?2:1)+totalBonus().atk, ps
   for(const m of mobs){ const dx=m.x-player.x,dy=m.y-player.y,fwd=dx*player.fx+dy*player.fy,lat=Math.abs(dx*player.fy-dy*player.fx),dd=Math.hypot(dx,dy);
     if(dd<range&&(fwd>-10||dd<TILE*0.9)&&lat<TILE*1.1){ m.hp-=dmg;m.flash=0.18;const d=dd||1;m.kx=dx/d*7;m.ky=dy/d*7;hit=true;SND.hit();
       if(psn>0)m.psn={dps:psn,t:4};   // venom gear: damage-over-time
-      bloodMeter=Math.min(BLOOD_MAX,bloodMeter+(m.boss?BLOOD_PER_BOSSHIT:BLOOD_PER_HIT));   // each hit feeds the drain meter
+      bloodMeter=Math.min(BLOOD_MAX,bloodMeter+(m.boss?BLOOD_PER_BOSSHIT:BLOOD_PER_HIT)+totalBonus().blood);   // each hit feeds the drain meter (blood gear fills it faster)
       if(m.hp<=0)mobDie(m); } }
   if(hit)spendHunger(1.5);
   mobs.splice(0,mobs.length,...mobs.filter(m=>m.hp>0)); return hit; }
@@ -1560,6 +1584,7 @@ function talkInteract(){ if(scene!=="out"){ return; }
     for(const n of VNPCS){ if(!n.inside&&Math.hypot(n.x-player.x,n.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow();
       if(n.role==="merchant"){ if(metHamu)npcMenu("hamu",openMerchant); else {metHamu=true;save();hamuIntro();} } else if(n.role==="quest")talkLouie(); else if(n.id==="david")npcMenu("david",null); else startDialog(n.lines.map(s=>({who:"vnpc",name:n.name,face:n.face,col:n.col,text:s})),null); return; } }
     for(const v of villagers){ if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); startDialog(v.lines.map(s=>({who:"vill",name:v.name,face:v.face,col:v.col,text:s})),null); return; } } }
+  if(area==="port"||area==="heart"){ for(const n of areaNpcs()){ if(!n.inside&&n.x!==undefined&&Math.hypot(n.x-player.x,n.y-player.y)<TILE*1.9){ SND.meow(); startDialog((n.lines||["…"]).map(s=>({who:"vnpc",name:n.name,face:n.face,col:n.col,text:s})),null); return; } } }
   float(player.x,player.y-22,"no one to talk to here","#cfe0ff"); }
 function interact(){ if(scene==="boss"){ bossAttack(); return; }
   if(player.sitting){ player.sitting=false; SND.step(); return; }   // already seated → stand up
@@ -1737,7 +1762,7 @@ function bossAttack(){ if(scene!=="boss"||boss.atk>0||boss.end)return; boss.atk=
   const dmg=1+totalBonus().atk, psn=totalBonus().poison, inReach=(tx,ty)=>Math.abs(tx-boss.px)<74&&Math.sign(tx-boss.px||1)===boss.pdir&&Math.abs(ty-boss.py)<78; let landed=false;
   if(boss.kind!=="swarm"&&inReach(boss.bx,boss.by)){ boss.bhp-=dmg; boss.bflash=0.16; if(psn>0)boss.bpsn={dps:psn,t:4}; landed=true; }   // hit the main body (ground/flyer)
   for(const a of boss.adds){ if(inReach(a.x,a.y-10)){ a.hp-=dmg; a.flash=0.15; if(a.elite)boss.bflash=0.1; if(psn>0)a.psn={dps:psn,t:3}; landed=true; } }   // slash minions & swarm small-bosses
-  if(landed)bloodMeter=Math.min(BLOOD_MAX,bloodMeter+BLOOD_PER_BOSSHIT); }
+  if(landed)bloodMeter=Math.min(BLOOD_MAX,bloodMeter+BLOOD_PER_BOSSHIT+totalBonus().blood); }
 function bhitPlayer(d,p){ if(boss.pinv>0||boss.end)return; boss.php-=defenseCut(d); boss.pinv=1.1; boss.flash=0.14; boss.pvy=-240; boss.pg=false; SND.hurt(); if(p)p.t=0; }
 function bossFire(){ const a=Math.atan2((boss.py-22)-(boss.by-24),boss.px-boss.bx); const ph=boss.bhp<=boss.bmax/2, spd=ph?255:225;
   for(let i=-2;i<=2;i++){ const an=a+i*0.20; boss.proj.push({x:boss.bx,y:boss.by-24,vx:Math.cos(an)*spd,vy:Math.sin(an)*spd,t:3.2}); } SND.swing(); }
@@ -1859,8 +1884,9 @@ function npcTarget(n){ const h=dayHour();                 // pick the anchor for
   if(h>=11&&h<17) return n.leisure||n.work||n.home;       // midday → leisure
   if(h>=17&&h<22) return n.leisure||n.home;               // evening → wander/leisure
   return n.home; }                                        // night → head home
-function moveNpcs(dt){ if(scene!=="out"||area!=="village")return;
-  for(const n of VNPCS){
+function moveNpcs(dt){ if(scene!=="out")return; const list=areaNpcs(); if(!list.length)return;
+  for(const n of list){
+    if(n.x===undefined){ n.x=n.home[1]*TILE+TILE/2; n.y=n.home[0]*TILE+TILE/2; }   // lazy-init on first visit to the map
     if(npcAsleep(n)){ n.inside=true; n.x=n.home[1]*TILE+TILE/2; n.y=n.home[0]*TILE+TILE/2; continue; }   // tucked in at home (door locked, not drawn)
     n.inside=false;
     const tg=npcTarget(n); const tx=tg[1]*TILE+TILE/2, ty=tg[0]*TILE+TILE/2;
@@ -1869,7 +1895,7 @@ function moveNpcs(dt){ if(scene!=="out"||area!=="village")return;
     if(d>5){ const sp=42*dt; moveEnt(n, dx/d*sp, dy/d*sp, 11); n.walking=true; } else n.walking=false;
   } }
 const EXTRA_HOUSES=[{id:"fisher", name:"Robin", houseDoor:[5,32]}];   // the coast fisher's hut (Robin isn't a routine NPC, but his house is enterable too)
-function npcByDoor(r,c){ return VNPCS.find(n=>n.houseDoor&&n.houseDoor[0]===r&&n.houseDoor[1]===c) || EXTRA_HOUSES.find(n=>n.houseDoor[0]===r&&n.houseDoor[1]===c) || null; }
+function npcByDoor(r,c){ return areaNpcs().find(n=>n.houseDoor&&n.houseDoor[0]===r&&n.houseDoor[1]===c) || (area==="village"&&EXTRA_HOUSES.find(n=>n.houseDoor[0]===r&&n.houseDoor[1]===c)) || null; }
 function enterNpcHouse(n){ const cx=n.houseDoor[1]*TILE+TILE/2, cy=n.houseDoor[0]*TILE+TILE/2;
   if(npcAsleep(n)){ SND.no(); const wk=fmtHour(n.sleep[1]); float(cx,cy-16, lang==="zh"?("💤 "+t(n.name)+"睡眠中 · 約"+fmtHour(n.sleep[1])+"醒"):("💤 "+n.name+" is asleep · wakes "+wk),"#cfe6ff",true); return; }
   outX=player.x;outY=player.y; houseKind="npc"; npcHouseId=n.id; SND.door(); setScene("in");
@@ -2248,6 +2274,14 @@ function drawVillager(v){ const x=v.x-camX,y=v.y-camY,bob=Math.sin(now()*2+v.c)*
   ctx.fillStyle="#ffd9a8";ctx.beginPath();ctx.arc(x,y-9+bob,7,0,7);ctx.fill();
   ctx.fillStyle="#3a2a1a";ctx.beginPath();ctx.arc(x-2.5,y-9+bob,1.3,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+2.5,y-9+bob,1.3,0,7);ctx.fill();
   if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.7){ ctx.fillStyle="rgba(255,255,255,.9)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText(lang==="zh"?t(v.name)+" ▸ 對話":v.name+" ▸ use",x,y-20+bob); } }
+// placeholder routine NPC: a coloured circle with the character's name above it (until real art is dropped in)
+function drawNpcDot(n){ const x=n.x-camX,y=n.y-camY,bob=Math.sin(now()*3+(n.home?n.home[1]:0))*1.6;
+  ctx.fillStyle="rgba(0,0,0,.22)";ctx.beginPath();ctx.ellipse(x,y+13,11,4,0,0,7);ctx.fill();
+  ctx.fillStyle=n.col||"#cfa0e0";ctx.beginPath();ctx.arc(x,y+bob,13,0,7);ctx.fill();
+  ctx.strokeStyle="rgba(255,255,255,.8)";ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle="#fff";ctx.font="700 11px Helvetica";ctx.textAlign="center";
+  ctx.fillText((lang==="zh"?t(n.name):n.name),x,y-19+bob);
+  if(Math.hypot(n.x-player.x,n.y-player.y)<TILE*1.9) ctx.fillText(lang==="zh"?"▸ 對話":"▸ use",x,y-31+bob); }
 function drawCritter(n){ const x=n.x-camX,y=n.y-camY,bob=Math.sin(now()*3+n.c)*1.5;
   ctx.fillStyle="rgba(0,0,0,.22)";ctx.beginPath();ctx.ellipse(x,y+11,10,4,0,0,7);ctx.fill();
   if(!drawSprite(artPick(n.id), x, y+12, 42, false)){
@@ -2314,6 +2348,7 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
   const ents=[...(scene==="out"?mobs.map(m=>({y:m.y,d:()=>drawMob(m)})):[]),{y:player.y,d:drawPlayer}];
   if(scene==="out"&&area==="home"){ ents.push({y:catY,d:drawCat}); animals.forEach(a=>ents.push({y:a.y,d:()=>drawAnimal(a)})); if(!bossDefeated)ents.push({y:ROAD_R*TILE+TILE/2,d:drawGuardian}); }
   if(scene==="out"&&area==="village"){ ents.push({y:npcY,d:drawNpc}); villagers.forEach(v=>ents.push({y:v.y,d:()=>drawVillager(v)})); VNPCS.forEach(n=>{ if(!n.inside)ents.push({y:n.y,d:()=>drawCritter(n)}); }); VDECOR.forEach(va=>ents.push({y:va.r*TILE+TILE/2,d:()=>drawDecorAnimal(va)})); }
+  if(scene==="out"&&(area==="port"||area==="heart")){ for(const n of areaNpcs()){ if(!n.inside&&n.x!==undefined)ents.push({y:n.y,d:()=>drawNpcDot(n)}); } }   // placeholder townsfolk on the new maps
   ents.sort((a,b)=>a.y-b.y); ents.forEach(e=>e.d());
   for(const s of shots){ const sx=s.x-camX,sy=s.y-camY; ctx.fillStyle="#c46aff";ctx.beginPath();ctx.arc(sx,sy,5,0,7);ctx.fill(); ctx.fillStyle="rgba(255,255,255,.6)";ctx.beginPath();ctx.arc(sx-1,sy-1,2,0,7);ctx.fill(); }
   if(holdUse&&(scene==="out"||scene==="in")){ const hf=facedCell(); if(hf&&BREAKABLE.has(G[hf.r][hf.c].type)){ const prog=Math.min(1,(now()-holdStart)/1.2),hx=hf.c*TILE-camX+TILE/2,hy=hf.r*TILE-camY+TILE/2;
