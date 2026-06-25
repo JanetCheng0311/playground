@@ -970,7 +970,7 @@ const BAGN=30; const bag=new Array(BAGN).fill(null);
 const ROAD_R=OROWS-4;
 // village is its own, larger map
 const VCOLS=46, VROWS=34;
-const PROWS=30, PCOLS=42, HROWS=30, HCOLS=42;   // blank new maps: Port Town & Heart of the Valley (structure TBD)
+const PROWS=30, PCOLS=42, HROWS=46, HCOLS=16, HMID=8;   // Port Town is wide/horizontal; Heart of the Valley is tall/VERTICAL (HMID = its central north-south path)
 const VROAD_R=9, RIVER_C=14, SEA_C0=39, SAND_C=38, NPC_R=6, NPC_C=36, CAVE_R=4, CAVE_C=6;
 
 const OBST=new Set(["fence","house","pond","river","sea","tree","rock","iron","gold","wall","bed","pfence","mfence","chair","table","lamp","church","churchtop","shop","hdoor","chest","stove","dwall","cave","gem","trough","snowman","drying_rack","preserve_pot","press_table","craft_bench","perfume_stand","stand","dchest","bench","stool","bookshelf","plant","fountain","barrel","clock","mailbox"]);
@@ -1263,25 +1263,25 @@ function buildPort(){ const g=[]; for(let r=0;r<PROWS;r++){ const row=[]; for(le
 function buildHeart(){ const g=[]; for(let r=0;r<HROWS;r++){ const row=[]; for(let c=0;c<HCOLS;c++)row.push({type:"grass",crop:null}); g.push(row); }
   const set=(r,c,t)=>{ if(g[r]&&g[r][c])g[r][c].type=t; };
   const block=(r0,c0,w,h,t)=>{ for(let r=r0;r<r0+h;r++)for(let c=c0;c<c0+w;c++)set(r,c,t); };
-  // ===== 山谷之心 HEART OF THE VALLEY — sacred grove + endgame dungeon =====
-  for(let c=1;c<=18;c++) set(15,c,"ppath");                     // approach path from the west entry
-  set(15,0,"road");                                            // west-edge road back to the village (walk west off it)
-  // ---- THE WORLD-TREE — great tree on a raised stone clearing at the centre ----
-  block(10,18,4,4,"tree");                                      // huge canopy
-  block(14,17,6,3,"ppath");                                     // ritual clearing in front of it
-  // ---- THE WELLSPRING — sacred pool beside the tree (the land's life-force) ----
-  block(10,25,2,2,"pond");
-  // ---- EDWARD'S SHRINE (west) + grandmother's memorial stele ----
-  block(8,7,3,3,"church"); set(8,8,"churchtop"); set(10,8,"hdoor");
-  for(let r=11;r<=15;r++) set(r,8,"ppath");                     // path from the shrine down to the approach
-  set(12,11,"rock");                                           // grandmother's memorial stele
-  // ---- THE ANCIENT STELES — a ring of standing stones around the tree ----
-  [[9,16],[9,23],[16,16],[16,24],[13,15],[13,25],[19,18],[19,22]].forEach(([r,c])=>set(r,c,"rock"));
-  // ---- 心之根 DUNGEON MOUTH — Umbra-blighted recess in the NE (Paco guards within) ----
-  for(let r=3;r<=8;r++)for(let c=30;c<=37;c++) set(r,c,"rock");  // corrupted rock field
-  set(5,33,"cave");                                             // the dungeon entrance
-  for(let r=6;r<=15;r++) set(r,33,"ppath");                     // dark path linking grove ↔ dungeon mouth
-  for(let c=20;c<=33;c++) set(15,c,"ppath");                    // grove → dungeon path
+  // ===== 山谷之心 HEART OF THE VALLEY — a TALL/VERTICAL sacred grove: enter at the top, descend south to the dungeon =====
+  const M=HMID;                                                 // the pilgrimage path runs straight down the middle (north→south)
+  for(let r=1;r<=43;r++) set(r,M,"ppath");
+  set(0,M,"road");                                             // top-edge road back to the village (walk north off it)
+  // ---- EDWARD'S SHRINE (upper-west) + grandmother's memorial stele ----
+  block(5,2,3,3,"church"); set(5,3,"churchtop"); set(7,3,"hdoor");
+  for(let c=3;c<=M;c++) set(8,c,"ppath");                       // path east from the shrine onto the main path
+  set(9,5,"rock");                                             // grandmother's memorial stele
+  // ---- THE WORLD-TREE — great tree on a stone clearing, just west of the path ----
+  block(16,3,4,4,"tree");                                       // huge canopy
+  block(20,4,4,2,"ppath"); set(18,7,"ppath"); set(19,7,"ppath");// ritual clearing linking the tree to the path
+  // ---- THE WELLSPRING — sacred pool just east of the path (the land's life-force) ----
+  block(16,11,2,2,"pond");
+  // ---- THE ANCIENT STELES — standing stones flanking the path all the way down ----
+  [[7,11],[13,5],[13,11],[24,5],[24,11],[31,6],[31,10],[38,5]].forEach(([r,c])=>set(r,c,"rock"));
+  // ---- 心之根 DUNGEON MOUTH — Umbra-blighted recess at the far south (Paco guards within) ----
+  for(let r=39;r<=44;r++)for(let c=3;c<=12;c++) set(r,c,"rock");// corrupted rock field across the bottom
+  for(let r=38;r<=42;r++) set(r,M,"ppath");                    // the path presses on into the blight
+  set(43,M,"cave");                                            // the dungeon entrance, deepest point
   return g; }
 /* ---- 1000-floor dungeon (entered from the village cave) ---- */
 let dungFloor=0, dungMax=1, dungBoss=false, gridDung=null, dungStairs=[19,27], dungExit=[3,2], dungBright=false;   // dungBright: "bright" cheat reveals the whole floor
@@ -1704,7 +1704,7 @@ function updateHold(){ const f=holdTarget(); if(!f){ return; } const prog=(now()
 function gotoArea(a){ houseKind="player"; npcHouseId=null; setArea(a); setScene("out"); SND.door(); transCD=0.6; mobs.length=0; hover=null;
   if(a==="village"){ player.x=1*TILE+TILE/2; player.y=VROAD_R*TILE+TILE/2; player.dir="r";player.fx=1;player.fy=0; }
   else if(a==="port"){ player.x=1.5*TILE; player.y=(PROWS>>1)*TILE+TILE/2; player.dir="r";player.fx=1;player.fy=0; }
-  else if(a==="heart"){ player.x=1.5*TILE; player.y=(HROWS>>1)*TILE+TILE/2; player.dir="r";player.fx=1;player.fy=0; }
+  else if(a==="heart"){ player.x=HMID*TILE+TILE/2; player.y=2*TILE+TILE/2; player.dir="d";player.fx=0;player.fy=1; }   // enter at the top of the vertical grove, facing down
   else { player.x=(OCOLS-2)*TILE+TILE/2; player.y=ROAD_R*TILE+TILE/2; player.dir="l";player.fx=-1;player.fy=0; }
   const msg=a==="village"?"the village":a==="port"?"Port Town":a==="heart"?"Heart of the Valley":"home sweet home";
   float(player.x,player.y-26,t(msg),"#fff"); save(); }
@@ -2023,7 +2023,8 @@ function update(dt){
     else if(scene==="out"&&here==="road"){ if(area==="home"&&pc>=OCOLS-1){ if(bossDefeated)gotoArea("village"); else tryBoss(); }
       else if(area==="village"&&pc<=0)gotoArea("home");
       else if(area==="village"&&pr>=VROWS-1)gotoArea(pc<22?"port":"heart");   // south roads → outer regions (col 19 → Port, col 25 → Heart)
-      else if((area==="port"||area==="heart")&&pc<=0)gotoArea("village"); } }   // walk west off the road → back to the village
+      else if(area==="port"&&pc<=0)gotoArea("village");                       // Port: walk west off the road → village
+      else if(area==="heart"&&pr<=0)gotoArea("village"); } }                  // Heart (vertical): walk NORTH off the top road → village
   moveNpcs(dt);   // townsfolk walk their daily routine
   if(scene==="out"){ const seasonGrow=(seasonIdx()===0||seasonIdx()===2)?1.25:1;   // spring & autumn grow a bit faster
     const rainGrow=(area==="home"&&isRainy())?1.6:1;   // rain waters the whole farm — crops grow faster all day
