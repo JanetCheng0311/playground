@@ -986,9 +986,9 @@ function setVillageMeta(){ npcX=NPC_C*TILE+TILE/2; npcY=NPC_R*TILE+TILE/2;
 // between the anchors as the clock turns; while asleep their door is locked.
 const VNPCS=[
   {id:"hamu", c:28,r:21, name:"Hamu", face:"🐹", col:"#f49ac6", role:"merchant", ears:"round",
-    houseDoor:[31,10], home:[30,10], work:[22,28], leisure:[27,25], sleep:[22,6]},
+    houseDoor:[20,12], home:[21,12], work:[22,28], leisure:[27,25], sleep:[22,6]},
   {id:"louie", c:11,r:27, name:"Louie", face:"🐱", col:"#5aa0e6", role:"quest", ears:"cat",
-    houseDoor:[31,16], home:[30,16], work:[24,12], leisure:[28,12], sleep:[23,7]},
+    houseDoor:[20,17], home:[21,17], work:[24,12], leisure:[28,12], sleep:[23,7]},
   {id:"david", c:20,r:23, name:"David", face:"🐶", col:"#e0913f", role:"chat", ears:"flop",
     houseDoor:[20,9], home:[21,9], work:[26,20], leisure:[28,30], sleep:[21,5],
     lines:["Woof! Welcome to the village, friend!","Pelle fishes the sea, Hamu trades, Louie's got a job for you.","Hamu's stall sells farm animals now — go grab a chicken!"]} ];
@@ -1177,14 +1177,15 @@ function buildVillage(){ const g=[]; for(let r=0;r<VROWS;r++){ const row=[]; for
     if(x<0.09)set(r,c,"tree"); else if(x<0.14)set(r,c,"rock"); else if(x<0.18)set(r,c,"iron"); else if(x<0.20)set(r,c,"gold"); }
   // ---- TOWN in the lower half ----
   block(18,19,4,4,"church"); set(18,20,"churchtop"); set(21,20,"hdoor");          // church (north-west of the square, off the street)
-  block(18,8,3,3,"house"); set(20,9,"hdoor");                                     // villager houses (west of street)
-  block(18,13,3,3,"house"); set(20,14,"hdoor");
-  block(31,9,3,3,"house"); set(31,10,"hdoor");
-  block(31,15,3,3,"house"); set(31,16,"hdoor");
+  block(18,8,3,3,"house"); set(20,9,"hdoor");                                     // NPC homes (north of the square; door on the bottom row facing the square — all clear of the river at col 14)
+  block(18,11,3,3,"house"); set(20,12,"hdoor");
+  block(18,16,3,3,"house"); set(20,17,"hdoor");                                   // third NPC home
+  block(31,9,3,3,"house"); set(33,10,"hdoor");                                    // south-wall houses (decor): door on the bottom row so it sits at ground level, not floating up top
+  block(31,15,3,3,"house"); set(33,16,"hdoor");
   block(18,27,3,3,"shop"); set(20,28,"hdoor");                                    // east market shop — this is now Hamu's shop (he stands at its door)
-  block(31,27,3,3,"shop"); set(31,28,"hdoor");
+  block(31,27,3,3,"shop"); set(33,28,"hdoor");
   carveVPen(g);                                                                   // Hamu's animal pen, right beside his shop
-  block(31,21,3,3,"house"); set(31,22,"hdoor");                                   // mayor's house, south
+  block(31,21,3,3,"house"); set(33,22,"hdoor");                                   // mayor's house, south
   // roads & paved square (carved after buildings so they stay clear)
   for(let c=0;c<=24;c++) set(VROAD_R,c,"road"); set(VROAD_R,RIVER_C,"road");      // entry road from the left + bridge
   for(let r=VROAD_R;r<=22;r++) set(r,24,"road");                                  // main street south to the square
@@ -1982,7 +1983,8 @@ function respawnRes(type){ const RW=gridOut.length,CW=gridOut[0].length;
     if(t.type==="wild"&&!inFarm(r,c)){ const x=c*TILE+TILE/2,y=r*TILE+TILE/2; if(Math.hypot(x-player.x,y-player.y)<TILE*3)continue; t.type=type; t.hits=0; return true; } }
   return false; }
 function update(dt){
-  { const bf=bloodMeter>=BLOOD_MAX; if(bf!==_bloodFull){ _bloodFull=bf; const bb=document.getElementById("bloodBtn"); if(bb)bb.classList.toggle("on",bf); const db=document.getElementById("drainBtn2"); if(db)db.classList.toggle("ready",bf); } }   // light up the on-screen Drain buttons when the meter is full
+  { const bf=bloodMeter>=BLOOD_MAX; if(bf!==_bloodFull){ _bloodFull=bf; const bb=document.getElementById("bloodBtn"); if(bb)bb.classList.toggle("on",bf); const db=document.getElementById("drainBtn2"); if(db)db.classList.toggle("ready",bf); }
+    const db2=document.getElementById("drainBtn2"); if(db2)db2.style.display=bloodMeter>0?"":"none"; }   // the on-screen Drain droplet only appears once you've banked some blood (skill "on"); it pulses when full
   if(scene==="boss"){ updateBoss(dt); return; }
   if(fishing){ updateFishing(dt); player.moving=false; return; }   // freeze the world during the fishing minigame
   if(dialogOpen||document.querySelector(".shop.open")){ player.moving=false; keys.l=keys.r=keys.u=keys.d=0; return; }   // freeze the world (no monster attacks) while a menu/bag/dialogue is open
@@ -2340,7 +2342,8 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
   drawHUD();
 }
 // in-canvas status strip (coins · weather · date · time) drawn inside the game window, top-right
-function drawBloodBar(x,y){ const w=210, full=bloodMeter>=BLOOD_MAX;   // lifesteal "blood drain" meter
+function drawBloodBar(x,y){ if(bloodMeter<=0)return;   // skill is "off" with no blood banked — hide the bar entirely
+  const w=210, full=bloodMeter>=BLOOD_MAX;   // lifesteal "blood drain" meter
   ctx.fillStyle="rgba(0,0,0,.45)"; ctx.beginPath();ctx.roundRect(x,y,w,9,4);ctx.fill();
   const fw=Math.max(0,w*Math.min(1,bloodMeter/BLOOD_MAX)); if(fw>0){ ctx.fillStyle=full?"#ff3b5b":"#a83048"; ctx.beginPath();ctx.roundRect(x,y,fw,9,4);ctx.fill(); }
   ctx.fillStyle="#ff8fa0";ctx.font="700 12px Helvetica";ctx.textAlign="left";ctx.textBaseline="middle";ctx.fillText("🩸",x-15,y+5);
