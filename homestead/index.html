@@ -981,10 +981,16 @@ const villagers=[];
 function setVillageMeta(){ npcX=NPC_C*TILE+TILE/2; npcY=NPC_R*TILE+TILE/2;
   villagers.length=0;   // animal NPCs only — human townsfolk removed
   for(const n of VNPCS){ n.x=n.c*TILE+TILE/2; n.y=n.r*TILE+TILE/2; } }
+// Each routine NPC carries: home (door to enter their house) + standing anchors for each
+// part of the day (work / leisure / home) + a sleep window [startHour,endHour). They walk
+// between the anchors as the clock turns; while asleep their door is locked.
 const VNPCS=[
-  {id:"hamu", c:28,r:21, name:"Hamu", face:"🐹", col:"#f49ac6", role:"merchant", ears:"round"},
-  {id:"louie", c:11,r:27, name:"Louie", face:"🐱", col:"#5aa0e6", role:"quest", ears:"cat"},
+  {id:"hamu", c:28,r:21, name:"Hamu", face:"🐹", col:"#f49ac6", role:"merchant", ears:"round",
+    houseDoor:[31,10], home:[30,10], work:[22,28], leisure:[27,25], sleep:[22,6]},
+  {id:"louie", c:11,r:27, name:"Louie", face:"🐱", col:"#5aa0e6", role:"quest", ears:"cat",
+    houseDoor:[31,16], home:[30,16], work:[24,12], leisure:[28,12], sleep:[23,7]},
   {id:"david", c:20,r:23, name:"David", face:"🐶", col:"#e0913f", role:"chat", ears:"flop",
+    houseDoor:[20,9], home:[21,9], work:[26,20], leisure:[28,30], sleep:[21,5],
     lines:["Woof! Welcome to the village, friend!","Pelle fishes the sea, Hamu trades, Louie's got a job for you.","Hamu's stall sells farm animals now — go grab a chicken!"]} ];
 
 /* ---- friendship: gift each townsfolk something they like to raise their friendship (4 levels). Whiskers the cat starts maxed out. ---- */
@@ -1202,8 +1208,64 @@ function buildVillage(){ const g=[]; for(let r=0;r<VROWS;r++){ const row=[]; for
   for(let r=20;r<=32;r++){ if(g[r][7]&&g[r][7].type==="wild")set(r,7,"fence"); if(g[r][36]&&g[r][36].type==="wild")set(r,36,"fence"); }
   setVillageMeta(); return g; }
 function setArea(a){ area=a; gridOut=(a==="home")?gridHome:(a==="village")?gridVillage:(a==="port")?gridPort:(a==="heart")?gridHeart:gridDung; }
-function buildPort(){ const g=[]; for(let r=0;r<PROWS;r++){ const row=[]; for(let c=0;c<PCOLS;c++){ let t="grass"; if(c>=PCOLS-4)t="sea"; else if(c===PCOLS-5)t="sand"; row.push({type:t,crop:null}); } g.push(row); } return g; }   // blank seaside field (sea on the east edge); real layout added later
-function buildHeart(){ const g=[]; for(let r=0;r<HROWS;r++){ const row=[]; for(let c=0;c<HCOLS;c++){ row.push({type:"grass",crop:null}); } g.push(row); } return g; }   // blank sacred grove; real layout added later
+function buildPort(){ const g=[]; for(let r=0;r<PROWS;r++){ const row=[]; for(let c=0;c<PCOLS;c++){ let t="grass"; if(c>=PCOLS-4)t="sea"; else if(c===PCOLS-5)t="sand"; row.push({type:t,crop:null}); } g.push(row); }
+  const set=(r,c,t)=>{ if(g[r]&&g[r][c]&&g[r][c].type!=="sea")g[r][c].type=t; };
+  const block=(r0,c0,w,h,t)=>{ for(let r=r0;r<r0+h;r++)for(let c=c0;c<c0+w;c++)set(r,c,t); };
+  // ===== PORT / SEASIDE TOWN — social hub. Sea on the east (col 37 sand, 38-41 sea). =====
+  // CENTRAL PLAZA (rows 11-18, cols 15-25): NPC gathering + festivals, fountain at the heart.
+  block(11,15,11,8,"ppath");
+  block(14,19,2,2,"fountain");                                  // festival centerpiece
+  [[11,15],[11,22],[18,15],[18,22]].forEach(([r,c])=>set(r,c,"lamp"));   // plaza corner lamps
+  // ---- NORTH ROW (above the plaza) ----
+  block(5,14,4,4,"house");  set(8,15,"hdoor");                  // HOTEL — Sukie (the biggest building)
+  block(5,21,3,3,"shop");   set(7,22,"hdoor");                  // GENERAL STORE
+  block(5,26,3,3,"shop");   set(7,27,"hdoor");                  // KOYA'S STALL (seasonal merchant)
+  // ---- WEST COLUMN of homes ----
+  block(10,5,3,3,"house");  set(12,6,"hdoor");                  // CYBELE'S house
+  block(15,5,3,3,"house");  set(15,6,"hdoor");                  // ALICIA'S house
+  block(20,5,3,3,"house");  set(20,6,"hdoor");                  // ARIA'S house (next to Alicia)
+  // ---- SOUTH ROW (below the plaza) ----
+  block(21,14,3,3,"house"); set(21,15,"hdoor");                 // FLOWER SHOP
+  block(21,19,4,4,"church"); set(21,20,"churchtop"); set(24,20,"hdoor");  // MARY'S PERFORMANCE HALL
+  // ---- SEASIDE FARM — Jeannie & Althea (fenced, NE, open east to the sea) ----
+  { const fr0=3,fr1=9,fc0=28,fc1=35;
+    for(let c=fc0;c<=fc1;c++){ set(fr0,c,"fence"); set(fr1,c,"fence"); }
+    for(let r=fr0;r<=fr1;r++) set(r,fc0,"fence");
+    for(let r=fr0+1;r<fr1;r++)for(let c=fc0+1;c<=fc1;c++) set(r,c,"soil");
+    block(3,28,2,2,"house"); set(4,29,"hdoor");                 // twins' little farmhouse
+    set(6,fc0,"path"); }                                        // west gate
+  // ---- DOCK & LIGHTHOUSE (SE, by the water) ----
+  block(20,34,2,2,"wall");                                      // lighthouse base
+  // ===== ROADS & PATHS (carved last so nothing overwrites the buildings) =====
+  for(let c=1;c<=15;c++) set(15,c,"path");                      // entry road from the west → plaza
+  for(let r=8;r<=21;r++) set(r,20,"path");                      // plaza spine: north shops ↔ south hall
+  for(let c=6;c<=15;c++){ if(g[12]&&g[12][c].type==="grass")set(12,c,"path"); }   // west homes → plaza (Cybele/Alicia)
+  for(let r=12;r<=22;r++){ if(g[r]&&g[r][6].type==="grass")set(r,6,"path"); }     // west home street
+  for(let c=23;c<=37;c++){ const tt=g[15][c].type; if(tt==="grass")set(15,c,"path"); else if(tt==="sand")set(15,c,"ppath"); }  // plaza → dock pier onto the sand
+  for(let r=10;r<=15;r++) set(r,31,"path");                     // plaza → seaside farm gate
+  return g; }
+function buildHeart(){ const g=[]; for(let r=0;r<HROWS;r++){ const row=[]; for(let c=0;c<HCOLS;c++)row.push({type:"grass",crop:null}); g.push(row); }
+  const set=(r,c,t)=>{ if(g[r]&&g[r][c])g[r][c].type=t; };
+  const block=(r0,c0,w,h,t)=>{ for(let r=r0;r<r0+h;r++)for(let c=c0;c<c0+w;c++)set(r,c,t); };
+  // ===== 山谷之心 HEART OF THE VALLEY — sacred grove + endgame dungeon =====
+  for(let c=1;c<=18;c++) set(15,c,"ppath");                     // approach path from the west entry
+  // ---- THE WORLD-TREE — great tree on a raised stone clearing at the centre ----
+  block(10,18,4,4,"tree");                                      // huge canopy
+  block(14,17,6,3,"ppath");                                     // ritual clearing in front of it
+  // ---- THE WELLSPRING — sacred pool beside the tree (the land's life-force) ----
+  block(10,25,2,2,"pond");
+  // ---- EDWARD'S SHRINE (west) + grandmother's memorial stele ----
+  block(8,7,3,3,"church"); set(8,8,"churchtop"); set(10,8,"hdoor");
+  for(let r=11;r<=15;r++) set(r,8,"ppath");                     // path from the shrine down to the approach
+  set(12,11,"rock");                                           // grandmother's memorial stele
+  // ---- THE ANCIENT STELES — a ring of standing stones around the tree ----
+  [[9,16],[9,23],[16,16],[16,24],[13,15],[13,25],[19,18],[19,22]].forEach(([r,c])=>set(r,c,"rock"));
+  // ---- 心之根 DUNGEON MOUTH — Umbra-blighted recess in the NE (Paco guards within) ----
+  for(let r=3;r<=8;r++)for(let c=30;c<=37;c++) set(r,c,"rock");  // corrupted rock field
+  set(5,33,"cave");                                             // the dungeon entrance
+  for(let r=6;r<=15;r++) set(r,33,"ppath");                     // dark path linking grove ↔ dungeon mouth
+  for(let c=20;c<=33;c++) set(15,c,"ppath");                    // grove → dungeon path
+  return g; }
 /* ---- 1000-floor dungeon (entered from the village cave) ---- */
 let dungFloor=0, dungMax=1, dungBoss=false, gridDung=null, dungStairs=[19,27], dungExit=[3,2], dungBright=false;   // dungBright: "bright" cheat reveals the whole floor
 const DR=22, DC=30;
@@ -1300,7 +1362,7 @@ function buildIn(){ const id=interior, cottage=(id==="cottage"), upper=(id==="up
   for(const k in fur){ const p=k.split(",").map(Number), r=p[0], c=p[1];   // restore placed furniture/machines for this room
     if(g[r]&&g[r][c]&&g[r][c].type==="floor") g[r][c]=fur[k]; else delete fur[k]; }
   return {g,w,h}; }
-function setScene(s){ scene=s; if(s==="out"){G=gridOut;GR=gridOut.length;GC=gridOut[0].length;} else {const io=buildIn();gridIn=io.g;G=gridIn;GR=io.h;GC=io.w;} GW=GC*TILE; GH=GR*TILE; }
+function setScene(s){ scene=s; if(s==="out"){G=gridOut;GR=gridOut.length;GC=gridOut[0].length;} else {const io=(houseKind==="npc")?buildNpcHouse(npcHouseId):buildIn();gridIn=io.g;G=gridIn;GR=io.h;GC=io.w;} GW=GC*TILE; GH=GR*TILE; }
 
 function reset(){ farmFR1=15;farmFC1=18;houseLvl=0;farmLvl=0;hasAxe=false; metCat=false;metFisher=false;bossDefeated=false; penLvl=0; area="home"; homeFurn={ground:{},upper:{},cottage:{}}; interior="ground"; gridHome=buildOut(); gridVillage=buildVillage(); gridPort=buildPort(); gridHeart=buildHeart(); setArea("home"); coins=40; clock=0;
   for(let i=0;i<bag.length;i++)bag[i]=null; bag[0]={key:"seed_carrot",count:6}; bag[1]={key:"seed_wheat",count:2}; selSlot=0;
@@ -1478,7 +1540,7 @@ document.getElementById("drainBtn2").addEventListener("click",()=>{ try{audio();
 function talkInteract(){ if(scene!=="out"){ return; }
   if(area==="home"&&Math.hypot(catX-player.x,catY-player.y)<TILE*1.7){ if(nearThreat())return blockTalk(); SND.meow(); if(metCat)npcMenu("cat",openShop); else {metCat=true;save();talkToCat();} return; }
   if(area==="village"){ if(Math.hypot(npcX-player.x,npcY-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); if(metFisher)npcMenu("fisher",openMarket); else {metFisher=true;save();talkToFisher();} return; }
-    for(const n of VNPCS){ if(Math.hypot(n.x-player.x,n.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow();
+    for(const n of VNPCS){ if(!n.inside&&Math.hypot(n.x-player.x,n.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow();
       if(n.role==="merchant"){ if(metHamu)npcMenu("hamu",openMerchant); else {metHamu=true;save();hamuIntro();} } else if(n.role==="quest")talkLouie(); else if(n.id==="david")npcMenu("david",null); else startDialog(n.lines.map(s=>({who:"vnpc",name:n.name,face:n.face,col:n.col,text:s})),null); return; } }
     for(const v of villagers){ if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); startDialog(v.lines.map(s=>({who:"vill",name:v.name,face:v.face,col:v.col,text:s})),null); return; } } }
   float(player.x,player.y-22,"no one to talk to here","#cfe0ff"); }
@@ -1486,7 +1548,7 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; }
   if(player.sitting){ player.sitting=false; SND.step(); return; }   // already seated → stand up
   player.swing=0.18;
   if(scene==="in"){ const f=facedCell(); if(!f)return; const t=gridIn[f.r][f.c]; const cx=f.c*TILE+TILE/2,cy=f.r*TILE+TILE/2; const sel=bag[selSlot];
-    if(t.type==="bed"){ sleep(); return; }
+    if(t.type==="bed"){ if(houseKind==="npc"){ SND.no(); float(cx,cy-12, lang==="zh"?"這不是你的床":"not your bed","#cfe6ff",true); return; } sleep(); return; }
     if(t.type==="mat"){ exitHouse(); return; }
     if(t.type==="stairup"){ goFloor("upper"); return; }
     if(t.type==="stairdown"){ goFloor("ground"); return; }
@@ -1514,6 +1576,7 @@ function interact(){ if(scene==="boss"){ bossAttack(); return; }
     if(here2==="stairs"){ descend(); return; } if(here2==="exitup"){ leaveDungeon(); return; } if(here2==="elevator"){ float(player.x,player.y-12,TR("checkpoint saved!"),"#9ad8ff"); leaveDungeon(); return; } }
   if(t.type==="door"){ enterHouse("ground"); return; }
   if(t.type==="door2"){ enterHouse("cottage"); return; }
+  if(t.type==="hdoor"){ const owner=npcByDoor(f.r,f.c); if(owner){ enterNpcHouse(owner); return; } SND.no(); float(cx,cy-12, lang==="zh"?"門鎖著":"the door is locked","#cfe6ff",true); return; }
   if(t.type==="mailbox"){ openMailbox(); return; }
   if(t.type==="chest"){ openChest(f.r,f.c); return; }
   if(t.type==="stand"){ const isRelic=sel&&ITEMS[sel.key]&&ITEMS[sel.key].kind==="relic";
@@ -1626,7 +1689,7 @@ function gotoArea(a){ setArea(a); setScene("out"); SND.door(); transCD=0.6; mobs
   else if(a==="port"){ player.x=1.5*TILE; player.y=(PROWS>>1)*TILE+TILE/2; player.dir="r";player.fx=1;player.fy=0; }
   else if(a==="heart"){ player.x=1.5*TILE; player.y=(HROWS>>1)*TILE+TILE/2; player.dir="r";player.fx=1;player.fy=0; }
   else { player.x=(OCOLS-2)*TILE+TILE/2; player.y=ROAD_R*TILE+TILE/2; player.dir="l";player.fx=-1;player.fy=0; }
-  const msg=a==="village"?"the village":a==="port"?"Port Town (blank)":a==="heart"?"Heart of the Valley (blank)":"home sweet home";
+  const msg=a==="village"?"the village":a==="port"?"Port Town":a==="heart"?"Heart of the Valley":"home sweet home";
   float(player.x,player.y-26,msg,"#fff"); save(); }
 
 /* ---- road boss: side-view mini-fight (needs metal sword + armour) ---- */
@@ -1767,9 +1830,39 @@ function drawGuardian(){ const x=(OCOLS-1)*TILE+TILE/2-camX,y=ROAD_R*TILE+TILE/2
   ctx.fillStyle="#6a3a8a";ctx.beginPath();ctx.roundRect(x-12,y-16+bob,24,28,8);ctx.fill();
   ctx.fillStyle="#ffd23b";ctx.beginPath();ctx.arc(x-5,y-6+bob,3,0,7);ctx.fill();ctx.beginPath();ctx.arc(x+5,y-6+bob,3,0,7);ctx.fill();
   ctx.fillStyle="rgba(255,255,255,.92)";ctx.font="700 11px Helvetica";ctx.textAlign="center";ctx.fillText(t("BOSS ▸ approach"),x,y-24+bob); }
-function enterHouse(which){ outX=player.x;outY=player.y; interior=which||"ground"; SND.door(); setScene("in"); const mc=Math.floor(GC/2); player.x=mc*TILE+TILE/2; player.y=(GR-2)*TILE+TILE/2; player.dir="u";player.fx=0;player.fy=-1; transCD=0.5; }
-function exitHouse(){ SND.door(); interior="ground"; setScene("out"); player.x=outX||doorC*TILE+TILE/2; player.y=outY||(doorR+1)*TILE+TILE/2; player.dir="d";player.fx=0;player.fy=1; transCD=0.5; save(); if(catIntroPending)catReveal(); }
-function goFloor(which){ SND.door(); interior=which; setScene("in");   // move between the main house's floors via the stairs
+function enterHouse(which){ houseKind="player"; outX=player.x;outY=player.y; interior=which||"ground"; SND.door(); setScene("in"); const mc=Math.floor(GC/2); player.x=mc*TILE+TILE/2; player.y=(GR-2)*TILE+TILE/2; player.dir="u";player.fx=0;player.fy=-1; transCD=0.5; }
+function exitHouse(){ SND.door(); const npc=houseKind==="npc"; houseKind="player"; npcHouseId=null; if(!npc)interior="ground"; setScene("out"); player.x=outX||doorC*TILE+TILE/2; player.y=outY||(doorR+1)*TILE+TILE/2; player.dir="d";player.fx=0;player.fy=1; transCD=0.5; save(); if(catIntroPending)catReveal(); }
+/* ---- NPC daily routine + their own little houses ---- */
+let houseKind="player", npcHouseId=null;
+function dayHour(){ return (6+dayPhase()*24)%24; }   // 0..24 in-game hour (the game's day starts at 6 AM, matching clockHour)
+function fmtHour(h){ h=((Math.round(h)%24)+24)%24; const ap=h<12?"AM":"PM"; let hh=h%12; if(hh===0)hh=12; return hh+":00 "+ap; }
+function npcAsleep(n){ if(!n.sleep)return false; const h=dayHour(),a=n.sleep[0],b=n.sleep[1]; return a<b?(h>=a&&h<b):(h>=a||h<b); }
+function npcTarget(n){ const h=dayHour();                 // pick the anchor for this part of the day
+  if(h>=6&&h<11) return n.work||n.home;                   // morning → work
+  if(h>=11&&h<17) return n.leisure||n.work||n.home;       // midday → leisure
+  if(h>=17&&h<22) return n.leisure||n.home;               // evening → wander/leisure
+  return n.home; }                                        // night → head home
+function moveNpcs(dt){ if(scene!=="out"||area!=="village")return;
+  for(const n of VNPCS){
+    if(npcAsleep(n)){ n.inside=true; n.x=n.home[1]*TILE+TILE/2; n.y=n.home[0]*TILE+TILE/2; continue; }   // tucked in at home (door locked, not drawn)
+    n.inside=false;
+    const tg=npcTarget(n); const tx=tg[1]*TILE+TILE/2, ty=tg[0]*TILE+TILE/2;
+    const dx=tx-n.x, dy=ty-n.y, d=Math.hypot(dx,dy);
+    if(Math.hypot(n.x-player.x,n.y-player.y)<TILE*1.4){ n.walking=false; continue; }   // pause when the player is right next to them
+    if(d>5){ const sp=42*dt; moveEnt(n, dx/d*sp, dy/d*sp, 11); n.walking=true; } else n.walking=false;
+  } }
+function npcByDoor(r,c){ return VNPCS.find(n=>n.houseDoor&&n.houseDoor[0]===r&&n.houseDoor[1]===c); }
+function enterNpcHouse(n){ const cx=n.houseDoor[1]*TILE+TILE/2, cy=n.houseDoor[0]*TILE+TILE/2;
+  if(npcAsleep(n)){ SND.no(); const wk=fmtHour(n.sleep[1]); float(cx,cy-16, lang==="zh"?("💤 "+t(n.name)+"睡眠中 · 約"+fmtHour(n.sleep[1])+"醒"):("💤 "+n.name+" is asleep · wakes "+wk),"#cfe6ff",true); return; }
+  outX=player.x;outY=player.y; houseKind="npc"; npcHouseId=n.id; SND.door(); setScene("in");
+  const mc=Math.floor(GC/2); player.x=mc*TILE+TILE/2; player.y=(GR-2)*TILE+TILE/2; player.dir="u";player.fx=0;player.fy=-1; transCD=0.5; }
+function buildNpcHouse(id){ const w=9,h=7,g=[];   // a cosy one-room home, entered from the door like the player's house
+  for(let r=0;r<h;r++){ const row=[]; for(let c=0;c<w;c++)row.push({type:(r===0||c===0||r===w-1||c===w-1||r===h-1)?"wall":"floor",crop:null}); g.push(row); }
+  const mc=Math.floor(w/2); g[h-1][mc].type="mat";   // exit mat (step on it to leave)
+  g[1][1].type="bed"; g[1][2].type="bed"; g[1][w-2].type="bookshelf";
+  g[h-2][1].type="table"; g[h-2][2].type="stool"; g[1][mc].type="plant"; g[h-2][w-2].type="barrel";
+  return {g,w,h}; }
+function goFloor(which){ SND.door(); houseKind="player"; interior=which; setScene("in");   // move between the main house's floors via the stairs
   const sp=which==="upper"?"stairdown":"stairup"; let pr=GR-2,pc=GC-2;   // arrive next to the matching stairs
   for(let r=0;r<GR;r++)for(let c=0;c<GC;c++){ if(gridIn[r][c].type===sp){ pr=r; pc=c; } }
   player.x=pc*TILE+TILE/2; player.y=(pr-1)*TILE+TILE/2; player.dir="u";player.fx=0;player.fy=-1; transCD=0.5; }   // arrive just above the stairs, facing away (no instant re-trigger)
@@ -1909,6 +2002,7 @@ function update(dt){
   const pr=Math.floor(player.y/TILE),pc=Math.floor(player.x/TILE); const here=(pr>=0&&pc>=0&&pr<GR&&pc<GC)?G[pr][pc].type:"";
   if(transCD<=0){ if(scene==="out"&&here==="door")enterHouse("ground"); else if(scene==="out"&&here==="door2")enterHouse("cottage"); else if(scene==="in"&&here==="mat")exitHouse();
     else if(scene==="out"&&here==="road"){ if(area==="home"&&pc>=OCOLS-1){ if(bossDefeated)gotoArea("village"); else tryBoss(); } else if(area==="village"&&pc<=0)gotoArea("home"); } }
+  moveNpcs(dt);   // townsfolk walk their daily routine
   if(scene==="out"){ const seasonGrow=(seasonIdx()===0||seasonIdx()===2)?1.25:1;   // spring & autumn grow a bit faster
     const rainGrow=(area==="home"&&isRainy())?1.6:1;   // rain waters the whole farm — crops grow faster all day
     for(let r=0;r<gridOut.length;r++)for(let c=0;c<gridOut[0].length;c++){ const cr=gridOut[r][c].crop; if(cr&&cr.grow<1){ const C=CROPS[cr.type];const s=(now()<cr.boost?2.4:1)*seasonGrow*rainGrow; cr.grow=Math.min(1,cr.grow+dt/C.dur*s); } }
@@ -2196,7 +2290,7 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
     if(farm||gather||inr){ ctx.strokeStyle="rgba(255,255,255,0.7)";ctx.lineWidth=2;ctx.strokeRect(f.c*TILE-camX+2,f.r*TILE-camY+2,TILE-4,TILE-4); } }
   const ents=[...(scene==="out"?mobs.map(m=>({y:m.y,d:()=>drawMob(m)})):[]),{y:player.y,d:drawPlayer}];
   if(scene==="out"&&area==="home"){ ents.push({y:catY,d:drawCat}); animals.forEach(a=>ents.push({y:a.y,d:()=>drawAnimal(a)})); if(!bossDefeated)ents.push({y:ROAD_R*TILE+TILE/2,d:drawGuardian}); }
-  if(scene==="out"&&area==="village"){ ents.push({y:npcY,d:drawNpc}); villagers.forEach(v=>ents.push({y:v.y,d:()=>drawVillager(v)})); VNPCS.forEach(n=>ents.push({y:n.y,d:()=>drawCritter(n)})); VDECOR.forEach(va=>ents.push({y:va.r*TILE+TILE/2,d:()=>drawDecorAnimal(va)})); }
+  if(scene==="out"&&area==="village"){ ents.push({y:npcY,d:drawNpc}); villagers.forEach(v=>ents.push({y:v.y,d:()=>drawVillager(v)})); VNPCS.forEach(n=>{ if(!n.inside)ents.push({y:n.y,d:()=>drawCritter(n)}); }); VDECOR.forEach(va=>ents.push({y:va.r*TILE+TILE/2,d:()=>drawDecorAnimal(va)})); }
   ents.sort((a,b)=>a.y-b.y); ents.forEach(e=>e.d());
   for(const s of shots){ const sx=s.x-camX,sy=s.y-camY; ctx.fillStyle="#c46aff";ctx.beginPath();ctx.arc(sx,sy,5,0,7);ctx.fill(); ctx.fillStyle="rgba(255,255,255,.6)";ctx.beginPath();ctx.arc(sx-1,sy-1,2,0,7);ctx.fill(); }
   if(holdUse&&(scene==="out"||scene==="in")){ const hf=facedCell(); if(hf&&BREAKABLE.has(G[hf.r][hf.c].type)){ const prog=Math.min(1,(now()-holdStart)/1.2),hx=hf.c*TILE-camX+TILE/2,hy=hf.r*TILE-camY+TILE/2;
