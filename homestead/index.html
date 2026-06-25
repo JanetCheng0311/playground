@@ -77,6 +77,14 @@
   .shop .item b{font-size:14px}.shop .item span{font-size:11.5px;opacity:.7}
   .shop .item button{font:inherit;font-size:12px;font-weight:700;color:#0a2acc;background:#fff;border:none;border-radius:999px;padding:7px 13px;cursor:pointer;min-width:54px}
   .shop .item button[disabled]{opacity:.4;cursor:default}
+  /* Ride/teleport list — its own clean grid: aligned icon column, left label, fixed go button */
+  #teleList{text-align:left;margin:6px 0 10px}
+  #teleList .trow{display:flex;align-items:center;gap:13px;padding:12px 2px;border-top:1px solid rgba(255,255,255,.14)}
+  #teleList .trow:first-child{border-top:none}
+  #teleList .tic{flex:0 0 28px;width:28px;text-align:center;font-size:21px;line-height:1}
+  #teleList .trow b{flex:1;font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #teleList .trow button{flex:0 0 auto;width:66px;font:inherit;font-weight:800;font-size:13px;color:#0a2acc;background:#fff;border:none;border-radius:999px;padding:9px 0;cursor:pointer}
+  #teleList .trow button:active{transform:scale(.96)}
   .shop .close{margin-top:16px;width:100%;font:inherit;font-weight:700;color:#fff;background:none;border:1.5px solid rgba(255,255,255,.5);border-radius:999px;padding:11px;cursor:pointer}
   .vrow{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:700;padding:7px 0}
   .vrow input[type=range]{flex:1;accent-color:#ffd23b;cursor:pointer}
@@ -2864,8 +2872,8 @@ function findClear(g,r0,c0){ for(let rad=0;rad<14;rad++)for(let dr=-rad;dr<=rad;
   if(g[r]&&g[r][c]&&!OBST.has(g[r][c].type)&&!WATER.has(g[r][c].type)&&!g[r][c].crop)return {r,c}; } return {r:r0,c:c0}; }
 function openTeleport(){ if(scene!=="out"){ SND.no(); return; }   // usable outdoors AND in the dungeon (a quick way out)
   if(!hasHorse()){ SND.no(); float(player.x,player.y-24,t("buy a horse from Hamu first"),"#ffd9a8"); return; }
-  const dests=[["farm","🏡 "+t("your farm")],["house","🏠 "+t("inside your house")],["village","🏘 "+t("village centre")],["port","⚓ "+t("Port Town")],["heart","🌳 "+t("Heart of the Valley")]];
-  document.getElementById("teleList").innerHTML=dests.map(([d,l])=>`<div class="item"><div><b>${l}</b></div><button data-tele="${d}">${t("go")}</button></div>`).join("");
+  const dests=[["farm","🏡",t("your farm")],["house","🏠",t("inside your house")],["village","🏘",t("village centre")],["port","⚓",t("Port Town")],["heart","🌳",t("Heart of the Valley")]];
+  document.getElementById("teleList").innerHTML=dests.map(([d,ic,l])=>`<div class="trow"><span class="tic">${ic}</span><b>${l}</b><button data-tele="${d}">${t("go")}</button></div>`).join("");
   teleEl.classList.add("open"); }
 teleEl.addEventListener("click",e=>{ const d=e.target.dataset&&e.target.dataset.tele; if(!d)return; teleEl.classList.remove("open");
   if(area==="dungeon")dungFloor=0;                                                   // riding out of the dungeon ends the run
