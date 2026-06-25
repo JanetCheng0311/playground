@@ -77,13 +77,13 @@
   .shop .item b{font-size:14px}.shop .item span{font-size:11.5px;opacity:.7}
   .shop .item button{font:inherit;font-size:12px;font-weight:700;color:#0a2acc;background:#fff;border:none;border-radius:999px;padding:7px 13px;cursor:pointer;min-width:54px}
   .shop .item button[disabled]{opacity:.4;cursor:default}
-  /* Ride/teleport list — its own clean grid: aligned icon column, left label, fixed go button */
-  #teleList{text-align:left;margin:6px 0 10px}
-  #teleList .trow{display:flex;align-items:center;gap:13px;padding:12px 2px;border-top:1px solid rgba(255,255,255,.14)}
+  /* Ride/teleport list — fixed 3-column grid so the icon, label and go button line up on every row */
+  #teleList{margin:6px 0 10px}
+  #teleList .trow{display:grid;grid-template-columns:28px 1fr 66px;align-items:center;gap:13px;padding:12px 2px;width:100%;box-sizing:border-box;border-top:1px solid rgba(255,255,255,.14)}
   #teleList .trow:first-child{border-top:none}
-  #teleList .tic{flex:0 0 28px;width:28px;text-align:center;font-size:21px;line-height:1}
-  #teleList .trow b{flex:1;font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #teleList .trow button{flex:0 0 auto;width:66px;font:inherit;font-weight:800;font-size:13px;color:#0a2acc;background:#fff;border:none;border-radius:999px;padding:9px 0;cursor:pointer}
+  #teleList .tic{text-align:center;font-size:21px;line-height:1}
+  #teleList .trow b{text-align:left;font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #teleList .trow button{width:66px;font:inherit;font-weight:800;font-size:13px;color:#0a2acc;background:#fff;border:none;border-radius:999px;padding:9px 0;cursor:pointer}
   #teleList .trow button:active{transform:scale(.96)}
   .shop .close{margin-top:16px;width:100%;font:inherit;font-weight:700;color:#fff;background:none;border:1.5px solid rgba(255,255,255,.5);border-radius:999px;padding:11px;cursor:pointer}
   .vrow{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:700;padding:7px 0}
@@ -751,7 +751,7 @@ const ZH={ "farm · gather · craft":"耕作 · 採集 · 製作","coins":"金�
   "buy farm animals (kept in your home pasture)":"購買農場動物（飼養在家中牧場）","🐴 Ride the horse":"🐴 騎馬出行","🐴 Ride":"🐴 騎馬",
   "chicken":"雞","pig":"豬","cow":"乳牛","horse":"馬",
   "lays an egg each day":"每天下一顆蛋","roots up a truffle each day":"每天拱出一顆松露","gives milk each day":"每天產一份牛奶","unlocks fast-travel (G)":"解鎖快速旅行（G）",
-  "max":"已滿","go":"前往","your farm":"你的農場","village centre":"村莊中心","buy a horse from Hamu first":"先向哈姆買一匹馬","not ready yet":"還沒準備好","delivered to your pasture!":"已送到你的牧場！",
+  "max":"已滿","go":"前往","your farm":"你的農場","village centre":"村莊中心","animal farm":"動物農場","fish shop":"漁市","dungeon":"地城","buy a horse from Hamu first":"先向哈姆買一匹馬","not ready yet":"還沒準備好","delivered to your pasture!":"已送到你的牧場！",
   "Expand pasture":"擴建牧場","bigger pen — keep more animals":"更大的圍欄 — 飼養更多動物","pasture expanded":"牧場已擴建","pen is full — expand it at the cat":"牧場已滿 — 去貓商店擴建","animals":"動物",
   "netted":"撈到","the net needs a day to fill":"漁網需要一天才會有收穫","net set — come back tomorrow":"漁網已下 — 明天再來收","select a rod or a net":"先選釣竿或漁網","net picked up":"已收回漁網",
   "set it in water; collect seafood next day":"放入水中；隔天收取海鮮",
@@ -2872,7 +2872,7 @@ function findClear(g,r0,c0){ for(let rad=0;rad<14;rad++)for(let dr=-rad;dr<=rad;
   if(g[r]&&g[r][c]&&!OBST.has(g[r][c].type)&&!WATER.has(g[r][c].type)&&!g[r][c].crop)return {r,c}; } return {r:r0,c:c0}; }
 function openTeleport(){ if(scene!=="out"){ SND.no(); return; }   // usable outdoors AND in the dungeon (a quick way out)
   if(!hasHorse()){ SND.no(); float(player.x,player.y-24,t("buy a horse from Hamu first"),"#ffd9a8"); return; }
-  const dests=[["farm","🏡",t("your farm")],["house","🏠",t("inside your house")],["village","🏘",t("village centre")],["port","⚓",t("Port Town")],["heart","🌳",t("Heart of the Valley")]];
+  const dests=[["farm","🏡",t("your farm")],["pen","🐄",t("animal farm")],["house","🏠",t("inside your house")],["village","🏘",t("village centre")],["fish","🎣",t("fish shop")],["dungeon","🕳️",t("dungeon")],["port","⚓",t("Port Town")],["heart","🌳",t("Heart of the Valley")]];
   document.getElementById("teleList").innerHTML=dests.map(([d,ic,l])=>`<div class="trow"><span class="tic">${ic}</span><b>${l}</b><button data-tele="${d}">${t("go")}</button></div>`).join("");
   teleEl.classList.add("open"); }
 teleEl.addEventListener("click",e=>{ const d=e.target.dataset&&e.target.dataset.tele; if(!d)return; teleEl.classList.remove("open");
@@ -2880,7 +2880,12 @@ teleEl.addEventListener("click",e=>{ const d=e.target.dataset&&e.target.dataset.
   mobs.length=0; shots.length=0; hover=null;
   if(d==="house"){ setArea("home"); player.x=doorC*TILE+TILE/2; player.y=(doorR+1)*TILE+TILE/2; enterHouse(); save(); return; }   // step inside the cottage
   if(d==="port"||d==="heart"){ gotoArea(d); return; }                               // ride out to the outer regions
-  let p; if(d==="farm"){ setArea("home"); p=findClear(gridHome,doorR+2,doorC); } else { setArea("village"); const hm=VNPCS.find(n=>n.id==="hamu"); p=findClear(gridVillage,(hm?hm.r:24)+1,hm?hm.c:26); }   // arrive next to Hamu, inside the fenced town
+  let p;
+  if(d==="farm"){ setArea("home"); p=findClear(gridHome,doorR+2,doorC); }
+  else if(d==="pen"){ setArea("home"); p=findClear(gridHome,PEN_R0+3,Math.floor((PEN_C0+PEN_C1)/2)); }   // inside the home pasture, among the animals
+  else if(d==="fish"){ setArea("village"); p=findClear(gridVillage,NPC_R+1,NPC_C-1); }                    // next to Robin's fishing spot
+  else if(d==="dungeon"){ setArea("village"); p=findClear(gridVillage,CAVE_R+2,CAVE_C); }                 // at the dungeon cave mouth
+  else { setArea("village"); const hm=VNPCS.find(n=>n.id==="hamu"); p=findClear(gridVillage,(hm?hm.r:24)+1,hm?hm.c:26); }   // village centre: arrive next to Hamu, inside the fenced town
   setScene("out"); player.x=p.c*TILE+TILE/2; player.y=p.r*TILE+TILE/2; player.dir="d";player.fx=0;player.fy=1;
   SND.door(); transCD=0.6; save(); });
 document.getElementById("teleClose").addEventListener("click",()=>teleEl.classList.remove("open"));
