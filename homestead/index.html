@@ -1010,12 +1010,12 @@ const VNPCS=[
   {id:"david", c:20,r:23, name:"David", face:"🐶", col:"#e0913f", role:"chat", ears:"flop",
     houseDoor:[20,9], home:[21,9], work:[26,20], leisure:[28,30], sleep:[21,5],
     lines:["Woof! Welcome to the village, friend!","Robin fishes the sea, Hamu trades, Louie's got a job for you.","Hamu's stall sells farm animals now — go grab a chicken!"]},
-  {id:"anthony", c:21,r:24, name:"Anthony", face:"🐺", col:"#8a8f98", ears:"flop",
-    home:[23,32], work:[22,20], leisure:[27,20], sleep:[22,6], lines:["A good teacher learns more than the students do.","The valley revived me as much as I revive it."]},
   {id:"natalie", c:29,r:26, name:"Natalie", face:"🐦", col:"#d98a8a", ears:"round",
     home:[29,30], work:[25,28], leisure:[27,22], sleep:[22,6], lines:["My healing song faded with the land… it's coming back now.","Rest well, and the body mends itself."]},
   {id:"amand",   c:27,r:14, name:"Amand", face:"🐴", col:"#c79a5a", ears:"flop",
-    home:[29,12], work:[24,30], leisure:[27,16], sleep:[23,7], lines:["Can't keep me in one place — the road's always calling.","Brought my flute. Festivals need a tune, don't they?"]},
+    home:[29,12], work:[24,30], leisure:[27,16], sleep:[23,7],
+    tendArea:"home", tendHours:[6,11], tendAnchor:[7,27],   // mornings: he's at the player's pasture tending the animals
+    lines:["Morning's for the animals — they don't feed themselves.","Can't keep me in one place… the road's always calling.","Brought my flute. Festivals need a tune, don't they?"]},
   {id:"jacy",    c:28,r:24, name:"Jacy", face:"🐰", col:"#e8d0d8", ears:"cat",
     home:[29,16], work:[26,16], leisure:[28,24], sleep:[20,7], lines:["Mister Anthony says I'm the village's future!","Wanna play? …after my lessons. Probably."]} ];
 
@@ -1029,12 +1029,17 @@ const PORT_NPCS=[
   {id:"alicia", name:"Alicia", face:"🐧", col:"#3a4a6a", home:[14,6], work:[12,22], leisure:[17,30], sleep:[22,6], houseDoor:[15,6], lines:["…","You already know the true thing. You just won't say it."]},
   {id:"aria",   name:"Aria",   face:"🕊️", col:"#cfd6dd", home:[19,6], work:[16,24], leisure:[17,30], sleep:[23,7], houseDoor:[20,6], lines:["Put up your fists! …kidding. Mostly.","Stick with me and nothing in the deep will scare you."]},
   {id:"jeannie",name:"Jeannie",face:"🐬", col:"#7fc7e8", home:[6,31], work:[5,31],  leisure:[16,24], sleep:[22,6], houseDoor:[4,29], lines:["One day I'll see the big city… but the farm needs me.","Sunny day, isn't it? It always is when you visit!"]},
-  {id:"althea", name:"Althea", face:"🐬", col:"#5a9ec2", home:[7,32], work:[6,32],  leisure:[9,34],  sleep:[21,5], houseDoor:[4,29], lines:["Jeannie talks enough for the both of us.","…the sea is calmer than people. I prefer it."]} ];
+  {id:"althea", name:"Althea", face:"🐬", col:"#5a9ec2", home:[7,32], work:[6,32],  leisure:[9,34],  sleep:[21,5], houseDoor:[4,29], lines:["Jeannie talks enough for the both of us.","…the sea is calmer than people. I prefer it."]},
+  {id:"anthony",name:"Anthony",face:"🐺", col:"#8a8f98", home:[22,15],work:[16,20], leisure:[17,32], sleep:[22,6], houseDoor:[21,15],lines:["I came to the coast to teach — and to learn from the tide.","A good teacher learns more than the students do.","The sea air clears the mind. Try it sometime."]} ];
 const HEART_NPCS=[
   {id:"edward", name:"Edward", face:"🐢", col:"#6a8a4a", home:[8,3], work:[16,7], leisure:[8,5], sleep:[21,5], houseDoor:[7,3], lines:["The way to the Heart is not walked lightly.","Your grandmother loved this grove… as did I.","Tend it well, child. The valley remembers."]},
   // Paco — the black panther bound to the corruption. A near-stationary sentinel by the dungeon mouth; "???" until the story reveals him.
   {id:"paco", name:"???", face:"🐾", col:"#2b2433", home:[37,8], work:[37,8], leisure:[37,8], lines:["…","Turn back. What sleeps below is mine to hold.","…you have her eyes."]} ];
-function areaNpcs(){ return area==="village"?VNPCS:area==="port"?PORT_NPCS:area==="heart"?HEART_NPCS:[]; }   // the routine NPCs that live on the current map
+VNPCS.forEach(n=>n.baseArea="village"); PORT_NPCS.forEach(n=>n.baseArea="port"); HEART_NPCS.forEach(n=>n.baseArea="heart");
+const ALL_NPCS=[...VNPCS,...PORT_NPCS,...HEART_NPCS];
+// which map an NPC is on right now — usually their home map, but some visit another map for part of the day (e.g. Amand tends the farm each morning)
+function npcArea(n){ if(n.tendHours){ const h=dayHour(),a=n.tendHours[0],b=n.tendHours[1]; if(a<b?(h>=a&&h<b):(h>=a||h<b)) return n.tendArea; } return n.baseArea; }
+function areaNpcs(){ return ALL_NPCS.filter(n=>npcArea(n)===area); }   // the routine NPCs on the current map right now
 // walk pace by personality (1 = base amble): kids/restless faster, the dignified/old slower
 const NPC_SPD={ hamu:1, louie:0.95, david:1.1, anthony:0.95, natalie:1, amand:1.2, jacy:1.35,
   sukie:0.9, koya:1.05, cybele:0.95, mary:0.8, alicia:0.95, aria:1.3, jeannie:1.15, althea:0.95, edward:0.6 };
@@ -1596,10 +1601,10 @@ document.getElementById("drainBtn2").addEventListener("click",()=>{ try{audio();
 function talkInteract(){ if(scene!=="out"){ return; }
   if(area==="home"&&Math.hypot(catX-player.x,catY-player.y)<TILE*1.7){ if(nearThreat())return blockTalk(); SND.meow(); if(metCat)npcMenu("cat",openShop); else {metCat=true;save();talkToCat();} return; }
   if(area==="village"){ if(Math.hypot(npcX-player.x,npcY-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); if(metFisher)npcMenu("fisher",openMarket); else {metFisher=true;save();talkToFisher();} return; }
-    for(const n of VNPCS){ if(!n.inside&&Math.hypot(n.x-player.x,n.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow();
+    for(const n of areaNpcs()){ if(!n.inside&&Math.hypot(n.x-player.x,n.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow();
       if(n.role==="merchant"){ if(metHamu)npcMenu("hamu",openMerchant); else {metHamu=true;save();hamuIntro();} } else if(n.role==="quest")talkLouie(); else if(n.id==="david")npcMenu("david",null); else startDialog(n.lines.map(s=>({who:"vnpc",name:n.name,face:n.face,col:n.col,text:s})),null); return; } }
     for(const v of villagers){ if(Math.hypot(v.x-player.x,v.y-player.y)<TILE*1.8){ if(nearThreat())return blockTalk(); SND.meow(); startDialog(v.lines.map(s=>({who:"vill",name:v.name,face:v.face,col:v.col,text:s})),null); return; } } }
-  if(area==="port"||area==="heart"){ for(const n of areaNpcs()){ if(!n.inside&&n.x!==undefined&&Math.hypot(n.x-player.x,n.y-player.y)<TILE*1.9){ SND.meow(); startDialog((n.lines||["…"]).map(s=>({who:"vnpc",name:n.name,face:n.face,col:n.col,text:s})),null); return; } } }
+  if(area==="port"||area==="heart"||area==="home"){ for(const n of areaNpcs()){ if(!n.inside&&n.x!==undefined&&Math.hypot(n.x-player.x,n.y-player.y)<TILE*1.9){ SND.meow(); startDialog((n.lines||["…"]).map(s=>({who:"vnpc",name:n.name,face:n.face,col:n.col,text:s})),null); return; } } }
   float(player.x,player.y-22,"no one to talk to here","#cfe0ff"); }
 function interact(){ if(scene==="boss"){ bossAttack(); return; }
   if(player.sitting){ player.sitting=false; SND.step(); return; }   // already seated → stand up
@@ -1894,13 +1899,15 @@ let houseKind="player", npcHouseId=null;
 function dayHour(){ return (6+dayPhase()*24)%24; }   // 0..24 in-game hour (the game's day starts at 6 AM, matching clockHour)
 function fmtHour(h){ h=((Math.round(h)%24)+24)%24; const ap=h<12?"AM":"PM"; let hh=h%12; if(hh===0)hh=12; return hh+":00 "+ap; }
 function npcAsleep(n){ if(!n.sleep)return false; const h=dayHour(),a=n.sleep[0],b=n.sleep[1]; return a<b?(h>=a&&h<b):(h>=a||h<b); }
-function npcTarget(n){ const h=dayHour();                 // pick the anchor for this part of the day
+function npcTarget(n){ if(n.tendAnchor&&npcArea(n)===n.tendArea) return n.tendAnchor;   // visiting another map (e.g. Amand at the pasture) → stay at that anchor
+  const h=dayHour();                                      // otherwise pick the anchor for this part of the day
   if(h>=6&&h<11) return n.work||n.home;                   // morning → work
   if(h>=11&&h<17) return n.leisure||n.work||n.home;       // midday → leisure
   if(h>=17&&h<22) return n.leisure||n.home;               // evening → wander/leisure
   return n.home; }                                        // night → head home
 function moveNpcs(dt){ if(scene!=="out")return; const list=areaNpcs(); if(!list.length)return;
   for(const n of list){
+    if(n._area!==area){ n._area=area; const t0=npcTarget(n); n.x=t0[1]*TILE+TILE/2; n.y=t0[0]*TILE+TILE/2; }   // just arrived on this map → snap to the right spot
     if(n.x===undefined){ n.x=n.home[1]*TILE+TILE/2; n.y=n.home[0]*TILE+TILE/2; }   // lazy-init on first visit to the map
     if(npcAsleep(n)){ n.inside=true; n.x=n.home[1]*TILE+TILE/2; n.y=n.home[0]*TILE+TILE/2; continue; }   // tucked in at home (door locked, not drawn)
     n.inside=false;
@@ -2385,8 +2392,9 @@ function draw(){ ctx.clearRect(0,0,VW,VH);
     if(farm||gather||inr){ ctx.strokeStyle="rgba(255,255,255,0.7)";ctx.lineWidth=2;ctx.strokeRect(f.c*TILE-camX+2,f.r*TILE-camY+2,TILE-4,TILE-4); } }
   const ents=[...(scene==="out"?mobs.map(m=>({y:m.y,d:()=>drawMob(m)})):[]),{y:player.y,d:drawPlayer}];
   if(scene==="out"&&area==="home"){ ents.push({y:catY,d:drawCat}); animals.forEach(a=>ents.push({y:a.y,d:()=>drawAnimal(a)})); if(!bossDefeated)ents.push({y:ROAD_R*TILE+TILE/2,d:drawGuardian}); }
-  if(scene==="out"&&area==="village"){ ents.push({y:npcY,d:drawNpc}); villagers.forEach(v=>ents.push({y:v.y,d:()=>drawVillager(v)})); VNPCS.forEach(n=>{ if(!n.inside)ents.push({y:n.y,d:()=>drawCritter(n)}); }); VDECOR.forEach(va=>ents.push({y:va.r*TILE+TILE/2,d:()=>drawDecorAnimal(va)})); }
-  if(scene==="out"&&(area==="port"||area==="heart")){ for(const n of areaNpcs()){ if(!n.inside&&n.x!==undefined)ents.push({y:n.y,d:()=>drawNpcDot(n)}); } }   // placeholder townsfolk on the new maps
+  if(scene==="out"&&area==="village"){ ents.push({y:npcY,d:drawNpc}); villagers.forEach(v=>ents.push({y:v.y,d:()=>drawVillager(v)})); areaNpcs().forEach(n=>{ if(!n.inside&&n.x!==undefined)ents.push({y:n.y,d:()=>drawCritter(n)}); }); VDECOR.forEach(va=>ents.push({y:va.r*TILE+TILE/2,d:()=>drawDecorAnimal(va)})); }
+  if(scene==="out"&&area==="home"){ areaNpcs().forEach(n=>{ if(!n.inside&&n.x!==undefined)ents.push({y:n.y,d:()=>drawCritter(n)}); }); }   // visiting townsfolk (Amand tending the animals)
+  if(scene==="out"&&(area==="port"||area==="heart")){ for(const n of areaNpcs()){ if(!n.inside&&n.x!==undefined)ents.push({y:n.y,d:()=>drawNpcDot(n)}); } }   // townsfolk on the new maps
   ents.sort((a,b)=>a.y-b.y); ents.forEach(e=>e.d());
   for(const s of shots){ const sx=s.x-camX,sy=s.y-camY; ctx.fillStyle="#c46aff";ctx.beginPath();ctx.arc(sx,sy,5,0,7);ctx.fill(); ctx.fillStyle="rgba(255,255,255,.6)";ctx.beginPath();ctx.arc(sx-1,sy-1,2,0,7);ctx.fill(); }
   if(holdUse&&(scene==="out"||scene==="in")){ const hf=facedCell(); if(hf&&BREAKABLE.has(G[hf.r][hf.c].type)){ const prog=Math.min(1,(now()-holdStart)/1.2),hx=hf.c*TILE-camX+TILE/2,hy=hf.r*TILE-camY+TILE/2;
