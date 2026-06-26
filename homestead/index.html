@@ -339,7 +339,7 @@
 <div class="shop" id="help"><div class="card">
   <h2>📖 Guide</h2>
   <div id="helpBody"></div>
-  <p style="font-size:11px;opacity:.55;margin:12px 0 0;text-align:center">Tileset art: “Pixel Art Top Down — Basic” by Cainos (free for commercial use)</p>
+  <p style="font-size:11px;opacity:.55;margin:12px 0 0;text-align:center">Tileset art: “Pixel Art Top Down — Basic” by Cainos · Interior furniture by Bitglow</p>
   <button class="close" id="helpClose">close</button>
 </div></div>
 <div class="shop" id="quests"><div class="card">
@@ -2102,6 +2102,11 @@ function updateCamera(){ camX=Math.max(0,Math.min(GW-VW,player.x-VW/2)); camY=Ma
 // Cainos "Pixel Art Top Down - Basic" tileset (CC0/free for commercial use) — textured ground + trees
 const TT={};
 loadImg(TT,"grass","art/tile-grass.png"); loadImg(TT,"cobble","art/tile-cobble.png"); loadImg(TT,"stone","art/tile-stone.png"); loadImg(TT,"tree","art/tree-a.png");
+// Bitglow interior pack (licensed for commercial use) — furniture sprites for indoor tiles
+const FT={};
+["bookshelf","chest","stove","plant","lamp","clock","table","chair","rug"].forEach(k=>loadImg(FT,k,"art/it-"+k+".png"));
+const FURN_SPRITE={bookshelf:"bookshelf",chest:"chest",stove:"stove",plant:"plant",lamp:"lamp",clock:"clock",table:"table",chair:"chair",stool:"chair",rug:"rug",bluerug:"rug"};
+const FURN_H={bookshelf:1.5,chest:1.25,stove:1.45,plant:1.5,lamp:1.6,clock:0.95,table:1.15,chair:1.2,stool:1.05};   // sprite height in tiles, bottom-anchored
 const GRASSY=new Set(["grass","wild","tree","rock","torch","fence","pfence","mfence","iron","gold","oil","cave"]);   // outdoor tiles that sit on grass
 function groundTexFor(ty){ if(ty==="path"||ty==="road")return TT.cobble; if(ty==="ppath")return TT.stone; if(GRASSY.has(ty))return TT.grass; return null; }
 function tileColor(t){ return {wild:"#5a9e4e",grass:"#7ec850",path:"#cdab73",ppath:"#bfa980",soil:"#9c6b3f",fence:"#5e8c3a",house:"#e9e4da",pond:"#5aa0e6",door:"#7a4a22",tree:"#5a9e4e",rock:"#5a9e4e",torch:"#7ec850",pfence:"#5a9e4e",floor:"#caa46a",wall:"#7a5230",bed:"#caa46a",mat:"#caa46a",
@@ -2112,6 +2117,13 @@ function drawTile(r,c){ const t=G[r][c],x=c*TILE-camX,y=r*TILE-camY; if(x<-TILE|
   const gt=scene==="out"?groundTexFor(t.type):null;   // textured ground outdoors; dungeon/indoor keep their own look
   if(gt&&imgReady(gt)){ ctx.drawImage(gt,x,y,TILE,TILE); } else { ctx.fillStyle=tileColor(t); ctx.fillRect(x,y,TILE,TILE); }
   const textured=!!(gt&&imgReady(gt));
+  { const fsp=FURN_SPRITE[t.type], fim=fsp&&FT[fsp];   // Bitglow furniture sprite, on the proper floor/ground base
+    if(fim&&imgReady(fim)){
+      if(scene==="in"){ ctx.fillStyle="#caa46a";ctx.fillRect(x,y,TILE,TILE); }
+      else if(imgReady(TT.grass)){ ctx.drawImage(TT.grass,x,y,TILE,TILE); } else { ctx.fillStyle="#5a9e4e";ctx.fillRect(x,y,TILE,TILE); }
+      if(t.type==="rug"||t.type==="bluerug"){ ctx.drawImage(fim,x+2,y+3,TILE-4,TILE-7); }   // rug lies flat
+      else drawSprite(fim, x+TILE/2, y+TILE+2, TILE*(FURN_H[t.type]||1.2), false);            // furniture stands, bottom-anchored
+      return; } }
   if(t.type==="wild"||t.type==="grass"){ if(!textured){ ctx.fillStyle="rgba(0,0,0,0.05)";if((r+c)%2)ctx.fillRect(x,y,TILE,TILE);ctx.fillStyle=shade(tileColor(t),1.08);ctx.fillRect(x+7,y+9,3,3);ctx.fillRect(x+24,y+27,3,3); } }
   else if(t.type==="soil"){ const rainWet=(area==="home"&&isRainy()), wet=rainWet||(t.crop&&(t.crop.wet||now()<t.crop.boost));   // rain keeps the whole farm wet all day; watered crops stay damp too
     if(wet){ctx.fillStyle="rgba(0,0,0,"+(rainWet||(t.crop&&now()<t.crop.boost)?.22:.15)+")";ctx.fillRect(x,y,TILE,TILE);}
