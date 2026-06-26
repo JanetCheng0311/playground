@@ -1035,6 +1035,9 @@ const HEART_NPCS=[
   // Paco — the black panther bound to the corruption. A near-stationary sentinel by the dungeon mouth; "???" until the story reveals him.
   {id:"paco", name:"???", face:"🐾", col:"#2b2433", home:[37,8], work:[37,8], leisure:[37,8], lines:["…","Turn back. What sleeps below is mine to hold.","…you have her eyes."]} ];
 function areaNpcs(){ return area==="village"?VNPCS:area==="port"?PORT_NPCS:area==="heart"?HEART_NPCS:[]; }   // the routine NPCs that live on the current map
+// walk pace by personality (1 = base amble): kids/restless faster, the dignified/old slower
+const NPC_SPD={ hamu:1, louie:0.95, david:1.1, anthony:0.95, natalie:1, amand:1.2, jacy:1.35,
+  sukie:0.9, koya:1.05, cybele:0.95, mary:0.8, alicia:0.95, aria:1.3, jeannie:1.15, althea:0.95, edward:0.6 };
 function initNpcPositions(){ for(const list of [PORT_NPCS,HEART_NPCS])for(const n of list){ n.x=n.home[1]*TILE+TILE/2; n.y=n.home[0]*TILE+TILE/2; n.inside=false; } }
 
 /* ---- friendship: gift each townsfolk something they like to raise their friendship (4 levels). Whiskers the cat starts maxed out. ---- */
@@ -1904,7 +1907,7 @@ function moveNpcs(dt){ if(scene!=="out")return; const list=areaNpcs(); if(!list.
     const tg=npcTarget(n); const tx=tg[1]*TILE+TILE/2, ty=tg[0]*TILE+TILE/2;
     const dx=tx-n.x, dy=ty-n.y, d=Math.hypot(dx,dy);
     if(Math.hypot(n.x-player.x,n.y-player.y)<TILE*1.4){ n.walking=false; continue; }   // pause when the player is right next to them
-    if(d>5){ const sp=42*dt; moveEnt(n, dx/d*sp, dy/d*sp, 11); n.walking=true; } else n.walking=false;
+    if(d>5){ const sp=50*(NPC_SPD[n.id]||1)*dt; moveEnt(n, dx/d*sp, dy/d*sp, 11); n.walking=true; } else n.walking=false;   // per-NPC pace (personality)
   } }
 const EXTRA_HOUSES=[{id:"fisher", name:"Robin", houseDoor:[5,32]}];   // the coast fisher's hut (Robin isn't a routine NPC, but his house is enterable too)
 function npcByDoor(r,c){ return areaNpcs().find(n=>n.houseDoor&&n.houseDoor[0]===r&&n.houseDoor[1]===c) || (area==="village"&&EXTRA_HOUSES.find(n=>n.houseDoor[0]===r&&n.houseDoor[1]===c)) || null; }
@@ -2453,12 +2456,15 @@ function drawHUD(){ if(scene==="boss")return; if(mapOpen&&scene==="out")return; 
   ctx.fillStyle="#dce8ff"; ctx.fillText(info,bx-pad-wc-gap,by+1);
   ctx.textAlign="left"; ctx.textBaseline="alphabetic";
 }
-function drawMinimap(){ const rows=GR,cols=GC,cw=Math.max(1,Math.min(160/cols,160/rows)),W=cw*cols,H=cw*rows,ox=VW-W-12,oy=12;
+function drawMinimap(){ const MM=Math.min(210,VW-24),rows=GR,cols=GC,cw=Math.max(1,Math.min(MM/cols,MM/rows)),W=cw*cols,H=cw*rows,ox=VW-W-12,oy=12;
   ctx.fillStyle="rgba(8,16,48,.85)"; ctx.fillRect(ox-5,oy-5,W+10,H+10); ctx.strokeStyle="rgba(255,255,255,.45)"; ctx.lineWidth=1; ctx.strokeRect(ox-5,oy-5,W+10,H+10);
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){ ctx.fillStyle=tileColor(G[r][c]); ctx.fillRect(ox+c*cw,oy+r*cw,Math.ceil(cw),Math.ceil(cw)); }
   const dot=(px,py,col,s)=>{ ctx.fillStyle=col; ctx.fillRect(ox+(px/TILE)*cw-s,oy+(py/TILE)*cw-s,s*2,s*2); };
-  if(scene==="out"&&area==="home") dot(catX,catY,"#f3a64b",2);
-  if(scene==="out"&&area==="village"){ dot(npcX,npcY,"#3a7d8f",2); villagers.forEach(v=>dot(v.x,v.y,"#c9a0e0",1.5)); }
+  // show each townsfolk on the map by their animal emoji, so you can spot where they wandered
+  const emo=(px,py,e)=>{ ctx.save();ctx.font="12px serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.shadowColor="rgba(0,0,0,.7)";ctx.shadowBlur=2;ctx.fillText(e,ox+(px/TILE)*cw,oy+(py/TILE)*cw);ctx.restore(); };
+  if(scene==="out"){ for(const n of areaNpcs()){ if(!n.inside&&n.x!==undefined)emo(n.x,n.y,n.face||"⭐"); }
+    if(area==="home")emo(catX,catY,"🐱");                 // Whiskers
+    if(area==="village")emo(npcX,npcY,"🐸"); }            // Robin the fisher (static)
   dot(player.x,player.y,"#fff",2.5);
   ctx.fillStyle="rgba(255,255,255,.6)"; ctx.font="700 9px Helvetica"; ctx.textAlign="left"; ctx.fillText((area==="village"?"VILLAGE":"HOMESTEAD")+(scene==="in"?" · indoors":""),ox-2,oy+H+13); }
 let hover=null; // kept for compatibility; map name-tooltips were removed (names show on hover in the hotbar & bag instead)
